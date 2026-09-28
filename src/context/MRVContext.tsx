@@ -203,7 +203,7 @@ const INITIAL_FACILITIES: Facility[] = [
   {
     id: 'fac-4',
     name: 'Al Taweelah Power & Desalination',
-    facilityCode: 'FAC-EAD-2026-0033',
+    facilityCode: 'FAC-EAD-2026-0305',
     sector: 'Energy',
     emirate: 'Abu Dhabi',
     coordinates: { lat: 24.7601, lng: 54.7082 },

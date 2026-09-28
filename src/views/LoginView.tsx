@@ -244,23 +244,23 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         <div className="my-10 lg:my-auto max-w-2xl z-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#082235]/80 backdrop-blur-md border border-[#00B2FE]/30 text-[#00B2FE] text-xs font-semibold mb-6 shadow-md">
             <Sparkles className="w-3.5 h-3.5 text-[#00B2FE]" />
-            <span>Environment Agency – Abu Dhabi Subnational MRV Framework</span>
+            <span>Climate Change Registry Portal (CCRP)</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold font-display leading-[1.1] tracking-tight text-white">
-            Monitor. Report. <br />
-            <span className="text-[#00B2FE]">
-              Comply with Precision.
+          <h1 className="text-3xl sm:text-4xl lg:text-[40px] font-extrabold font-display leading-[1.15] tracking-tight text-white">
+            Track Climate Action. <br />
+            <span className="text-[#00B2FE] whitespace-normal sm:whitespace-nowrap">
+              Report Progress. Drive Impact.
             </span>
           </h1>
 
-          <p className="text-sm sm:text-base text-slate-300/90 mt-5 leading-relaxed font-normal max-w-xl">
-            A secure enterprise digital platform for facility-level GHG emissions monitoring, verified reporting submissions, third-party assurance audits, and regulatory compliance.
+          <p className="text-xs sm:text-sm text-slate-300/90 mt-4 leading-relaxed font-normal max-w-xl">
+            A secure digital platform for registering climate change initiatives, reporting progress, tracking performance, and monitoring KPIs across Abu Dhabi’s Climate Change Strategy and Adaptation Plan.
           </p>
 
           {/* 3 Feature Glass Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 max-w-2xl">
-            {/* Card 1: Facility Registration */}
+            {/* Card 1: Project Registration */}
             <div className="relative p-4 rounded-2xl bg-gradient-to-b from-white/15 via-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.36),inset_0_1px_1px_0_rgba(255,255,255,0.3)] hover:border-[#00B2FE]/60 hover:bg-white/20 hover:shadow-[0_12px_36px_rgba(0,178,254,0.25),inset_0_1px_2px_rgba(255,255,255,0.5)] transition-all duration-300 hover:-translate-y-1.5 group overflow-hidden">
               <div className="absolute inset-x-3 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
               <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#00B2FE]/15 to-transparent pointer-events-none rounded-b-2xl opacity-60 group-hover:opacity-100 transition-opacity" />
@@ -269,14 +269,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 <div className="mb-3 text-[#00B2FE] drop-shadow-[0_2px_10px_rgba(0,178,254,0.5)] group-hover:scale-110 group-hover:text-cyan-300 transition-all duration-300">
                   <Building2 className="w-6 h-6" />
                 </div>
-                <h4 className="text-xs font-bold text-white tracking-wide">Facility Registration</h4>
+                <h4 className="text-xs font-bold text-white tracking-wide">Project Registration</h4>
                 <p className="text-[11px] text-slate-300/90 mt-1 leading-snug font-normal">
-                  Annual renewal, permits & plant boundary definitions
+                  Register and manage climate initiatives.
                 </p>
               </div>
             </div>
 
-            {/* Card 2: Emission & Plans */}
+            {/* Card 2: Initiative Performance */}
             <div className="relative p-4 rounded-2xl bg-gradient-to-b from-white/15 via-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.36),inset_0_1px_1px_0_rgba(255,255,255,0.3)] hover:border-[#00B2FE]/60 hover:bg-white/20 hover:shadow-[0_12px_36px_rgba(0,178,254,0.25),inset_0_1px_2px_rgba(255,255,255,0.5)] transition-all duration-300 hover:-translate-y-1.5 group overflow-hidden">
               <div className="absolute inset-x-3 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
               <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#00B2FE]/15 to-transparent pointer-events-none rounded-b-2xl opacity-60 group-hover:opacity-100 transition-opacity" />
@@ -285,14 +285,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 <div className="mb-3 text-[#00B2FE] drop-shadow-[0_2px_10px_rgba(0,178,254,0.5)] group-hover:scale-110 group-hover:text-cyan-300 transition-all duration-300">
                   <Layers className="w-6 h-6" />
                 </div>
-                <h4 className="text-xs font-bold text-white tracking-wide">Emission & Plans</h4>
+                <h4 className="text-xs font-bold text-white tracking-wide">Initiative Performance</h4>
                 <p className="text-[11px] text-slate-300/90 mt-1 leading-snug font-normal">
-                  Manage monitoring plans, activity data & emissions
+                  Track progress, targets, and milestones.
                 </p>
               </div>
             </div>
 
-            {/* Card 3: Annual Emission Reporting */}
+            {/* Card 3: Project Data Entry */}
             <div className="relative p-4 rounded-2xl bg-gradient-to-b from-white/15 via-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.36),inset_0_1px_1px_0_rgba(255,255,255,0.3)] hover:border-[#00B2FE]/60 hover:bg-white/20 hover:shadow-[0_12px_36px_rgba(0,178,254,0.25),inset_0_1px_2px_rgba(255,255,255,0.5)] transition-all duration-300 hover:-translate-y-1.5 group overflow-hidden">
               <div className="absolute inset-x-3 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
               <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#00B2FE]/15 to-transparent pointer-events-none rounded-b-2xl opacity-60 group-hover:opacity-100 transition-opacity" />
@@ -301,9 +301,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 <div className="mb-3 text-[#00B2FE] drop-shadow-[0_2px_10px_rgba(0,178,254,0.5)] group-hover:scale-110 group-hover:text-cyan-300 transition-all duration-300">
                   <BarChart3 className="w-6 h-6" />
                 </div>
-                <h4 className="text-xs font-bold text-white tracking-wide">Annual Emission Reporting</h4>
+                <h4 className="text-xs font-bold text-white tracking-wide">Project Data Entry</h4>
                 <p className="text-[11px] text-slate-300/90 mt-1 leading-snug font-normal">
-                  Submit annual data, calculate emissions & track status.
+                  Submit reports and track progress.
                 </p>
               </div>
             </div>
@@ -345,7 +345,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                     Welcome back
                   </h2>
                   <p className="text-xs text-slate-300/80 mt-1.5 font-normal">
-                    Sign in to your Facility MRV Platform
+                    Sign in to your Climate Change Registry Portal
                   </p>
                 </div>
 
@@ -361,7 +361,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                       Email
                     </label>
                     <FieldTooltip
-                      content="Enter your registered corporate or government MRV account email."
+                      content="Enter your registered corporate or government CCRP account email."
                       example="ahmed.zaabi@alnoor-energy.ae"
                     >
                       <input

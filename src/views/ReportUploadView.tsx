@@ -16,7 +16,6 @@ import {
   Clock,
   ArrowRight,
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 import { useMRV } from '../context/MRVContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { Badge } from '../components/ui/Badge';
@@ -103,14 +102,6 @@ export const ReportUploadView: React.FC = () => {
     const res = submitAnnualMRV();
     setSubmissionResult({ success: true, version: res.version });
     setIsSubmitModalOpen(false);
-
-    // Trigger celebration confetti
-    confetti({
-      particleCount: 80,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#0878C9', '#19B5D8', '#16A6A0', '#071A2B'],
-    });
   };
 
   return (

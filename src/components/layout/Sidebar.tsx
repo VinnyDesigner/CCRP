@@ -15,6 +15,7 @@ import {
   KeyRound,
   History,
   ChevronDown,
+  TrendingUp,
 } from 'lucide-react';
 import { LogoutNavIcon } from '../icons/NavIcons';
 import { useMRV } from '../../context/MRVContext';
@@ -58,24 +59,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   // Active view match flags
   const isDashboardActive = activeView === 'dashboard' && currentRole === 'FACILITY_OPERATOR';
-  const isFacilityActive =
+  const isInitiativesActive =
+    activeView === 'initiatives' ||
     activeView === 'facility' ||
     activeView === 'registration' ||
     activeView === 'annual-renewal' ||
     activeView === 'report-change' ||
     activeView === 'compliance-checker' ||
+    activeView === 'ead-facilities';
+  const isFacilityActive = isInitiativesActive;
+  const isPerformanceReportingActive =
+    activeView === 'performance-reporting' ||
+    activeView === 'annual-emission-data' ||
+    activeView === 'emissions-data' ||
     activeView === 'data-entry' ||
     activeView === 'monitoring-plan' ||
-    activeView === 'monitoring-plan-module' ||
-    activeView === 'ead-facilities';
-  const isAnnualEmissionActive =
-    activeView === 'annual-emission-data' ||
-    activeView === 'emissions-data';
+    activeView === 'monitoring-plan-module';
+  const isAmendmentsActive =
+    activeView === 'amendments' ||
+    activeView === 'version-history';
   const isReportsActive =
     activeView === 'reports' ||
     activeView === 'mrv-reports' ||
-    activeView === 'submissions' ||
-    activeView === 'version-history';
+    activeView === 'submissions';
   const isAdministrationActive =
     activeView === 'administration' ||
     activeView === 'admin' ||
@@ -114,7 +120,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div
               className="flex items-center justify-center cursor-pointer"
               onClick={() => setActiveView(currentRole === 'EAD_REVIEWER' ? 'ead-dashboard' : 'registration')}
-              title="Abu Dhabi MRV Portal"
+              title="Climate Change Registry Portal (CCRP)"
             >
               <img
                 src={isCollapsed ? eadLogoMark : eadLogo}
@@ -129,60 +135,73 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Navigation Section */}
           <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-2.5 space-y-3 font-sans">
             {currentRole === 'FACILITY_OPERATOR' ? (
-              /* DATA PROVIDER SIDEBAR MENU: Facility Registration, Annual Emission Data, Reports */
+              /* DATA PROVIDER SIDEBAR MENU: Dashboard, Project Registration, Project Data Entry, Amendments, Reports */
               <>
-                {/* 1. Facility Registration */}
+                {/* 1. Dashboard */}
+                <button
+                  onClick={() => setActiveView('dashboard')}
+                  className={`flex items-center rounded-[6px] text-xs font-bold transition-all cursor-pointer ${
+                    isCollapsed ? 'w-9 h-9 mx-auto justify-center px-0 py-0' : 'w-full gap-2.5 px-3 py-2'
+                  } ${
+                    isDashboardActive
+                      ? 'bg-white text-[#365785] shadow-sm font-bold'
+                      : 'text-white/90 hover:text-white hover:bg-white/15'
+                  }`}
+                  title="Dashboard"
+                >
+                  <LayoutDashboard className={`w-4 h-4 shrink-0 ${isDashboardActive ? 'text-[#365785]' : 'text-white/85'}`} />
+                  {!isCollapsed && <span className="truncate">Dashboard</span>}
+                </button>
+
+                {/* 2. Project Registration */}
                 <button
                   onClick={() => setActiveView('registration')}
                   className={`flex items-center rounded-[6px] text-xs font-bold transition-all cursor-pointer ${
                     isCollapsed ? 'w-9 h-9 mx-auto justify-center px-0 py-0' : 'w-full gap-2.5 px-3 py-2'
                   } ${
-                    isFacilityActive
+                    isInitiativesActive
                       ? 'bg-white text-[#365785] shadow-sm font-bold'
                       : 'text-white/90 hover:text-white hover:bg-white/15'
                   }`}
-                  title="Facility Registration"
+                  title="Project Registration"
                 >
-                  <Building2 className={`w-4 h-4 shrink-0 ${isFacilityActive ? 'text-[#365785]' : 'text-white/85'}`} />
-                  {!isCollapsed && <span className="truncate">Facility Registration</span>}
+                  <Building2 className={`w-4 h-4 shrink-0 ${isInitiativesActive ? 'text-[#365785]' : 'text-white/85'}`} />
+                  {!isCollapsed && <span className="truncate">Project Registration</span>}
                 </button>
 
-                {/* 2. Annual Emission Data */}
+                {/* 3. Project Data Entry */}
                 <button
-                  onClick={() => {
-                    if (isAnnualEmissionUnlocked) {
-                      setActiveView('annual-emission-data');
-                    } else {
-                      setLockedModalInfo(getLockReason('annual-emission-data'));
-                    }
-                  }}
+                  onClick={() => setActiveView('annual-emission-data')}
                   className={`flex items-center rounded-[6px] text-xs font-bold transition-all cursor-pointer ${
-                    isCollapsed ? 'w-9 h-9 mx-auto justify-center px-0 py-0' : 'w-full justify-between px-3 py-2'
+                    isCollapsed ? 'w-9 h-9 mx-auto justify-center px-0 py-0' : 'w-full gap-2.5 px-3 py-2'
                   } ${
-                    isAnnualEmissionActive
-                      ? isAnnualEmissionUnlocked
-                        ? 'bg-white text-[#365785] shadow-sm font-bold'
-                        : 'bg-white/90 text-amber-950 font-bold shadow-sm border border-amber-300'
-                      : isAnnualEmissionUnlocked
-                      ? 'text-white/90 hover:text-white hover:bg-white/15'
-                      : 'text-white/60 hover:text-white/80 hover:bg-white/10'
+                    isPerformanceReportingActive
+                      ? 'bg-white text-[#365785] shadow-sm font-bold'
+                      : 'text-white/90 hover:text-white hover:bg-white/15'
                   }`}
-                  title={
-                    isAnnualEmissionUnlocked
-                      ? 'Annual Emission Data'
-                      : `Annual Emission Data Locked (${getLockReason('annual-emission-data').reason})`
-                  }
+                  title="Project Data Entry"
                 >
-                  <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2.5 truncate'}`}>
-                    <Flame className={`w-4 h-4 shrink-0 ${isAnnualEmissionActive ? 'text-[#365785]' : 'text-white/85'}`} />
-                    {!isCollapsed && <span className="truncate">Annual Emission Data</span>}
-                  </div>
-                  {!isCollapsed && !isAnnualEmissionUnlocked && (
-                    <Lock className="w-3.5 h-3.5 text-amber-300 flex-shrink-0" />
-                  )}
+                  <TrendingUp className={`w-4 h-4 shrink-0 ${isPerformanceReportingActive ? 'text-[#365785]' : 'text-white/85'}`} />
+                  {!isCollapsed && <span className="truncate">Project Data Entry</span>}
                 </button>
 
-                {/* 3. Reports */}
+                {/* 4. Amendments */}
+                <button
+                  onClick={() => setActiveView('amendments')}
+                  className={`flex items-center rounded-[6px] text-xs font-bold transition-all cursor-pointer ${
+                    isCollapsed ? 'w-9 h-9 mx-auto justify-center px-0 py-0' : 'w-full gap-2.5 px-3 py-2'
+                  } ${
+                    isAmendmentsActive
+                      ? 'bg-white text-[#365785] shadow-sm font-bold'
+                      : 'text-white/90 hover:text-white hover:bg-white/15'
+                  }`}
+                  title="Amendments"
+                >
+                  <History className={`w-4 h-4 shrink-0 ${isAmendmentsActive ? 'text-[#365785]' : 'text-white/85'}`} />
+                  {!isCollapsed && <span className="truncate">Amendments</span>}
+                </button>
+
+                {/* 5. Reports */}
                 <button
                   onClick={() => setActiveView('reports')}
                   className={`flex items-center rounded-[6px] text-xs font-bold transition-all cursor-pointer ${
@@ -199,7 +218,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </button>
               </>
             ) : (
-              /* ADMIN SIDEBAR MENU: Dashboard, Facility Management, Annual Emission Data, Reports, Administration */
+              /* ADMIN SIDEBAR MENU: Dashboard, Project Registration, Project Data Entry, Reports, Administration */
               <>
                 {/* 1. Dashboard */}
                 <button
@@ -217,7 +236,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {!isCollapsed && <span className="truncate">Dashboard</span>}
                 </button>
 
-                {/* 2. Facility Management */}
+                {/* 2. Project Registration */}
                 <button
                   onClick={() => setActiveView('registration')}
                   className={`flex items-center rounded-[6px] text-xs font-bold transition-all cursor-pointer ${
@@ -227,13 +246,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       ? 'bg-white text-[#365785] shadow-sm font-bold'
                       : 'text-white/90 hover:text-white hover:bg-white/15'
                   }`}
-                  title="Facility Management"
+                  title="Project Registration"
                 >
                   <Building2 className={`w-4 h-4 shrink-0 ${isFacilityActive ? 'text-[#365785]' : 'text-white/85'}`} />
-                  {!isCollapsed && <span className="truncate">Facility Management</span>}
+                  {!isCollapsed && <span className="truncate">Project Registration</span>}
                 </button>
 
-                {/* 3. Annual Emission Data */}
+                {/* 3. Project Data Entry */}
                 <button
                   onClick={() => setActiveView('annual-emission-data')}
                   className={`flex items-center rounded-[6px] text-xs font-bold transition-all cursor-pointer ${
@@ -243,10 +262,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       ? 'bg-white text-[#365785] shadow-sm font-bold'
                       : 'text-white/90 hover:text-white hover:bg-white/15'
                   }`}
-                  title="Annual Emission Data"
+                  title="Project Data Entry"
                 >
                   <Flame className={`w-4 h-4 shrink-0 ${isEadAnnualEmissionActive ? 'text-[#365785]' : 'text-white/85'}`} />
-                  {!isCollapsed && <span className="truncate">Annual Emission Data</span>}
+                  {!isCollapsed && <span className="truncate">Project Data Entry</span>}
                 </button>
 
                 {/* 4. Reports */}

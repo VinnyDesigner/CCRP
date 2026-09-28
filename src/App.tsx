@@ -56,6 +56,7 @@ const MainAppContent: React.FC = () => {
     switch (activeView) {
       case 'dashboard':
         return currentRole === 'EAD_REVIEWER' ? <EADDashboardView /> : <FacilityDashboardView />;
+      case 'initiatives':
       case 'facility':
       case 'registration':
       case 'annual-renewal':
@@ -67,13 +68,15 @@ const MainAppContent: React.FC = () => {
       case 'monitoring-plan-module':
       case 'emissions-data':
       case 'report-upload':
-        return <DataEntryView />;
+      case 'performance-reporting':
       case 'annual-emission-data':
         return <AnnualEmissionDataView />;
       case 'verification':
         return <VerificationModuleView />;
       case 'data-review':
         return <DataReviewView />;
+      case 'amendments':
+        return <VersionHistoryView />;
       case 'reports':
       case 'mrv-reports':
       case 'submissions':

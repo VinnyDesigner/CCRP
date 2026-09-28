@@ -32,31 +32,39 @@ import {
   ChevronRight,
   XCircle,
   MessageSquare,
+  Sparkles,
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 import { useMRV } from '../context/MRVContext';
-import { formatVersion } from '../types/mrv';
-import { MonitoringMethodsTab } from '../components/monitoring/MonitoringMethodsTab';
 import { FieldTooltip } from '../components/ui/FieldTooltip';
 import { SortTriangles } from '../components/ui/SortTriangles';
 import emptyFolderIcon from '../assets/empty-folder-icon.png';
+import {
+  PerformanceReportData,
+  CCRP_PROJECT_PHASES,
+  CCRP_REPORT_STATUSES,
+  CCRP_BUDGET_TYPES,
+  CCRP_BUDGET_STATUSES,
+  CCRP_PILLARS,
+  CCRP_REPORTING_PERIODS_BY_PILLAR,
+  CCRP_APPROVED_INITIATIVES,
+  CCRPApprovedInitiative,
+  INITIAL_FACILITY_EMISSIONS,
+} from '../data/facilityEmissionsData';
 
-const ANNUAL_EMISSION_STEPS = [
-  { id: 'monitoring-methods', stepNumber: 1, title: 'Monitoring Methods' },
-  { id: 'mitigation-measures', stepNumber: 2, title: 'Mitigation Measures' },
-  { id: 'qa-qc', stepNumber: 3, title: 'Data Management & QA/QC' },
-  { id: 'review-submit', stepNumber: 4, title: 'Support Documents & Submit' },
+const PERFORMANCE_REPORT_STEPS = [
+  { id: 'report-details', stepNumber: 1, title: 'Report Details' },
+  { id: 'progress-status', stepNumber: 2, title: 'Progress & Project Data' },
+  { id: 'ghg-emissions', stepNumber: 3, title: 'GHG Emissions' },
+  { id: 'supporting-submit', stepNumber: 4, title: 'Supporting Documents & Submit' },
 ] as const;
+
+type StepTabId = 'report-details' | 'progress-status' | 'ghg-emissions' | 'supporting-submit';
 
 export const AnnualEmissionDataView: React.FC = () => {
   const {
     activeFacility,
-    reportingYear,
     setActiveView,
     workflowState,
-    isAnnualEmissionUnlocked,
-    setAnnualEmissionStatus,
-    setVerificationStatus,
     currentRole,
     facilities,
     setActiveFacilityId,
@@ -65,97 +73,273 @@ export const AnnualEmissionDataView: React.FC = () => {
     operatorEmissionIds,
     setOperatorEmissionIds,
     operatorFacilityIds,
-    facilityPlans,
-    facilityMonitoringPlanStatuses,
     facilityRegistrations,
   } = useMRV();
 
   const isFacilityOperator = currentRole === 'FACILITY_OPERATOR';
   const isEadReviewerOrAdmin = currentRole === 'EAD_REVIEWER' || (currentRole as string) === 'ADMIN';
 
-  // VIEW MODE: 'table' (Overview Table) | 'form' (5-Tab Edit Form) | 'view' (Read-Only Inspection)
+  // VIEW MODE: 'table' (Overview Table) | 'form' (4-Step Edit Form) | 'view' (Read-Only Inspection)
   const [viewMode, setViewMode] = useState<'table' | 'form' | 'view'>('table');
   const [selectedFacilityId, setSelectedFacilityId] = useState<string>(activeFacility?.id || 'fac-1');
 
   // Overview Table Search & Filters
   const [tableSearchTerm, setTableSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  const [yearFilter, setYearFilter] = useState<string>('ALL');
+  const [pillarFilter, setPillarFilter] = useState<string>('ALL');
+  const [deletedEmissionIds, setDeletedEmissionIds] = useState<string[]>([]);
 
   // Form Tab Navigation
-  const [activeTab, setActiveTab] = useState<
-    'monitoring-methods' | 'mitigation-measures' | 'qa-qc' | 'review-submit'
-  >('monitoring-methods');
+  const [activeTab, setActiveTab] = useState<StepTabId>('report-details');
 
   const [isSavedNotice, setIsSavedNotice] = useState(false);
   const [noticeMessage, setNoticeMessage] = useState('Data Saved Successfully!');
-  const [formReportingYear, setFormReportingYear] = useState('2026');
   const [reviewerComments, setReviewerComments] = useState('');
   const [activeReviewModal, setActiveReviewModal] = useState<'approve' | 'reject' | 'revert' | null>(null);
 
-  const currentRecord = facilityEmissions[selectedFacilityId] || facilityEmissions['fac-1'];
-
-  // Calculate Correction Deadline Countdown Helper
-  const getCorrectionDeadlineInfo = (deadlineDateStr: string | null, status: string) => {
-    if ((status !== 'Correction Required' && status !== 'Reverted') || !deadlineDateStr) {
-      return { text: '—', isOverdue: false, daysRemaining: null };
-    }
-    const deadline = new Date(deadlineDateStr);
-    const now = new Date('2026-05-18T10:00:00Z'); // normalized reference date
-    const diffTime = deadline.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) {
-      return { text: `Overdue (${Math.abs(diffDays)} days late)`, isOverdue: true, daysRemaining: diffDays, deadlineStr: deadlineDateStr };
-    }
-    return {
-      text: `Due: ${deadlineDateStr} (${diffDays} days left)`,
-      isOverdue: false,
-      daysRemaining: diffDays,
-      deadlineStr: deadlineDateStr,
+  // Active Report Form Data
+  const currentRecord: PerformanceReportData =
+    facilityEmissions[selectedFacilityId] ||
+    facilityEmissions['fac-1'] || {
+      initiativeName: CCRP_APPROVED_INITIATIVES[0].name,
+      initiativeId: CCRP_APPROVED_INITIATIVES[0].initiativeCode,
+      entity: CCRP_APPROVED_INITIATIVES[0].entity,
+      pillar: CCRP_APPROVED_INITIATIVES[0].pillar,
+      reportingCadence: CCRP_APPROVED_INITIATIVES[0].cadence,
+      progressReportPeriod: 'Semiannual 1 (H1)',
+      projectPhase: 'Implementation',
+      status: 'In Progress',
+      workflowStatus: 'Draft',
+      plannedProgress: 75,
+      actualProgress: 68,
+      budget: 'AED 3,200,000,000',
+      budgetType: 'CAPEX',
+      budgetStatus: 'Allocated',
+      challenges: '',
+      raiseToCommittee: 'No',
+      activitiesOutcomesOutput: '',
+      comments: '',
+      plannedGhgReduction: '142,800',
+      actualAnnualEmissionReduction: '138,500',
+      supportingDocsFiles: [],
+      submittedDate: null,
+      updatedDate: null,
+      eadCorrectionDate: null,
     };
+
+  // Local Form States
+  const [formInitiativeId, setFormInitiativeId] = useState<string>(
+    currentRecord.initiativeId || CCRP_APPROVED_INITIATIVES[0].initiativeCode
+  );
+  const [formInitiativeName, setFormInitiativeName] = useState<string>(
+    currentRecord.initiativeName || CCRP_APPROVED_INITIATIVES[0].name
+  );
+  const [formEntity, setFormEntity] = useState<string>(
+    currentRecord.entity || CCRP_APPROVED_INITIATIVES[0].entity
+  );
+  const [formPillar, setFormPillar] = useState<'Adaptation' | 'Mitigation' | 'Economic Diversification' | 'Cross Cutting'>(
+    currentRecord.pillar || 'Mitigation'
+  );
+  const [formCadence, setFormCadence] = useState<'Quarterly' | 'Semiannual'>(
+    currentRecord.reportingCadence || 'Semiannual'
+  );
+  const [formProgressReportPeriod, setFormProgressReportPeriod] = useState<string>(
+    currentRecord.progressReportPeriod || 'Semiannual 1 (H1)'
+  );
+  const [formProjectPhase, setFormProjectPhase] = useState<'Design' | 'Implementation' | 'Operation'>(
+    currentRecord.projectPhase || 'Implementation'
+  );
+  const [formReportStatus, setFormReportStatus] = useState<'Not Started' | 'In Progress' | 'On Hold' | 'Completed'>(
+    currentRecord.status || 'In Progress'
+  );
+  const [formPlannedProgress, setFormPlannedProgress] = useState<number | string>(
+    currentRecord.plannedProgress !== undefined ? currentRecord.plannedProgress : 75
+  );
+  const [formActualProgress, setFormActualProgress] = useState<number | string>(
+    currentRecord.actualProgress !== undefined ? currentRecord.actualProgress : 68
+  );
+  const [formBudget, setFormBudget] = useState<string | number>(
+    currentRecord.budget !== undefined ? currentRecord.budget : ''
+  );
+  const [formBudgetType, setFormBudgetType] = useState<string>(
+    currentRecord.budgetType || 'CAPEX'
+  );
+  const [formBudgetStatus, setFormBudgetStatus] = useState<string>(
+    currentRecord.budgetStatus || 'Allocated'
+  );
+  const [formChallenges, setFormChallenges] = useState<string>(
+    currentRecord.challenges || ''
+  );
+  const [formRaiseToCommittee, setFormRaiseToCommittee] = useState<'Yes' | 'No'>(
+    currentRecord.raiseToCommittee === 'Yes' || currentRecord.raiseToCommittee === true ? 'Yes' : 'No'
+  );
+  const [formActivitiesOutcomesOutput, setFormActivitiesOutcomesOutput] = useState<string>(
+    currentRecord.activitiesOutcomesOutput || ''
+  );
+  const [formComments, setFormComments] = useState<string>(
+    currentRecord.comments || ''
+  );
+  const [formPlannedGhgReduction, setFormPlannedGhgReduction] = useState<number | string>(
+    currentRecord.plannedGhgReduction || ''
+  );
+  const [formActualAnnualEmissionReduction, setFormActualAnnualEmissionReduction] = useState<number | string>(
+    currentRecord.actualAnnualEmissionReduction || ''
+  );
+  const [formSupportingDocs, setFormSupportingDocs] = useState<
+    { id: string; name: string; size: string; uploadDate: string }[]
+  >(currentRecord.supportingDocsFiles || []);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // When initiative changes in form, sync entity, pillar, cadence and report period options
+  const handleInitiativeChange = (initiativeCode: string) => {
+    const matched = CCRP_APPROVED_INITIATIVES.find((init) => init.initiativeCode === initiativeCode);
+    if (matched) {
+      setFormInitiativeId(matched.initiativeCode);
+      setFormInitiativeName(matched.name);
+      setFormEntity(matched.entity);
+      setFormPillar(matched.pillar);
+      setFormCadence(matched.cadence);
+      const defaultPeriod =
+        matched.cadence === 'Quarterly'
+          ? 'Q1'
+          : CCRP_REPORTING_PERIODS_BY_PILLAR[matched.pillar]?.[0] || 'Semiannual 1 (H1)';
+      setFormProgressReportPeriod(defaultPeriod);
+    }
   };
 
-  // Filtered Facilities for Overview Table
-  const filteredTableList = useMemo(() => {
-    return Object.entries(facilityEmissions)
-      .filter(([facId]) => {
-        if (isFacilityOperator) {
-          return operatorEmissionIds.includes(facId);
-        }
-        return true;
+  // Helper to load record data into local form states
+  const loadRecordData = (rec: any) => {
+    const initCode = rec.initiativeId || rec.facilityId || CCRP_APPROVED_INITIATIVES[0].initiativeCode;
+    const matched = CCRP_APPROVED_INITIATIVES.find((i) => i.initiativeCode === initCode);
+
+    setFormInitiativeId(initCode);
+    setFormInitiativeName(rec.initiativeName || rec.facilityName || matched?.name || CCRP_APPROVED_INITIATIVES[0].name);
+    setFormEntity(rec.entity || rec.operatorName || matched?.entity || CCRP_APPROVED_INITIATIVES[0].entity);
+    setFormPillar(rec.pillar || matched?.pillar || 'Mitigation');
+    setFormCadence(rec.reportingCadence || matched?.cadence || 'Semiannual');
+    setFormProgressReportPeriod(rec.progressReportPeriod || (rec.reportingYear ? `Q1` : 'Semiannual 1 (H1)'));
+    setFormProjectPhase(rec.projectPhase || 'Implementation');
+    setFormReportStatus(rec.status || 'In Progress');
+    setFormPlannedProgress(rec.plannedProgress !== undefined ? rec.plannedProgress : 75);
+    setFormActualProgress(rec.actualProgress !== undefined ? rec.actualProgress : 68);
+    setFormBudget(rec.budget !== undefined ? rec.budget : '');
+    setFormBudgetType(rec.budgetType || 'CAPEX');
+    setFormBudgetStatus(rec.budgetStatus || 'Allocated');
+    setFormChallenges(rec.challenges || '');
+    setFormRaiseToCommittee(rec.raiseToCommittee === 'Yes' || rec.raiseToCommittee === true ? 'Yes' : 'No');
+    setFormActivitiesOutcomesOutput(rec.activitiesOutcomesOutput || '');
+    setFormComments(rec.comments || '');
+    setFormPlannedGhgReduction(rec.plannedGhgReduction || rec.totalEmissions || '');
+    setFormActualAnnualEmissionReduction(rec.actualAnnualEmissionReduction || rec.totalScope1 || '');
+    setFormSupportingDocs(rec.supportingDocsFiles || []);
+  };
+
+  const updateCurrentRecord = (updater: (prev: any) => any) => {
+    setFacilityEmissions((prev) => {
+      const existing = prev[selectedFacilityId] || currentRecord;
+      return {
+        ...prev,
+        [selectedFacilityId]: updater(existing),
+      };
+    });
+  };
+
+  // Determine all performance reports with sample demo records
+  const allReportsList = useMemo(() => {
+    const allKeys = Array.from(
+      new Set([
+        ...Object.keys(INITIAL_FACILITY_EMISSIONS),
+        ...Object.keys(facilityEmissions),
+      ])
+    ).filter((id) => !deletedEmissionIds.includes(id));
+
+    return allKeys
+      .map((id) => {
+        const rec = (facilityEmissions[id] || (INITIAL_FACILITY_EMISSIONS as any)[id]) as PerformanceReportData;
+        if (!rec) return null;
+
+        const initName = rec.initiativeName || rec.facilityName || 'Registered Initiative';
+        const initId = rec.initiativeId || rec.facilityId || '—';
+        const entity = rec.entity || rec.operatorName || 'Department of Energy (DoE)';
+        const pillar = rec.pillar || 'Mitigation';
+        const rawWfStatus = String(rec.workflowStatus || rec.status || 'Draft');
+
+        const normalizeStatus = (st: string) => {
+          if (st === 'Approved' || st === 'Approved / Published' || st === 'Verified') return 'Approved';
+          if (st === 'Returned for Correction' || st === 'Correction Required' || st === 'Reverted' || st === 'Correction Requested') return 'Correction Requested';
+          if (st === 'Under EAD Review' || st === 'Under Review') return 'Under Review';
+          if (st === 'Submitted' || st.includes('Submitted')) return 'Submitted';
+          return 'Draft';
+        };
+        const status = normalizeStatus(rawWfStatus);
+
+        const rawPeriod = rec.progressReportPeriod || 'Semiannual 1 (H1)';
+        const formatReportPeriod = (periodStr: string, pillarName: string) => {
+          if (pillarName === 'Adaptation') {
+            if (periodStr.includes('Q1') || periodStr === 'Quarter 1 (Q1)') return '2026 (Q1)';
+            if (periodStr.includes('Q2') || periodStr === 'Quarter 2 (Q2)') return '2026 (Q2)';
+            if (periodStr.includes('Q3') || periodStr === 'Quarter 3 (Q3)') return '2026 (Q3)';
+            if (periodStr.includes('Q4') || periodStr === 'Quarter 4 (Q4)') return '2026 (Q4)';
+            return `2026 (${periodStr || 'Q1'})`;
+          }
+          if (periodStr.includes('H1') || periodStr.includes('Semiannual 1') || periodStr === 'Semiannual 1 (H1)' || periodStr === 'H1') return '2026 (H1)';
+          if (periodStr.includes('H2') || periodStr.includes('Semiannual 2') || periodStr === 'Semiannual 2 (H2)' || periodStr === 'H2') return '2026 (H2)';
+          return `2026 (${periodStr || 'H1'})`;
+        };
+        const reportPeriod = formatReportPeriod(rawPeriod, pillar);
+
+        const actualProg = rec.actualProgress !== undefined ? Number(rec.actualProgress) : 0;
+        const plannedProg = rec.plannedProgress !== undefined ? Number(rec.plannedProgress) : 0;
+
+        return {
+          id,
+          rec,
+          name: initName,
+          initiativeCode: initId,
+          entity,
+          pillar,
+          status,
+          rawStatus: rawWfStatus,
+          reportPeriod,
+          actualProg,
+          plannedProg,
+        };
       })
-      .filter(([facId, rec]) => {
-        const matchesSearch =
-          (rec.facilityName || '').toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
-          (rec.facilityId || '').toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
-          (rec.operatorName || '').toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
-          (rec.businessSector || '').toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
-          (rec.primaryActivity || '').toLowerCase().includes(tableSearchTerm.toLowerCase());
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+  }, [facilityEmissions, deletedEmissionIds]);
 
-        const matchesStatus =
-          statusFilter === 'ALL' ||
-          (statusFilter === 'Approved' && (rec.status === 'Approved' || rec.status === 'Verified' || rec.status === 'EAD Approved')) ||
-          (statusFilter === 'Submitted' && (rec.status === 'Submitted' || rec.status?.includes('Submitted'))) ||
-          (statusFilter === 'Draft' && (rec.status === 'Draft' || rec.status?.includes('Draft'))) ||
-          (rec.status || '').toLowerCase() === statusFilter.toLowerCase();
+  // Filtered Performance Reports for Overview Table
+  const filteredTableList = useMemo(() => {
+    return allReportsList.filter((item) => {
+      const matchesSearch =
+        item.name.toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
+        item.initiativeCode.toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
+        item.entity.toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
+        item.pillar.toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
+        item.reportPeriod.toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
+        item.status.toLowerCase().includes(tableSearchTerm.toLowerCase());
 
-        const matchesYear =
-          yearFilter === 'ALL' ||
-          rec.reportingYear === yearFilter;
+      const matchesStatus =
+        statusFilter === 'ALL' ||
+        item.status === statusFilter;
 
-        return matchesSearch && matchesStatus && matchesYear;
-      });
-  }, [facilityEmissions, tableSearchTerm, statusFilter, yearFilter, isFacilityOperator, operatorEmissionIds, operatorFacilityIds]);
+      const matchesPillar =
+        pillarFilter === 'ALL' ||
+        item.pillar === pillarFilter;
+
+      return matchesSearch && matchesStatus && matchesPillar;
+    });
+  }, [allReportsList, tableSearchTerm, statusFilter, pillarFilter]);
 
   // Overview Table Sorting & Pagination
-  type EmissionSortField = 'index' | 'name' | 'id' | 'year' | 'emissions' | 'submittedDate' | 'status';
+  type ReportSortField = 'index' | 'name' | 'id' | 'pillar' | 'period' | 'progress' | 'status';
   type SortDirection = 'asc' | 'desc';
 
-  const [sortField, setSortField] = useState<EmissionSortField>('index');
+  const [sortField, setSortField] = useState<ReportSortField>('index');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
-  const handleSort = (field: EmissionSortField) => {
+  const handleSort = (field: ReportSortField) => {
     if (sortField === field) {
       setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
@@ -171,37 +355,26 @@ export const AnnualEmissionDataView: React.FC = () => {
     if (sortField === 'index') {
       return sortDirection === 'asc' ? filteredTableList : [...filteredTableList].reverse();
     }
-    return [...filteredTableList].sort(([, a], [, b]) => {
-      const nameA = (a.facilityName || '').toLowerCase();
-      const nameB = (b.facilityName || '').toLowerCase();
-
-      const idA = (a.facilityId || '').toLowerCase();
-      const idB = (b.facilityId || '').toLowerCase();
-
-      const yearA = parseInt(a.reportingYear || '0', 10);
-      const yearB = parseInt(b.reportingYear || '0', 10);
-
-      const parseNum = (val: string | number | undefined | null) => {
-        if (!val) return 0;
-        const cleaned = String(val).replace(/,/g, '').trim();
-        const n = parseFloat(cleaned);
-        return isNaN(n) ? 0 : n;
-      };
-      const emissA = parseNum(a.totalScope1);
-      const emissB = parseNum(b.totalScope1);
-
-      const dateA = a.submittedDate && a.submittedDate !== '—' ? new Date(a.submittedDate).getTime() : 0;
-      const dateB = b.submittedDate && b.submittedDate !== '—' ? new Date(b.submittedDate).getTime() : 0;
-
-      const statusA = (a.status || '').toLowerCase();
-      const statusB = (b.status || '').toLowerCase();
+    return [...filteredTableList].sort((a, b) => {
+      const nameA = a.name.toLowerCase();
+      const nameB = b.name.toLowerCase();
+      const idA = a.initiativeCode.toLowerCase();
+      const idB = b.initiativeCode.toLowerCase();
+      const pillarA = a.pillar.toLowerCase();
+      const pillarB = b.pillar.toLowerCase();
+      const periodA = a.reportPeriod.toLowerCase();
+      const periodB = b.reportPeriod.toLowerCase();
+      const progA = a.actualProg;
+      const progB = b.actualProg;
+      const statusA = a.status.toLowerCase();
+      const statusB = b.status.toLowerCase();
 
       let cmp = 0;
       if (sortField === 'name') cmp = nameA.localeCompare(nameB);
       else if (sortField === 'id') cmp = idA.localeCompare(idB);
-      else if (sortField === 'year') cmp = yearA - yearB;
-      else if (sortField === 'emissions') cmp = emissA - emissB;
-      else if (sortField === 'submittedDate') cmp = dateA - dateB;
+      else if (sortField === 'pillar') cmp = pillarA.localeCompare(pillarB);
+      else if (sortField === 'period') cmp = periodA.localeCompare(periodB);
+      else if (sortField === 'progress') cmp = progA - progB;
       else if (sortField === 'status') cmp = statusA.localeCompare(statusB);
 
       return sortDirection === 'asc' ? cmp : -cmp;
@@ -210,82 +383,13 @@ export const AnnualEmissionDataView: React.FC = () => {
 
   const totalPages = Math.ceil(sortedTableList.length / itemsPerPage) || 1;
 
-  const paginatedEmissions = useMemo(() => {
+  const paginatedReports = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return sortedTableList.slice(startIndex, startIndex + itemsPerPage);
   }, [sortedTableList, currentPage, itemsPerPage]);
 
-  // Production Streams
-  const productionStreams = [
-    { id: 'P01', category: 'Primary Products', technology: 'Combined Cycle Gas Turbine', capacity: '450,000 MWh/year', actual: '412,000 MWh/year' },
-    { id: 'P02', category: 'Primary Products', technology: 'Heat Recovery Steam Generator', capacity: '120,000 t/year', actual: '108,500 t/year' },
-  ];
-
-  // Active Form States
-  const defaultMitigationRow = {
-    description: '',
-    category: 'Emission Reduction',
-    scope: '1',
-    ghg: 'CO₂',
-    startYear: '2026',
-    status: 'Planned',
-    preMeasureRef: '',
-    reportingYearReduction: '',
-    expectedAnnualReduction: '',
-    methodology: '',
-    verification: 'Third-party verified',
-  };
-
-  const defaultQaDataGapRow = {
-    sourceStream: '',
-    fromDate: '',
-    untilDate: '',
-    description: '',
-    estimatedEmissions: '',
-    sourceOfEstimate: '',
-  };
-
-  const defaultQaManagementRespRow = {
-    jobTitle: '',
-    responsibilities: '',
-  };
-
-  const defaultQaProcedureRow = {
-    procedureTitle: '',
-    reference: '',
-    briefDescription: '',
-    responsibleDept: '',
-    recordStorage: '',
-  };
-
-  const defaultInternalReviewProcedureRow = {
-    procedureTitle: '',
-    reference: '',
-    briefDescription: '',
-    responsibleDept: '',
-    recordStorage: '',
-  };
-
-  const [mitigationMeasures, setMitigationMeasures] = useState<any[]>([defaultMitigationRow]);
-  const [mitigationAdditionalInfo, setMitigationAdditionalInfo] = useState('');
-  const [qaVerificationDesc, setQaVerificationDesc] = useState('');
-  const [qaFurtherDetails, setQaFurtherDetails] = useState('');
-  const [qaDataGaps, setQaDataGaps] = useState<any[]>([defaultQaDataGapRow]);
-  const [qaManagementResp, setQaManagementResp] = useState<any[]>([defaultQaManagementRespRow]);
-  const [qaProcedures, setQaProcedures] = useState<any[]>([defaultQaProcedureRow]);
-  const [qaDiagramFiles, setQaDiagramFiles] = useState<{ id: string; name: string; size: string; uploadDate: string }[]>([]);
-  const qaDiagramInputRef = useRef<HTMLInputElement>(null);
-  const [internalReviewProcedures, setInternalReviewProcedures] = useState<any[]>([defaultInternalReviewProcedureRow]);
-  const [internalReviewFiles, setInternalReviewFiles] = useState<{ id: string; name: string; size: string; uploadDate: string }[]>([]);
-  const internalReviewInputRef = useRef<HTMLInputElement>(null);
-  const [supportingDocsFiles, setSupportingDocsFiles] = useState<{ id: string; name: string; size: string; uploadDate: string }[]>([
-    { id: 'doc-1', name: 'Third-Party-Verification-Statement-2026.pdf', size: '2.4 MB', uploadDate: '21 Sept 2026' },
-    { id: 'doc-2', name: 'CEMS-Calibration-Logs-2026.pdf', size: '1.8 MB', uploadDate: '21 Sept 2026' },
-  ]);
-  const supportingDocsInputRef = useRef<HTMLInputElement>(null);
-  const [previewModalFile, setPreviewModalFile] = useState<{ name: string } | null>(null);
-
-  const handleSupportingDocsUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // File Upload Handler for Step 4
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     const nowStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -295,407 +399,333 @@ export const AnnualEmissionDataView: React.FC = () => {
       size: `${(f.size / (1024 * 1024)).toFixed(2)} MB`,
       uploadDate: nowStr,
     }));
-    setSupportingDocsFiles((prev) => [...prev, ...newItems]);
+    setFormSupportingDocs((prev) => [...prev, ...newItems]);
   };
 
-  const [declarationChecks, setDeclarationChecks] = useState({
-    check1: false,
-    check2: false,
-    check3: false,
-  });
+  // Flow 1: Create New Performance Report
+  const handleCreateReport = () => {
+    const newReportId = `rep-${Date.now()}`;
+    const defaultInit = CCRP_APPROVED_INITIATIVES[0];
 
-  const [declarationForm, setDeclarationForm] = useState({
-    name: '',
-    designation: '',
-    date: '21 Sept 2026',
-  });
-
-  // Table Row Add / Remove Handlers
-  const addMitigationMeasure = () => {
-    setMitigationMeasures((prev) => [...prev, { ...defaultMitigationRow }]);
-  };
-  const removeMitigationMeasure = (index: number) => {
-    setMitigationMeasures((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const addQaDataGap = () => {
-    setQaDataGaps((prev) => [...prev, { ...defaultQaDataGapRow }]);
-  };
-  const removeQaDataGap = (index: number) => {
-    setQaDataGaps((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const addQaManagementResp = () => {
-    setQaManagementResp((prev) => [...prev, { ...defaultQaManagementRespRow }]);
-  };
-  const removeQaManagementResp = (index: number) => {
-    setQaManagementResp((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const addQaProcedure = () => {
-    setQaProcedures((prev) => [...prev, { ...defaultQaProcedureRow }]);
-  };
-  const removeQaProcedure = (index: number) => {
-    setQaProcedures((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const addInternalReviewProcedure = () => {
-    setInternalReviewProcedures((prev) => [...prev, { ...defaultInternalReviewProcedureRow }]);
-  };
-  const removeInternalReviewProcedure = (index: number) => {
-    setInternalReviewProcedures((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  // Helper to load record data into local form states
-  const loadRecordData = (rec: any) => {
-    setMitigationMeasures(
-      rec.mitigationMeasures && rec.mitigationMeasures.length > 0
-        ? rec.mitigationMeasures
-        : [{ ...defaultMitigationRow }]
-    );
-    setMitigationAdditionalInfo(rec.mitigationAdditionalInfo || '');
-    setQaVerificationDesc(rec.qaVerificationDesc || '');
-    setQaFurtherDetails(rec.qaFurtherDetails || '');
-    setQaDataGaps(
-      rec.qaDataGaps && rec.qaDataGaps.length > 0
-        ? rec.qaDataGaps
-        : [{ ...defaultQaDataGapRow }]
-    );
-    setQaManagementResp(
-      rec.qaManagementResp && rec.qaManagementResp.length > 0
-        ? rec.qaManagementResp
-        : [{ ...defaultQaManagementRespRow }]
-    );
-    setQaProcedures(
-      rec.qaProcedures && rec.qaProcedures.length > 0
-        ? rec.qaProcedures
-        : [{ ...defaultQaProcedureRow }]
-    );
-    setQaDiagramFiles(rec.qaDiagramFiles || []);
-    setInternalReviewProcedures(
-      rec.internalReviewProcedures && rec.internalReviewProcedures.length > 0
-        ? rec.internalReviewProcedures
-        : [{ ...defaultInternalReviewProcedureRow }]
-    );
-    setInternalReviewFiles(rec.internalReviewFiles || []);
-    setSupportingDocsFiles(
-      rec.supportingDocsFiles ||
-        (rec.isNew
-          ? []
-          : [
-              { id: 'doc-1', name: 'Third-Party-Verification-Statement-2026.pdf', size: '2.4 MB', uploadDate: '21 Sept 2026' },
-              { id: 'doc-2', name: 'CEMS-Calibration-Logs-2026.pdf', size: '1.8 MB', uploadDate: '21 Sept 2026' },
-            ])
-    );
-    setDeclarationChecks(rec.declarationChecks || { check1: false, check2: false, check3: false });
-    setDeclarationForm(rec.declarationForm || { name: '', designation: '', date: '21 Sept 2026' });
-    setFormReportingYear(rec.reportingYear || '2026');
-  };
-
-  const updateCurrentRecord = (updater: (prev: any) => any) => {
-    setFacilityEmissions((prev) => {
-      const existing = prev[selectedFacilityId] || currentRecord;
-      return {
-        ...prev,
-        [selectedFacilityId]: updater(existing),
-      };
-    });
-  };
-
-  // Flow 1: Create New Annual Emission Data Record (Initialized with Unique Key)
-  const handleEnterEmissionData = () => {
-    const newEmissionId = `emiss-${Date.now()}`;
-    const operatorFacilities = isFacilityOperator
-      ? (operatorFacilityIds.length > 0 ? facilities.filter((f) => operatorFacilityIds.includes(f.id)) : facilities)
-      : facilities;
-
-    const targetFacility =
-      operatorFacilities.find((f) => f.id === activeFacility?.id) ||
-      operatorFacilities[0] ||
-      facilities[0];
-
-    const reg = (targetFacility && facilityRegistrations[targetFacility.id]) || {};
-    const numCode = Math.floor(1000 + Math.random() * 9000).toString();
-    const facilityCode = reg.facilityId || targetFacility?.facilityCode || `FAC-EAD-2026-${numCode}`;
-
-    const blankRecord = {
-      facilityName: reg.facilityName || targetFacility?.name || 'Registered Facility',
-      facilityId: facilityCode,
-      operatorName: reg.operatorName || targetFacility?.operatorName || 'Authorized Operator',
-      reportingYear: '2026',
-      version: 'V1',
-      status: 'Draft',
-      totalEmissions: '0',
-      scope1Stationary: '0',
-      scope1Process: '0',
-      scope1Fugitive: '0',
-      totalScope1: '0',
+    const blankReport: PerformanceReportData = {
+      initiativeName: defaultInit.name,
+      initiativeId: defaultInit.initiativeCode,
+      entity: defaultInit.entity,
+      pillar: defaultInit.pillar,
+      reportingCadence: defaultInit.cadence,
+      progressReportPeriod: 'Semiannual 1 (H1)',
+      projectPhase: 'Implementation',
+      status: 'In Progress',
+      workflowStatus: 'Draft',
+      plannedProgress: 0,
+      actualProgress: 0,
+      budget: '',
+      budgetType: 'CAPEX',
+      budgetStatus: 'Allocated',
+      challenges: '',
+      raiseToCommittee: 'No',
+      activitiesOutcomesOutput: '',
+      comments: '',
+      plannedGhgReduction: '',
+      actualAnnualEmissionReduction: '',
+      supportingDocsFiles: [],
       submittedDate: null,
       updatedDate: null,
       eadCorrectionDate: null,
-      businessSector: reg.reportingSector || targetFacility?.sector || 'Energy',
-      primaryActivity: reg.primaryActivity || targetFacility?.primaryActivity || '',
-      operationalStatus: 'Operational',
-      monitoringPlanRef: `MP-2026-${numCode} (Approved)`,
       isNew: true,
-      monitoringMethods: {
-        calcSourceStreams: [{ id: 'F01', desc: '', estimatedEmissions: '', selectedCategory: '' }],
-        calcTierUncertainty: [{ id: 'F01', tier: '', uncertaintyAchieved: '', fuelStreamType: '', sourceAccuracy: '' }],
-        calcApproachDesc: '',
-        calcDetailedInfo: [{ id: 'F01', fuelType: '', activityLevel: '', unit: '', source: '' }],
-        nonFuelInputsDesc: '',
-        calcOtherInputsOutputs: [{ id: 'F01', type: '', activityLevel: '', units: '', ncv: '', emissionFactor: '', oxidationFactor: '', conversionFactor: '', source: '' }],
-        calcMeasurementSystems: [{ ref: 'MI01', associatedSource: '', instrumentType: '', location: '', unit: '', rangeLower: '', rangeUpper: '', specifiedUncertainty: '', typicalLower: '', typicalUpper: '' }],
-        measEmissionSources: [{ id: 'S01', totalEmissions: '', category: '' }],
-        measUncertainty: [{ id: 'S01', tier: '', uncertaintyAchieved: '', streamType: '', sourceAccuracy: '' }],
-        measApproachDesc: '',
-        measPoints: [{ id: 'M1', associatedSource: '', procedures: '', relevantProcedures: '', relevantSource: '' }],
-        measComments: '',
-        fallbackData: { methodologyDesc: '', justification: '' },
-      },
-      mitigationMeasures: [{ ...defaultMitigationRow }],
-      mitigationAdditionalInfo: '',
-      qaVerificationDesc: '',
-      qaFurtherDetails: '',
-      qaDataGaps: [{ ...defaultQaDataGapRow }],
-      qaManagementResp: [{ ...defaultQaManagementRespRow }],
-      qaProcedures: [{ ...defaultQaProcedureRow }],
-      qaDiagramFiles: [],
-      internalReviewProcedures: [{ ...defaultInternalReviewProcedureRow }],
-      internalReviewFiles: [],
-      supportingDocsFiles: [],
-      declarationChecks: { check1: false, check2: false, check3: false },
-      declarationForm: { name: '', designation: '', date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) },
+
+      facilityName: defaultInit.name,
+      facilityId: defaultInit.initiativeCode,
+      operatorName: defaultInit.entity,
+      reportingYear: '2026',
     };
 
     setFacilityEmissions((prev) => ({
       ...prev,
-      [newEmissionId]: blankRecord,
+      [newReportId]: blankReport,
     }));
-    setSelectedFacilityId(newEmissionId);
-    setOperatorEmissionIds((prev) => (prev.includes(newEmissionId) ? prev : [...prev, newEmissionId]));
-    loadRecordData(blankRecord);
-    setActiveTab('monitoring-methods');
+    setSelectedFacilityId(newReportId);
+    setOperatorEmissionIds((prev) => (prev.includes(newReportId) ? prev : [...prev, newReportId]));
+    loadRecordData(blankReport);
+    setActiveTab('report-details');
     setViewMode('form');
   };
 
-  // Flow 2: Edit Existing Facility Emission Record
-  const handleEditEmissionData = (facId: string) => {
-    setSelectedFacilityId(facId);
-    setActiveFacilityId(facId);
-    const rec = facilityEmissions[facId];
+  // Flow 2: Edit Existing Report
+  const handleEditReport = (repId: string) => {
+    setSelectedFacilityId(repId);
+    setActiveFacilityId(repId);
+    const rec = facilityEmissions[repId];
     if (rec) {
       loadRecordData(rec);
     }
-    setActiveTab('monitoring-methods');
+    setActiveTab('report-details');
     setViewMode('form');
   };
 
-  // Flow 3: View Existing Facility Emission Record in Read-Only Mode
-  const handleViewEmissionData = (facId: string) => {
-    setSelectedFacilityId(facId);
-    setActiveFacilityId(facId);
-    const rec = facilityEmissions[facId];
+  // Flow 3: View Existing Report in Read-Only Mode
+  const handleViewReport = (repId: string) => {
+    setSelectedFacilityId(repId);
+    setActiveFacilityId(repId);
+    const rec = facilityEmissions[repId];
     if (rec) {
       loadRecordData(rec);
-      setReviewerComments(rec.reviewerComments || rec.reviewNotes || '');
+      setReviewerComments(rec.reviewerComments || '');
     }
+    setActiveTab('report-details');
     setViewMode('view');
   };
 
-  const handleApproveEmission = () => {
-    const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    setFacilityEmissions((prev) => ({
-      ...prev,
-      [selectedFacilityId]: {
-        ...(prev[selectedFacilityId] || currentRecord),
-        status: 'Approved',
-        reviewerComments: reviewerComments || 'All statutory emission parameters and Scope 1 calculations verified under EAD MRV Guidelines.',
-        reviewedDate: todayStr,
-        updatedDate: todayStr,
-      },
-    }));
-    setActiveReviewModal(null);
-    setIsSavedNotice(true);
-    setNoticeMessage('Annual Emission Data Approved — Official Certificate Issued!');
-    confetti({
-      particleCount: 80,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#10B981', '#0878C9', '#19B5D8'],
-    });
-    setTimeout(() => setIsSavedNotice(false), 3500);
-    setViewMode('table');
-  };
-
-  const handleRejectEmission = () => {
-    const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    setFacilityEmissions((prev) => ({
-      ...prev,
-      [selectedFacilityId]: {
-        ...(prev[selectedFacilityId] || currentRecord),
-        status: 'Rejected',
-        reviewerComments: reviewerComments || 'Formal rejection under EAD regulatory guidelines due to unresolved discrepancies.',
-        reviewedDate: todayStr,
-        updatedDate: todayStr,
-      },
-    }));
-    setActiveReviewModal(null);
-    setIsSavedNotice(true);
-    setNoticeMessage('Annual Emission Data Formally Rejected');
-    setTimeout(() => setIsSavedNotice(false), 3500);
-    setViewMode('table');
-  };
-
-  const handleRevertEmission = () => {
-    const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    setFacilityEmissions((prev) => ({
-      ...prev,
-      [selectedFacilityId]: {
-        ...(prev[selectedFacilityId] || currentRecord),
-        status: 'Reverted',
-        reviewerComments: reviewerComments || 'Please provide required corrections for reported emission figures or supporting attachments.',
-        eadCorrectionDate: todayStr,
-        updatedDate: todayStr,
-      },
-    }));
-    setActiveReviewModal(null);
-    setIsSavedNotice(true);
-    setNoticeMessage('Emission Data Reverted to Facility Operator for Correction');
-    setTimeout(() => setIsSavedNotice(false), 3500);
-    setViewMode('table');
-  };
-
-  const isDeclarationComplete = Boolean(
-    declarationChecks.check1 &&
-    declarationChecks.check2 &&
-    declarationChecks.check3 &&
-    declarationForm.name.trim() &&
-    declarationForm.designation.trim()
-  );
-
+  // Save Draft Handler
   const handleSave = () => {
     const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     setFacilityEmissions((prev) => ({
       ...prev,
       [selectedFacilityId]: {
         ...(prev[selectedFacilityId] || currentRecord),
-        mitigationMeasures,
-        mitigationAdditionalInfo,
-        qaVerificationDesc,
-        qaFurtherDetails,
-        qaDataGaps,
-        qaManagementResp,
-        qaProcedures,
-        qaDiagramFiles,
-        internalReviewProcedures,
-        internalReviewFiles,
-        supportingDocsFiles,
-        declarationChecks,
-        declarationForm,
-        status: 'Draft',
+        initiativeName: formInitiativeName,
+        initiativeId: formInitiativeId,
+        entity: formEntity,
+        pillar: formPillar,
+        reportingCadence: formCadence,
+        progressReportPeriod: formProgressReportPeriod,
+        projectPhase: formProjectPhase,
+        status: formReportStatus,
+        workflowStatus: 'Draft',
+        plannedProgress: formPlannedProgress,
+        actualProgress: formActualProgress,
+        budget: formBudget,
+        budgetType: formBudgetType,
+        budgetStatus: formBudgetStatus,
+        challenges: formChallenges,
+        raiseToCommittee: formRaiseToCommittee,
+        activitiesOutcomesOutput: formActivitiesOutcomesOutput,
+        comments: formComments,
+        plannedGhgReduction: formPlannedGhgReduction,
+        actualAnnualEmissionReduction: formActualAnnualEmissionReduction,
+        supportingDocsFiles: formSupportingDocs,
         updatedDate: todayStr,
+
+        facilityName: formInitiativeName,
+        facilityId: formInitiativeId,
+        operatorName: formEntity,
       },
     }));
     setOperatorEmissionIds((prev) => (prev.includes(selectedFacilityId) ? prev : [...prev, selectedFacilityId]));
-    setAnnualEmissionStatus?.('Draft');
     setIsSavedNotice(true);
-    setNoticeMessage('Annual Emission Data Saved as Draft!');
+    setNoticeMessage('Performance Report Saved as Draft!');
     setTimeout(() => setIsSavedNotice(false), 3000);
     setViewMode('table');
   };
 
+  // Submit Handler
   const handleSubmit = () => {
-    if (!isDeclarationComplete) return;
+    // If completed/100%, evidence is mandatory
+    const isCompleted = formReportStatus === 'Completed' || Number(formActualProgress) === 100;
+    if (isCompleted && formSupportingDocs.length === 0) {
+      alert('Supporting documents are mandatory for final/closing report submissions. Please attach evidence before submitting.');
+      return;
+    }
+
     const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     setFacilityEmissions((prev) => ({
       ...prev,
       [selectedFacilityId]: {
         ...(prev[selectedFacilityId] || currentRecord),
-        status: 'Submitted',
+        initiativeName: formInitiativeName,
+        initiativeId: formInitiativeId,
+        entity: formEntity,
+        pillar: formPillar,
+        reportingCadence: formCadence,
+        progressReportPeriod: formProgressReportPeriod,
+        projectPhase: formProjectPhase,
+        status: formReportStatus,
+        workflowStatus: 'Submitted',
+        plannedProgress: formPlannedProgress,
+        actualProgress: formActualProgress,
+        budget: formBudget,
+        budgetType: formBudgetType,
+        budgetStatus: formBudgetStatus,
+        challenges: formChallenges,
+        raiseToCommittee: formRaiseToCommittee,
+        activitiesOutcomesOutput: formActivitiesOutcomesOutput,
+        comments: formComments,
+        plannedGhgReduction: formPlannedGhgReduction,
+        actualAnnualEmissionReduction: formActualAnnualEmissionReduction,
+        supportingDocsFiles: formSupportingDocs,
         submittedDate: todayStr,
         updatedDate: todayStr,
-        mitigationMeasures,
-        mitigationAdditionalInfo,
-        qaVerificationDesc,
-        qaFurtherDetails,
-        qaDataGaps,
-        qaManagementResp,
-        qaProcedures,
-        qaDiagramFiles,
-        internalReviewProcedures,
-        internalReviewFiles,
-        supportingDocsFiles,
-        declarationChecks,
-        declarationForm,
+
+        facilityName: formInitiativeName,
+        facilityId: formInitiativeId,
+        operatorName: formEntity,
       },
     }));
     setOperatorEmissionIds((prev) => (prev.includes(selectedFacilityId) ? prev : [...prev, selectedFacilityId]));
-    setAnnualEmissionStatus?.('Submitted');
-    setVerificationStatus?.('Verification In Progress');
     setIsSavedNotice(true);
-    setNoticeMessage('Annual Emission Data Submitted for Third-Party Verification!');
+    setNoticeMessage('Performance Report Submitted for EAD Review!');
     setTimeout(() => setIsSavedNotice(false), 3500);
     setViewMode('table');
   };
 
-  const handleDeleteEmissionData = (facId: string, facilityName: string) => {
-    if (window.confirm(`Are you sure you want to delete draft emission data for "${facilityName}"?`)) {
+  const handleApproveReport = () => {
+    const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    setFacilityEmissions((prev) => ({
+      ...prev,
+      [selectedFacilityId]: {
+        ...(prev[selectedFacilityId] || currentRecord),
+        workflowStatus: 'Approved / Published',
+        reviewerComments: reviewerComments || 'Performance report verified and approved for publication under CCRP guidelines.',
+        reviewedDate: todayStr,
+        updatedDate: todayStr,
+      },
+    }));
+    setActiveReviewModal(null);
+    setIsSavedNotice(true);
+    setNoticeMessage('Performance Report Approved & Published!');
+    setTimeout(() => setIsSavedNotice(false), 3500);
+    setViewMode('table');
+  };
+
+  const handleRevertReport = () => {
+    const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    setFacilityEmissions((prev) => ({
+      ...prev,
+      [selectedFacilityId]: {
+        ...(prev[selectedFacilityId] || currentRecord),
+        workflowStatus: 'Returned for Correction',
+        reviewerComments: reviewerComments || 'Please provide updated actual progress milestones or supporting documentation.',
+        eadCorrectionDate: todayStr,
+        updatedDate: todayStr,
+      },
+    }));
+    setActiveReviewModal(null);
+    setIsSavedNotice(true);
+    setNoticeMessage('Performance Report Returned for Correction');
+    setTimeout(() => setIsSavedNotice(false), 3500);
+    setViewMode('table');
+  };
+
+  const handleDeleteReport = (repId: string, initiativeName: string) => {
+    if (window.confirm(`Are you sure you want to delete draft performance report for "${initiativeName}"?`)) {
+      setDeletedEmissionIds((prev) => (prev.includes(repId) ? prev : [...prev, repId]));
       setFacilityEmissions((prev) => {
         const copy = { ...prev };
-        delete copy[facId];
+        delete copy[repId];
         return copy;
       });
-      setOperatorEmissionIds((prev) => prev.filter((id) => id !== facId));
+      setOperatorEmissionIds((prev) => prev.filter((id) => id !== repId));
       setIsSavedNotice(true);
-      setNoticeMessage('Draft Emission Data Deleted');
+      setNoticeMessage('Draft Performance Report Deleted');
       setTimeout(() => setIsSavedNotice(false), 3000);
     }
+  };
+
+  // Cadence-filtered period choices based on current pillar
+  const availablePeriods = useMemo(() => {
+    return CCRP_REPORTING_PERIODS_BY_PILLAR[formPillar] || ['Semiannual 1 (H1)', 'Semiannual 2 (H2)', 'Q1', 'Q2', 'Q3', 'Q4'];
+  }, [formPillar]);
+
+  // Helper for pillar badge styling matching Amendments
+  const getPillarBadgeColor = (pillar: string) => {
+    switch (pillar) {
+      case 'Mitigation':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'Adaptation':
+        return 'bg-sky-50 text-sky-700 border-sky-200';
+      case 'Economic Diversification':
+        return 'bg-purple-50 text-purple-700 border-purple-200';
+      case 'Cross Cutting':
+        return 'bg-amber-50 text-amber-700 border-amber-200';
+      default:
+        return 'bg-slate-50 text-slate-700 border-slate-200';
+    }
+  };
+
+  // Helper for rendering status badges consistently with Amendments
+  const renderStatusBadge = (rawStatus: string) => {
+    if (rawStatus === 'Approved / Published' || rawStatus === 'Approved' || rawStatus === 'Verified') {
+      return (
+        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E8F8F0] text-[#00875A] border border-[#00875A]/25 inline-block">
+          Approved
+        </span>
+      );
+    }
+    if (rawStatus === 'Submitted') {
+      return (
+        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E0EEFA] text-[#0284C7] border border-sky-200/60 inline-block">
+          Submitted
+        </span>
+      );
+    }
+    if (rawStatus === 'Under EAD Review' || rawStatus === 'Under Review') {
+      return (
+        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200/60 inline-block">
+          Under Review
+        </span>
+      );
+    }
+    if (
+      rawStatus === 'Returned for Correction' ||
+      rawStatus === 'Correction Required' ||
+      rawStatus === 'Correction Requested' ||
+      rawStatus === 'Reverted'
+    ) {
+      return (
+        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60 inline-block">
+          Correction Requested
+        </span>
+      );
+    }
+    return (
+      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-normal bg-slate-100 text-slate-700 border border-slate-200 inline-block">
+        Draft
+      </span>
+    );
   };
 
   // =========================================================================
   // 1. OVERVIEW TABLE VIEW (viewMode === 'table')
   // =========================================================================
   if (viewMode === 'table') {
-    // Clean Empty State for Data Provider with no annual emission record
-    if (isFacilityOperator && operatorEmissionIds.length === 0 && !tableSearchTerm && statusFilter === 'ALL' && yearFilter === 'ALL') {
+    if (allReportsList.length === 0) {
       return (
-        <div className="h-full flex flex-col font-sans py-1">
+        <div className="h-full flex flex-col font-sans py-1 animate-fade-in">
           {/* Header */}
           <div className="flex-shrink-0 pb-[18px] pt-0.5 flex items-center justify-between gap-3">
             <div>
               <h1 className="text-[18px] font-bold font-display text-[#336D9F] tracking-tight whitespace-nowrap">
-                Annual Emission Data
+                Project Data Entry
               </h1>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Facility GHG Emissions Data — Annual activity data, calculated Scope 1 emissions, and third-party verification workflow
+                Submit and track periodic initiative progress, report periods, milestones, and GHG performance data
               </p>
             </div>
           </div>
 
-          {/* White Color Frame till half */}
+          {/* White Color Frame */}
           <div className="w-full bg-white rounded-xl border border-slate-200/90 shadow-xs flex flex-col items-center justify-center py-12 px-6">
             <div className="flex flex-col items-center text-center max-w-md">
               <img
                 src={emptyFolderIcon}
-                alt="No Annual Emission Data"
+                alt="No Performance Reports"
                 className="w-[84px] h-[74px] object-contain mb-3.5 select-none"
                 draggable={false}
               />
 
               <h2 className="text-[15px] font-bold text-[#336D9F] tracking-tight">
-                No Annual Emission Data
+                No Data Entry Records Available
               </h2>
               <p className="text-[11.5px] text-slate-500 font-normal mt-1 max-w-sm">
-                You don’t have any annual emission data submitted yet. Please enter your annual emission data to continue.
+                You haven't submitted any initiative data entry reports yet. Start reporting on your approved climate change initiatives.
               </p>
 
               <button
-                onClick={handleEnterEmissionData}
+                onClick={handleCreateReport}
                 className="mt-4 h-9 px-4 bg-gradient-to-r from-[#004B87] to-[#006BB8] text-white rounded-[8px] text-xs font-bold flex items-center gap-1.5 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
               >
                 <Plus className="w-4 h-4" />
-                <span>Enter Annual Emission Data</span>
+                <span>Add Data Entry</span>
               </button>
             </div>
           </div>
@@ -704,17 +734,17 @@ export const AnnualEmissionDataView: React.FC = () => {
     }
 
     return (
-      <div className="h-full flex flex-col overflow-hidden font-sans py-1">
-        {/* Top Header Row with Title, Search, Filter & Enter Data Button (Strictly Single Row) */}
+      <div className="h-full flex flex-col overflow-hidden font-sans py-1 animate-fade-in">
+        {/* Top Header Row with Title, Search, Filter & Add Data Entry Button */}
         <div className="flex-shrink-0 pb-[18px] pt-0.5 flex items-center justify-between gap-3 min-w-0">
           <div className="min-w-0 shrink">
             <h1 className="text-[18px] font-bold font-display text-[#336D9F] tracking-tight whitespace-nowrap">
-              Annual Emission Data
+              Project Data Entry
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5 truncate max-w-lg xl:max-w-xl">
               {isEadReviewerOrAdmin
-                ? 'Regulated Facilities GHG Emissions & Statutory Reporting Oversight'
-                : 'Facility GHG Emissions Data — Annual activity data, calculated Scope 1 emissions, and third-party verification workflow'}
+                ? 'Climate Change Strategy Initiatives Performance Review & Regulatory Oversight'
+                : 'Submit and track periodic initiative progress, report periods, milestones, and GHG performance data'}
             </p>
           </div>
 
@@ -722,10 +752,10 @@ export const AnnualEmissionDataView: React.FC = () => {
             {/* Search Box */}
             <div className="relative w-36 sm:w-44 xl:w-48">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 z-10 pointer-events-none" />
-              <FieldTooltip content="Filter records by facility name, facility ID, or operator name.">
+              <FieldTooltip content="Filter records by project name, ID, pillar, or reporting period.">
                 <input
                   type="text"
-                  placeholder="Search by facility, ID, operator..."
+                  placeholder="Search data entries..."
                   value={tableSearchTerm}
                   onChange={(e) => {
                     setTableSearchTerm(e.target.value);
@@ -749,51 +779,52 @@ export const AnnualEmissionDataView: React.FC = () => {
 
             {/* Status Filter */}
             <div className="relative">
-              <FieldTooltip content="Filter submissions by workflow approval status.">
+              <FieldTooltip content="Filter data entry records by status.">
                 <select
                   value={statusFilter}
                   onChange={(e) => {
                     setStatusFilter(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-28 sm:w-36 h-9 px-2.5 py-1.5 bg-white border border-slate-300 rounded-[8px] text-xs font-semibold text-slate-700 shadow-xs focus:outline-none focus:ring-2 focus:ring-[#336D9F]/20 focus:border-[#336D9F] transition-all cursor-pointer truncate"
+                  className="w-32 sm:w-36 h-9 px-2.5 py-1.5 bg-white border border-slate-300 rounded-[8px] text-xs font-semibold text-slate-700 shadow-xs focus:outline-none focus:ring-2 focus:ring-[#336D9F]/20 focus:border-[#336D9F] transition-all cursor-pointer truncate"
                 >
                   <option value="ALL">All Statuses</option>
-                  <option value="Draft">Draft</option>
-                  <option value="Submitted">Submitted</option>
                   <option value="Approved">Approved</option>
-                  <option value="Rejected">Rejected</option>
-                  <option value="Reverted">Reverted</option>
+                  <option value="Submitted">Submitted</option>
+                  <option value="Under Review">Under Review</option>
+                  <option value="Correction Requested">Correction Requested</option>
+                  <option value="Draft">Draft</option>
                 </select>
               </FieldTooltip>
             </div>
 
-            {/* Year Filter */}
+            {/* Pillar Filter */}
             <div className="relative">
-              <FieldTooltip content="Filter annual emission reports by reporting compliance year.">
+              <FieldTooltip content="Filter reports by Abu Dhabi Climate Change Strategy Pillar.">
                 <select
-                  value={yearFilter}
+                  value={pillarFilter}
                   onChange={(e) => {
-                    setYearFilter(e.target.value);
+                    setPillarFilter(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-24 sm:w-26 h-9 px-2.5 py-1.5 bg-white border border-slate-300 rounded-[8px] text-xs font-semibold text-slate-700 shadow-xs focus:outline-none focus:ring-2 focus:ring-[#336D9F]/20 focus:border-[#336D9F] transition-all cursor-pointer truncate"
+                  className="w-28 sm:w-36 h-9 px-2.5 py-1.5 bg-white border border-slate-300 rounded-[8px] text-xs font-semibold text-slate-700 shadow-xs focus:outline-none focus:ring-2 focus:ring-[#336D9F]/20 focus:border-[#336D9F] transition-all cursor-pointer truncate"
                 >
-                  <option value="ALL">All Years</option>
-                  <option value="2026">2026</option>
-                  <option value="2025">2025</option>
-                  <option value="2024">2024</option>
+                  <option value="ALL">All Pillars</option>
+                  <option value="Mitigation">Mitigation</option>
+                  <option value="Adaptation">Adaptation</option>
+                  <option value="Economic Diversification">Economic Diversification</option>
+                  <option value="Cross Cutting">Cross Cutting</option>
                 </select>
               </FieldTooltip>
             </div>
 
             {/* Reset */}
-            {(tableSearchTerm || statusFilter !== 'ALL' || yearFilter !== 'ALL') && (
+            {(tableSearchTerm || statusFilter !== 'ALL' || pillarFilter !== 'ALL') && (
               <button
                 onClick={() => {
                   setTableSearchTerm('');
                   setStatusFilter('ALL');
-                  setYearFilter('ALL');
+                  setPillarFilter('ALL');
                   setCurrentPage(1);
                 }}
                 className="h-9 px-2.5 text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-100 rounded-[8px] border border-slate-200 font-semibold transition-colors flex items-center gap-1 cursor-pointer text-xs"
@@ -804,20 +835,21 @@ export const AnnualEmissionDataView: React.FC = () => {
               </button>
             )}
 
-            {/* Enter Emission Data Button (Only for Data Provider) */}
+            {/* Add Data Entry Button */}
             {isFacilityOperator && (
               <button
-                onClick={handleEnterEmissionData}
+                type="button"
+                onClick={handleCreateReport}
                 className="h-9 px-4 bg-gradient-to-r from-[#004B87] to-[#006BB8] text-white rounded-[8px] text-xs font-bold flex items-center gap-1.5 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
               >
                 <Plus className="w-4 h-4" />
-                <span>Enter Emission Data</span>
+                <span>Add Data Entry</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Table & Pagination Container (Without outer white card background) */}
+        {/* Table Container */}
         <div className="flex flex-col flex-1 min-h-0 justify-between overflow-hidden">
           <div className="flex-1 min-h-0 overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-xs">
             <table className="w-full text-left text-xs border-collapse">
@@ -835,57 +867,57 @@ export const AnnualEmissionDataView: React.FC = () => {
                   </th>
                   <th
                     onClick={() => handleSort('name')}
-                    className="h-[38px] px-3 w-[18%] align-middle bg-[#D6E3EF] hover:bg-[#C8D9E8] transition-colors cursor-pointer group"
-                    title="Sort by Facility Name"
+                    className="h-[38px] px-3 w-[25%] align-middle bg-[#D6E3EF] hover:bg-[#C8D9E8] transition-colors cursor-pointer group"
+                    title="Sort by Project/Initiative Name"
                   >
                     <div className="flex items-center">
-                      <span>Facility Name</span>
+                      <span>Project/Initiative Name</span>
                       <SortTriangles active={sortField === 'name'} direction={sortDirection} />
                     </div>
                   </th>
                   <th
                     onClick={() => handleSort('id')}
-                    className="h-[38px] px-3 w-[16%] whitespace-nowrap align-middle bg-[#D6E3EF] hover:bg-[#C8D9E8] transition-colors cursor-pointer group"
-                    title="Sort by Facility ID"
+                    className="h-[38px] px-3 w-[15%] whitespace-nowrap align-middle bg-[#D6E3EF] hover:bg-[#C8D9E8] transition-colors cursor-pointer group"
+                    title="Sort by Project ID"
                   >
                     <div className="flex items-center">
-                      <span>Facility ID</span>
+                      <span>Project ID</span>
                       <SortTriangles active={sortField === 'id'} direction={sortDirection} />
                     </div>
                   </th>
                   <th
-                    onClick={() => handleSort('year')}
-                    className="h-[38px] px-3 w-[12%] whitespace-nowrap text-center align-middle bg-[#D6E3EF] hover:bg-[#C8D9E8] transition-colors cursor-pointer group"
-                    title="Sort by Reporting Year"
-                  >
-                    <div className="flex items-center justify-center">
-                      <span>Reporting Year</span>
-                      <SortTriangles active={sortField === 'year'} direction={sortDirection} />
-                    </div>
-                  </th>
-                  <th
-                    onClick={() => handleSort('emissions')}
-                    className="h-[38px] px-3 w-[18%] whitespace-nowrap text-center align-middle bg-[#D6E3EF] hover:bg-[#C8D9E8] transition-colors cursor-pointer group"
-                    title="Sort by Total Scope 1 Emissions"
-                  >
-                    <div className="flex items-center justify-center">
-                      <span>Total Scope 1 (tCO₂e)</span>
-                      <SortTriangles active={sortField === 'emissions'} direction={sortDirection} />
-                    </div>
-                  </th>
-                  <th
-                    onClick={() => handleSort('submittedDate')}
-                    className="h-[38px] px-3 w-[14%] whitespace-nowrap align-middle bg-[#D6E3EF] hover:bg-[#C8D9E8] transition-colors cursor-pointer group"
-                    title="Sort by Submitted Date"
+                    onClick={() => handleSort('pillar')}
+                    className="h-[38px] px-3 w-[11%] whitespace-nowrap align-middle bg-[#D6E3EF] hover:bg-[#C8D9E8] transition-colors cursor-pointer group"
+                    title="Sort by Pillar"
                   >
                     <div className="flex items-center">
-                      <span>Submitted Date</span>
-                      <SortTriangles active={sortField === 'submittedDate'} direction={sortDirection} />
+                      <span>Pillar</span>
+                      <SortTriangles active={sortField === 'pillar'} direction={sortDirection} />
+                    </div>
+                  </th>
+                  <th
+                    onClick={() => handleSort('period')}
+                    className="h-[38px] px-3 w-[12%] whitespace-nowrap text-center align-middle bg-[#D6E3EF] hover:bg-[#C8D9E8] transition-colors cursor-pointer group"
+                    title="Sort by Report Period"
+                  >
+                    <div className="flex items-center justify-center">
+                      <span>Report Period</span>
+                      <SortTriangles active={sortField === 'period'} direction={sortDirection} />
+                    </div>
+                  </th>
+                  <th
+                    onClick={() => handleSort('progress')}
+                    className="h-[38px] px-3 w-[14%] whitespace-nowrap text-center align-middle bg-[#D6E3EF] hover:bg-[#C8D9E8] transition-colors cursor-pointer group"
+                    title="Sort by Progress (Actual/Planned)"
+                  >
+                    <div className="flex items-center justify-center">
+                      <span>Progress (Actual/Planned)</span>
+                      <SortTriangles active={sortField === 'progress'} direction={sortDirection} />
                     </div>
                   </th>
                   <th
                     onClick={() => handleSort('status')}
-                    className="h-[38px] px-2.5 w-[11%] whitespace-nowrap text-left align-middle bg-[#D6E3EF] hover:bg-[#C8D9E8] transition-colors cursor-pointer group"
+                    className="h-[38px] px-3 w-[11%] whitespace-nowrap text-left align-middle bg-[#D6E3EF] hover:bg-[#C8D9E8] transition-colors cursor-pointer group"
                     title="Sort by Status"
                   >
                     <div className="flex items-center">
@@ -893,135 +925,123 @@ export const AnnualEmissionDataView: React.FC = () => {
                       <SortTriangles active={sortField === 'status'} direction={sortDirection} />
                     </div>
                   </th>
-                  <th className="h-[38px] px-3 w-[6%] text-center whitespace-nowrap align-middle bg-[#D6E3EF]">Actions</th>
+                  <th className="h-[38px] px-4 w-[7%] text-right whitespace-nowrap align-middle bg-[#D6E3EF]">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-normal text-slate-700">
-                {paginatedEmissions.length === 0 ? (
+                {paginatedReports.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="h-[60px] py-8 text-center text-slate-400 font-normal align-middle">
-                      No annual emission records match the selected filter criteria.
+                    <td colSpan={8} className="py-8 text-center text-slate-400 font-medium">
+                      No data entry records match the selected filter criteria.
                     </td>
                   </tr>
                 ) : (
-                  paginatedEmissions.map(([facId, rec], idx) => {
+                  paginatedReports.map((item, idx) => {
                     const rowNumber = (currentPage - 1) * itemsPerPage + idx + 1;
 
                     return (
                       <tr
-                        key={facId}
+                        key={item.id}
                         className={`h-[60px] ${idx % 2 === 1 ? 'bg-slate-50/80' : 'bg-white'} hover:bg-[#EBF3FA] transition-colors group cursor-default`}
                       >
+                        {/* 1. Row # */}
                         <td className="h-[60px] px-3 text-center font-mono font-normal text-slate-400 align-middle">
                           {rowNumber}
                         </td>
 
-                        {/* Facility Name */}
-                        <td className="h-[60px] px-3 font-normal text-slate-800 leading-snug align-middle">
-                          <span>{rec.facilityName}</span>
-                        </td>
-
-                        {/* Facility ID */}
-                        <td className="h-[60px] px-3 font-mono text-[#004B87] font-bold whitespace-nowrap align-middle">
-                          {rec.facilityId ? <span className="font-bold tracking-tight">{rec.facilityId}</span> : <span className="text-slate-400 font-normal">—</span>}
-                        </td>
-
-                        {/* Reporting Year */}
-                        <td className="h-[60px] px-3 text-center font-normal text-slate-700 whitespace-nowrap align-middle">
-                          {rec.reportingYear || '2026'}
-                        </td>
-
-                        {/* Total Scope 1 (tCO₂e) */}
-                        <td className="h-[60px] px-3 font-mono font-normal text-[#004B87] text-center whitespace-nowrap align-middle">
-                          {rec.totalScope1 ? `${rec.totalScope1}` : '—'}
-                        </td>
-
-                        {/* Submitted Date */}
-                        <td className="h-[60px] px-3 text-slate-600 whitespace-nowrap align-middle">
-                          {rec.submittedDate && rec.submittedDate !== '—' ? (
-                            <div className="flex items-center gap-1.5">
-                              <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                              <span>{rec.submittedDate}</span>
-                            </div>
-                          ) : (
-                            <span>—</span>
-                          )}
-                        </td>
-
-                        {/* Status */}
-                        <td className="h-[60px] px-2.5 text-left whitespace-nowrap align-middle">
-                          <span
-                            className={`px-2.5 py-0.5 rounded-full text-[11px] font-normal whitespace-nowrap inline-block ${
-                              rec.status === 'Approved' || rec.status === 'Verified' || rec.status === 'EAD Approved'
-                                ? 'bg-[#D1FAE5] text-[#065F46] border border-emerald-200/60'
-                                : rec.status === 'Rejected'
-                                ? 'bg-rose-50 text-rose-700 border border-rose-200/80'
-                                : rec.status === 'Reverted' || rec.status === 'Correction Required'
-                                ? 'bg-[#FEF3C7] text-[#92400E] border border-[#FCD34D]'
-                                : rec.status === 'Submitted' || rec.status?.includes('Submitted')
-                                ? 'bg-[#E0EEFA] text-[#0284C7] border border-sky-200/60'
-                                : 'bg-slate-100 text-slate-700 border border-slate-200'
-                            }`}
+                        {/* 2. Project/Initiative Name */}
+                        <td className="h-[60px] px-3 font-medium text-slate-800 align-middle overflow-hidden">
+                          <div
+                            className="line-clamp-2 leading-snug break-words hover:text-[#004B87] cursor-pointer"
+                            onClick={() => handleViewReport(item.id)}
+                            title={item.name}
                           >
-                            {rec.status === 'Approved' || rec.status === 'Verified' || rec.status === 'EAD Approved'
-                              ? 'Approved'
-                              : rec.status === 'Rejected'
-                              ? 'Rejected'
-                              : rec.status === 'Reverted' || rec.status === 'Correction Required'
-                              ? 'Reverted'
-                              : rec.status === 'Submitted' || rec.status?.includes('Submitted')
-                              ? 'Submitted'
-                              : 'Draft'}
+                            {item.name}
+                          </div>
+                        </td>
+
+                        {/* 3. Project ID */}
+                        <td className="h-[60px] px-3 font-mono font-bold text-[#004B87] whitespace-nowrap align-middle">
+                          <span>{item.initiativeCode}</span>
+                        </td>
+
+                        {/* 4. Pillar */}
+                        <td className="h-[60px] px-3 whitespace-nowrap align-middle">
+                          <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border inline-flex items-center gap-1 ${getPillarBadgeColor(item.pillar)}`}>
+                            {item.pillar}
                           </span>
                         </td>
 
-                        {/* Actions: View / Edit / Delete for Operator vs View / Review for Admin */}
-                        <td className="h-[60px] px-3 text-center whitespace-nowrap align-middle">
-                          {isFacilityOperator ? (
-                            <div className="flex items-center justify-center gap-1.5 w-[76px] mx-auto">
-                              {/* Slot 1: View */}
-                              <button
-                                onClick={() => handleViewEmissionData(facId)}
-                                title="View Annual Emission Details"
-                                className="w-6 h-6 flex items-center justify-center rounded-lg text-slate-500 hover:text-[#336D9F] hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </button>
+                        {/* 5. Report Period */}
+                        <td className="h-[60px] px-3 whitespace-nowrap text-center font-medium text-slate-700 align-middle">
+                          {item.reportPeriod}
+                        </td>
 
-                              {/* Slot 2: Edit */}
-                              <button
-                                onClick={() => handleEditEmissionData(facId)}
-                                title="Edit Annual Emission Data"
-                                className="w-6 h-6 flex items-center justify-center rounded-lg text-slate-500 hover:text-[#336D9F] hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </button>
+                        {/* 6. Progress (Actual / Planned) */}
+                        <td className="h-[60px] px-3 whitespace-nowrap text-center align-middle">
+                          <div className="flex flex-col items-center justify-center gap-1" title={`Actual: ${item.actualProg}% / Planned: ${item.plannedProg}%`}>
+                            <div className="flex items-center gap-1 text-[11px] font-bold text-slate-800">
+                              <span title="Actual Progress">{item.actualProg}%</span>
+                              <span className="text-slate-400 font-normal">/</span>
+                              <span className="text-slate-500 font-normal" title="Planned Progress">{item.plannedProg}%</span>
+                            </div>
+                            <div className="w-20 bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200" title={`Progress: ${item.actualProg}% Actual / ${item.plannedProg}% Planned`}>
+                              <div
+                                className={`h-full rounded-full transition-all ${
+                                  item.actualProg >= item.plannedProg ? 'bg-emerald-500' : 'bg-amber-500'
+                                }`}
+                                style={{ width: `${Math.min(100, item.actualProg)}%` }}
+                              />
+                            </div>
+                            <span className="text-[9.5px] text-slate-400 font-medium leading-none">Actual / Planned</span>
+                          </div>
+                        </td>
 
-                              {/* Slot 3: Delete (Only for Draft status, empty slot otherwise) */}
-                              {rec.status === 'Draft' || !rec.status ? (
-                                <button
-                                  onClick={() => handleDeleteEmissionData(facId, rec.facilityName || 'Draft Emission Record')}
-                                  title="Delete Draft Emission Data"
-                                  className="w-6 h-6 flex items-center justify-center rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer shrink-0"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              ) : (
-                                <div className="w-6 h-6 shrink-0" aria-hidden="true" />
-                              )}
-                            </div>
-                          ) : (
-                            /* Admin Actions: Inspection & Review */
-                            <div className="flex items-center justify-center mx-auto">
+                        {/* 7. Status */}
+                        <td className="h-[60px] px-3 whitespace-nowrap text-left align-middle">
+                          {renderStatusBadge(item.status)}
+                        </td>
+
+                        {/* 8. Actions */}
+                        <td className="h-[60px] px-4 whitespace-nowrap align-middle text-right">
+                          <div className="flex items-center justify-end gap-2.5">
+                            {/* View Action */}
+                            <button
+                              type="button"
+                              onClick={() => handleViewReport(item.id)}
+                              title="View Data Entry"
+                              className="text-slate-600 hover:text-[#004B87] transition-colors cursor-pointer p-1 rounded-md hover:bg-[#004B87]/10"
+                            >
+                              <Eye className="w-[18px] h-[18px] stroke-[1.75]" />
+                            </button>
+
+                            {/* Edit Action */}
+                            <button
+                              type="button"
+                              onClick={() => handleEditReport(item.id)}
+                              title="Edit Data Entry"
+                              className="text-slate-600 hover:text-[#004B87] transition-colors cursor-pointer p-1 rounded-md hover:bg-[#004B87]/10"
+                            >
+                              <Edit className="w-[18px] h-[18px] stroke-[1.75]" />
+                            </button>
+
+                            {/* Delete Action (Only for Draft status) */}
+                            {item.status === 'Draft' && (
                               <button
-                                onClick={() => handleViewEmissionData(facId)}
-                                title="Review & Audit Emission Dossier"
-                                className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:text-[#004B87] hover:bg-[#E9F1F8] transition-colors cursor-pointer shrink-0"
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteReport(item.id, item.name);
+                                }}
+                                title="Delete Draft Data Entry"
+                                className="text-slate-600 hover:text-rose-600 transition-colors cursor-pointer p-1 rounded-md hover:bg-rose-50"
                               >
-                                <Eye className="w-4 h-4" />
+                                <Trash2 className="w-[18px] h-[18px] stroke-[1.75]" />
                               </button>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -1031,65 +1051,29 @@ export const AnnualEmissionDataView: React.FC = () => {
             </table>
           </div>
 
-          {/* Pagination & Counter Footer */}
-          <div className="pt-2.5 pb-1 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 font-medium flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <span>
-                Showing <span className="font-bold text-slate-800">{filteredTableList.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}</span> to{' '}
-                <span className="font-bold text-slate-800">{Math.min(currentPage * itemsPerPage, filteredTableList.length)}</span> of{' '}
-                <span className="font-bold text-slate-800">{filteredTableList.length}</span> annual emission data records
-              </span>
-              <span className="text-slate-300">|</span>
-              <div className="flex items-center gap-1.5">
-                <span>Per page:</span>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => {
-                    setItemsPerPage(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                  className="bg-white border border-slate-200 rounded-lg px-2 py-0.5 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer"
-                >
-                  <option value={8}>8</option>
-                  <option value={12}>12</option>
-                  <option value={16}>16</option>
-                  <option value={20}>20</option>
-                </select>
-              </div>
+          {/* Pagination Bar */}
+          <div className="flex-shrink-0 pt-2 flex items-center justify-between text-xs text-slate-500">
+            <div>
+              Showing {sortedTableList.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to{' '}
+              {Math.min(currentPage * itemsPerPage, sortedTableList.length)} of {sortedTableList.length} records
             </div>
-
-            {/* Pagination Controls */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <button
-                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                className="p-1 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
               >
-                <ChevronLeft className="w-3.5 h-3.5" />
-                <span>Previous</span>
+                <ChevronLeft className="w-4 h-4" />
               </button>
-
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                <button
-                  key={pageNum}
-                  onClick={() => setCurrentPage(pageNum)}
-                  className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    currentPage === pageNum
-                      ? 'bg-gradient-to-r from-[#004B87] to-[#006BB8] text-white shadow-xs'
-                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              ))}
-
+              <span className="px-2 font-medium">
+                Page {currentPage} of {totalPages}
+              </span>
               <button
-                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                disabled={currentPage >= totalPages}
-                className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="p-1 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
               >
-                <span>Next</span>
-                <ChevronRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -1099,731 +1083,26 @@ export const AnnualEmissionDataView: React.FC = () => {
   }
 
   // =========================================================================
-  // 2. READ-ONLY VIEW INSPECTOR (viewMode === 'view')
+  // 2. FORM & READ-ONLY INSPECTION VIEWS (viewMode === 'form' | 'view')
   // =========================================================================
-  if (viewMode === 'view') {
-    return (
-      <div className="h-full flex flex-col overflow-hidden font-sans py-0.5">
-        {/* Top Header Bar with Title, Status Chip, Facility Name, and Reporting Year Below Title */}
-        <div className="flex-shrink-0 flex flex-col gap-2 pb-3.5 pt-0.5">
-          {/* Row 1: Back Arrow, Title, Status Chip, Read-Only Badge, Save Notice & Edit Data Button */}
-          <div className="flex items-center justify-between gap-3 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={() => setViewMode('table')}
-                className="p-1 -ml-1 text-[#336D9F] hover:text-[#004B87] hover:bg-[#E9F1F8] rounded-lg transition-colors cursor-pointer flex items-center justify-center shrink-0 border border-slate-200/70 shadow-2xs"
-                title="Back to Overview"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
-              <h1 className="text-[18px] font-bold font-display text-[#336D9F] tracking-tight whitespace-nowrap">
-                Annual Emission Data
-              </h1>
-              <span
-                className={`px-3 py-0.5 rounded-full text-xs font-bold tracking-wide transition-all shrink-0 ${
-                  currentRecord.status === 'Approved' || currentRecord.status === 'Verified' || currentRecord.status === 'EAD Approved'
-                    ? 'bg-[#D1FAE5] text-[#065F46] border border-emerald-200/60'
-                    : currentRecord.status === 'Rejected'
-                    ? 'bg-rose-50 text-rose-700 border border-rose-200/80'
-                    : currentRecord.status === 'Reverted' || currentRecord.status === 'Correction Required'
-                    ? 'bg-[#FEF3C7] text-[#92400E] border border-[#FCD34D]'
-                    : currentRecord.status === 'Submitted' || currentRecord.status?.includes('Submitted')
-                    ? 'bg-[#E0EEFA] text-[#0284C7] border border-sky-200/60'
-                    : 'bg-slate-100 text-slate-700 border border-slate-200'
-                }`}
-              >
-                {currentRecord.status === 'Approved' || currentRecord.status === 'Verified' || currentRecord.status === 'EAD Approved'
-                  ? 'Approved'
-                  : currentRecord.status === 'Rejected'
-                  ? 'Rejected'
-                  : currentRecord.status === 'Reverted' || currentRecord.status === 'Correction Required'
-                  ? 'Reverted'
-                  : currentRecord.status === 'Submitted' || currentRecord.status?.includes('Submitted')
-                  ? 'Submitted'
-                  : 'Draft'}
-              </span>
-            </div>
+  const isReadOnly = viewMode === 'view';
+  const isGhgMandatory = formPillar === 'Mitigation';
+  const isGhgOptional = formPillar === 'Cross Cutting';
+  const isGhgNotRequired = formPillar === 'Adaptation' || formPillar === 'Economic Diversification';
+  const isEvidenceMandatory = formReportStatus === 'Completed' || Number(formActualProgress) === 100;
 
-            <div className="flex items-center gap-2.5">
-              {isSavedNotice && (
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 text-xs font-bold animate-fade-in shrink-0">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>{noticeMessage}</span>
-                </div>
-              )}
-
-              {isFacilityOperator && (
-                <button
-                  onClick={() => setViewMode('form')}
-                  className="px-4 py-1.5 bg-[#004B87] text-white rounded-xl text-xs font-bold hover:bg-[#003a6b] flex items-center gap-1.5 shadow-sm transition-all cursor-pointer shrink-0"
-                >
-                  <Edit className="w-3.5 h-3.5" />
-                  <span>Edit Data</span>
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Row 2: Facility Name & Calendar Year below title (Consistent with Create/Edit Form) */}
-          <div className="flex items-center gap-4 flex-wrap pt-0.5">
-            {/* Facility Name Field (Read-Only) */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Facility Name</label>
-              <div className="relative">
-                <FieldTooltip content="Name of the reporting industrial facility.">
-                  <input
-                    type="text"
-                    readOnly
-                    disabled
-                    value={currentRecord.facilityName || ''}
-                    className="w-64 sm:w-80 h-9 px-3.5 bg-[#F1F5F9] border border-slate-200/90 rounded-xl text-xs text-slate-800 font-bold shadow-2xs cursor-not-allowed select-none"
-                  />
-                </FieldTooltip>
-              </div>
-            </div>
-
-            {/* Calendar Year Field (Read-Only) */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Calendar Year</label>
-              <div className="relative">
-                <FieldTooltip content="Designated statutory MRV reporting compliance calendar year.">
-                  <input
-                    type="text"
-                    readOnly
-                    disabled
-                    value={currentRecord.reportingYear || '2026'}
-                    className="w-36 h-9 px-3.5 bg-[#F1F5F9] border border-slate-200/90 rounded-xl text-xs text-slate-800 font-bold shadow-2xs cursor-not-allowed select-none"
-                  />
-                </FieldTooltip>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Container on White Frame with 4-Tab Navigation */}
-        <div className="flex-1 min-h-0 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 sm:p-4 flex flex-col overflow-hidden">
-          {/* Sticky Tabs Navigation Bar (Fixed at top, outside scroll area) */}
-          <div className="flex-shrink-0 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar pb-2.5">
-            <div className="inline-flex items-center gap-1.5 p-1 bg-white border border-slate-200 rounded-[6px] shadow-2xs">
-              {ANNUAL_EMISSION_STEPS.map((step, idx) => {
-                const subTabOrder = [
-                  'monitoring-methods',
-                  'mitigation-measures',
-                  'qa-qc',
-                  'review-submit',
-                ];
-                const currentStepNum = subTabOrder.indexOf(activeTab) + 1;
-                const isActive = step.stepNumber === currentStepNum;
-                const isCompleted = step.stepNumber < currentStepNum;
-                const isArrowHighlighted = idx < currentStepNum - 1;
-
-                return (
-                  <React.Fragment key={step.id}>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab(step.id as any)}
-                      className={`px-3.5 py-1.5 rounded-[6px] text-xs transition-all flex items-center gap-2 cursor-pointer select-none ${
-                        isActive
-                          ? 'bg-gradient-to-r from-[#004B87] to-[#006BB8] text-white font-bold shadow-xs'
-                          : isCompleted
-                          ? 'text-slate-700 hover:text-[#004B87] hover:bg-slate-50 font-semibold'
-                          : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 font-medium'
-                      }`}
-                    >
-                      {/* Numbered Circle */}
-                      <div
-                        className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 transition-all ${
-                          isActive
-                            ? 'bg-white text-[#004B87] shadow-2xs'
-                            : isCompleted
-                            ? 'bg-[#00875A] text-white shadow-2xs'
-                            : 'bg-white text-slate-400 border border-slate-300'
-                        }`}
-                      >
-                        <span>{step.stepNumber}</span>
-                      </div>
-
-                      {/* Step Title */}
-                      <span className="whitespace-nowrap">{step.title}</span>
-                    </button>
-
-                    {/* Arrow Indication between steps (Highlighted once finished) */}
-                    {idx < ANNUAL_EMISSION_STEPS.length - 1 && (
-                      <ChevronRight
-                        className={`w-4 h-4 shrink-0 mx-0.5 transition-colors ${
-                          isArrowHighlighted ? 'text-[#004B87] stroke-[2.5]' : 'text-slate-300'
-                        }`}
-                      />
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </div>
-
-            <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
-              <Lock className="w-3.5 h-3.5 text-slate-500" />
-              <span>Read-Only Inspection Mode</span>
-            </div>
-          </div>
-
-          {/* Scrollable Tab Content */}
-          <div className="flex-1 min-h-0 overflow-y-auto space-y-[18px] pr-2.5 pt-2 pb-0.5 text-xs custom-scrollbar">
-              {/* TAB 1: MONITORING METHODS (READ-ONLY) */}
-              {activeTab === 'monitoring-methods' && (
-                <div className="space-y-[18px]">
-                  <MonitoringMethodsTab
-                    data={currentRecord.monitoringMethods}
-                    isReadOnly={true}
-                  />
-                </div>
-              )}
-
-              {/* TAB 2: MITIGATION MEASURES (READ-ONLY) */}
-              {activeTab === 'mitigation-measures' && (
-                <div className="space-y-4 pt-1">
-                  {/* Greenhouse Gas Mitigation Measures Table */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#336D9F]">
-                        Greenhouse Gas Mitigation Measures
-                      </span>
-                    </div>
-
-                    <div className="overflow-x-auto rounded-xl border border-slate-200 table-sticky-columns">
-                        <table className="w-full text-left text-xs min-w-[1500px]">
-                          <thead>
-                            <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold whitespace-nowrap">
-                              <th className="py-2.5 px-3 min-w-[200px]">Description of measure</th>
-                              <th className="py-2.5 px-3 min-w-[150px]">Category</th>
-                              <th className="py-2.5 px-3 min-w-[90px]">Scope</th>
-                              <th className="py-2.5 px-3 min-w-[90px]">GHG</th>
-                              <th className="py-2.5 px-3 min-w-[100px]">Start year</th>
-                              <th className="py-2.5 px-3 min-w-[130px]">Status</th>
-                              <th className="py-2.5 px-3 min-w-[180px]">Pre-measure reference</th>
-                              <th className="py-2.5 px-3 min-w-[170px]">Reporting year reduction</th>
-                              <th className="py-2.5 px-3 min-w-[170px]">Expected annual reduction</th>
-                              <th className="py-2.5 px-3 min-w-[200px]">Methodology / standard</th>
-                              <th className="py-2.5 px-3 min-w-[160px]">Verification</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100 bg-white">
-                            {!currentRecord.mitigationMeasures || currentRecord.mitigationMeasures.length === 0 || !currentRecord.mitigationMeasures.some((m: any) => m.description || m.reportingYearReduction) ? (
-                              <tr>
-                                <td colSpan={11} className="py-6 text-center text-slate-400 font-normal">
-                                  No greenhouse gas mitigation measures recorded for this facility.
-                                </td>
-                              </tr>
-                            ) : (
-                              currentRecord.mitigationMeasures.map((m: any, idx: number) => (
-                                <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                                  <td className="py-2 px-3 font-normal text-slate-900">{m.description || '—'}</td>
-                                  <td className="py-2 px-3 text-slate-800">{m.category || '—'}</td>
-                                  <td className="py-2 px-3 text-slate-800">{m.scope || '—'}</td>
-                                  <td className="py-2 px-3 text-slate-800">{m.ghg || '—'}</td>
-                                  <td className="py-2 px-3 text-slate-800">{m.startYear || '—'}</td>
-                                  <td className="py-2 px-3">
-                                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-normal bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                      {m.status || 'Planned'}
-                                    </span>
-                                  </td>
-                                  <td className="py-2 px-3 text-slate-800">{m.preMeasureRef || '—'}</td>
-                                  <td className="py-2 px-3 font-mono font-normal text-[#004B87]">{m.reportingYearReduction ? `${m.reportingYearReduction} tCO₂e/yr` : '—'}</td>
-                                  <td className="py-2 px-3 font-mono text-slate-800">{m.expectedAnnualReduction ? `${m.expectedAnnualReduction} tCO₂e/yr` : '—'}</td>
-                                  <td className="py-2 px-3 text-slate-700">{m.methodology || '—'}</td>
-                                  <td className="py-2 px-3 text-slate-700">{m.verification || '—'}</td>
-                                </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                  {/* Section 2: Additional Relevant Information */}
-                  <div className="space-y-2 pt-1">
-                    <p className="text-xs font-bold text-[#336D9F]">
-                      Additional Relevant Information
-                    </p>
-                    <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs leading-relaxed min-h-[60px]">
-                      {currentRecord.mitigationAdditionalInfo || 'No additional mitigation information provided.'}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 3: DATA MANAGEMENT & QA/QC (READ-ONLY) */}
-              {activeTab === 'qa-qc' && (
-                <div className="space-y-[18px]">
-                  {/* Internal QA/QC Methodology */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#336D9F]">Internal QA/QC Methodology</span>
-                    </div>
-                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs leading-relaxed">
-                      {currentRecord.qaVerificationDesc || 'Standard plant internal QA/QC protocols applied per EAD Technical Guidelines.'}
-                    </div>
-                  </div>
-
-                  {/* Section 2: Data Gaps */}
-                  <div className="rounded-xl border border-slate-200/90 overflow-hidden bg-white shadow-2xs">
-                    <div className="px-3.5 py-2.5 bg-[#F4F6F8] border-b border-slate-200/80">
-                      <span className="text-xs font-bold text-[#336D9F]">Data Gaps</span>
-                    </div>
-                    <div className="p-3.5 bg-white space-y-3">
-                      <div className="overflow-x-auto rounded-xl border border-slate-200">
-                        <table className="w-full text-left text-xs border-collapse">
-                          <thead>
-                            <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold whitespace-nowrap">
-                              <th className="py-2.5 px-3 min-w-[180px]">Source Stream / ID</th>
-                              <th className="py-2.5 px-3 min-w-[130px]">From</th>
-                              <th className="py-2.5 px-3 min-w-[130px]">Until</th>
-                              <th className="py-2.5 px-3 min-w-[240px]">Description, Reasons And Methods</th>
-                              <th className="py-2.5 px-3 min-w-[170px]">Estimated Emissions (t CO₂e)</th>
-                              <th className="py-2.5 px-3 min-w-[210px]">Source Of Estimated Emissions</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100 bg-white">
-                            {!currentRecord.qaDataGaps || currentRecord.qaDataGaps.length === 0 || !currentRecord.qaDataGaps.some((g: any) => g.sourceStream || g.description) ? (
-                              <tr>
-                                <td colSpan={6} className="py-5 text-center text-slate-400 font-normal">
-                                  No data gaps reported for this reporting period.
-                                </td>
-                              </tr>
-                            ) : (
-                              currentRecord.qaDataGaps.map((gap: any, idx: number) => (
-                                <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                                  <td className="py-2.5 px-3 font-normal text-slate-900">{gap.sourceStream || '—'}</td>
-                                  <td className="py-2.5 px-3 text-slate-700">{gap.fromDate || '—'}</td>
-                                  <td className="py-2.5 px-3 text-slate-700">{gap.untilDate || '—'}</td>
-                                  <td className="py-2.5 px-3 text-slate-800">{gap.description || '—'}</td>
-                                  <td className="py-2.5 px-3 font-mono font-normal text-[#004B87]">{gap.estimatedEmissions ? `${gap.estimatedEmissions} tCO₂e` : '—'}</td>
-                                  <td className="py-2.5 px-3 text-slate-700">{gap.sourceOfEstimate || '—'}</td>
-                                </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Section 3: Management Responsibilities */}
-                  <div className="rounded-xl border border-slate-200/90 overflow-hidden bg-white shadow-2xs">
-                    <div className="px-3.5 py-2.5 bg-[#F4F6F8] border-b border-slate-200/80">
-                      <span className="text-xs font-bold text-[#336D9F]">Management Responsibilities</span>
-                    </div>
-                    <div className="p-3.5 bg-white space-y-3">
-                      <div className="overflow-x-auto rounded-xl border border-slate-200">
-                        <table className="w-full text-left text-xs border-collapse">
-                          <thead>
-                            <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold whitespace-nowrap">
-                              <th className="py-2.5 px-3 min-w-[280px]">Job Title / Post</th>
-                              <th className="py-2.5 px-3 min-w-[500px]">Responsibilities</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100 bg-white">
-                            {!currentRecord.qaManagementResp || currentRecord.qaManagementResp.length === 0 || !currentRecord.qaManagementResp.some((r: any) => r.jobTitle || r.responsibilities) ? (
-                              <tr>
-                                <td colSpan={2} className="py-5 text-center text-slate-400 font-normal">
-                                  No management responsibilities defined.
-                                </td>
-                              </tr>
-                            ) : (
-                              currentRecord.qaManagementResp.map((resp: any, idx: number) => (
-                                <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                                  <td className="py-2.5 px-3 font-normal text-slate-900">{resp.jobTitle || '—'}</td>
-                                  <td className="py-2.5 px-3 text-slate-800">{resp.responsibilities || '—'}</td>
-                                </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Section 4: Quality Assurance Procedures */}
-                  <div className="rounded-xl border border-slate-200/90 overflow-hidden bg-white shadow-2xs">
-                    <div className="px-3.5 py-2.5 bg-[#F4F6F8] border-b border-slate-200/80">
-                      <span className="text-xs font-bold text-[#336D9F]">Quality Assurance Procedures</span>
-                    </div>
-                    <div className="p-3.5 bg-white space-y-4">
-                      <div className="overflow-x-auto rounded-xl border border-slate-200">
-                        <table className="w-full text-left text-xs border-collapse">
-                          <thead>
-                            <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold whitespace-nowrap">
-                              <th className="py-2.5 px-3 min-w-[180px]">Title of Procedure</th>
-                              <th className="py-2.5 px-3 min-w-[160px]">Reference for Procedure</th>
-                              <th className="py-2.5 px-3 min-w-[260px]">Brief Description of Procedure</th>
-                              <th className="py-2.5 px-3 min-w-[200px]">Post / Department Responsible</th>
-                              <th className="py-2.5 px-3 min-w-[200px]">Location Where Records Are Kept</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100 bg-white">
-                            {!currentRecord.qaProcedures || currentRecord.qaProcedures.length === 0 || !currentRecord.qaProcedures.some((p: any) => p.procedureTitle || p.reference) ? (
-                              <tr>
-                                <td colSpan={5} className="py-5 text-center text-slate-400 font-normal">
-                                  No QA procedures configured.
-                                </td>
-                              </tr>
-                            ) : (
-                              currentRecord.qaProcedures.map((proc: any, idx: number) => (
-                                <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                                  <td className="py-2.5 px-3 font-normal text-slate-900">{proc.procedureTitle || '—'}</td>
-                                  <td className="py-2.5 px-3 font-mono text-[#004B87] font-normal">{proc.reference || '—'}</td>
-                                  <td className="py-2.5 px-3 text-slate-800">{proc.briefDescription || '—'}</td>
-                                  <td className="py-2.5 px-3 text-slate-700">{proc.responsibleDept || '—'}</td>
-                                  <td className="py-2.5 px-3 text-slate-700">{proc.recordStorage || '—'}</td>
-                                </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      {/* Uploaded QA Diagrams */}
-                      {currentRecord.qaDiagramFiles && currentRecord.qaDiagramFiles.length > 0 && (
-                        <div className="pt-2 border-t border-slate-100 space-y-2">
-                          <h4 className="text-xs font-bold text-[#336D9F]">Attached QA Diagrams & Supporting Files</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {currentRecord.qaDiagramFiles.map((f: any) => (
-                              <div key={f.id} className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                                <div className="flex items-center gap-2.5 overflow-hidden">
-                                  <div className="w-8 h-8 rounded-lg bg-sky-100 text-[#004B87] flex items-center justify-center shrink-0 border border-sky-200">
-                                    <FileText className="w-4 h-4" />
-                                  </div>
-                                  <div className="truncate">
-                                    <p className="text-xs font-normal text-slate-800 truncate">{f.name}</p>
-                                    <p className="text-[10px] text-slate-500">{f.size} • {f.uploadDate}</p>
-                                  </div>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => setPreviewModalFile({ name: f.name })}
-                                  className="px-2.5 py-1 text-slate-600 hover:text-[#004B87] hover:bg-white rounded-md text-xs font-normal flex items-center gap-1 border border-slate-200 cursor-pointer"
-                                >
-                                  <Eye className="w-3 h-3" />
-                                  Preview
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Section 5: Internal Review & Validation */}
-                  <div className="rounded-xl border border-slate-200/90 overflow-hidden bg-white shadow-2xs">
-                    <div className="px-3.5 py-2.5 bg-[#F4F6F8] border-b border-slate-200/80">
-                      <span className="text-xs font-bold text-[#336D9F]">Internal Review & Validation</span>
-                    </div>
-                    <div className="p-3.5 bg-white space-y-4">
-                      <div className="overflow-x-auto rounded-xl border border-slate-200">
-                        <table className="w-full text-left text-xs border-collapse">
-                          <thead>
-                            <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold whitespace-nowrap">
-                              <th className="py-2.5 px-3 min-w-[180px]">Title of Procedure</th>
-                              <th className="py-2.5 px-3 min-w-[160px]">Reference for Procedure</th>
-                              <th className="py-2.5 px-3 min-w-[260px]">Brief Description of Procedure</th>
-                              <th className="py-2.5 px-3 min-w-[200px]">Post / Department Responsible</th>
-                              <th className="py-2.5 px-3 min-w-[200px]">Location Where Records Are Kept</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100 bg-white">
-                            {!currentRecord.internalReviewProcedures || currentRecord.internalReviewProcedures.length === 0 || !currentRecord.internalReviewProcedures.some((p: any) => p.procedureTitle || p.reference) ? (
-                              <tr>
-                                <td colSpan={5} className="py-5 text-center text-slate-400 font-normal">
-                                  No internal review procedures configured.
-                                </td>
-                              </tr>
-                            ) : (
-                              currentRecord.internalReviewProcedures.map((proc: any, idx: number) => (
-                                <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                                  <td className="py-2.5 px-3 font-normal text-slate-900">{proc.procedureTitle || '—'}</td>
-                                  <td className="py-2.5 px-3 font-mono text-[#004B87] font-normal">{proc.reference || '—'}</td>
-                                  <td className="py-2.5 px-3 text-slate-800">{proc.briefDescription || '—'}</td>
-                                  <td className="py-2.5 px-3 text-slate-700">{proc.responsibleDept || '—'}</td>
-                                  <td className="py-2.5 px-3 text-slate-700">{proc.recordStorage || '—'}</td>
-                                </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      {/* Uploaded Internal Review Diagrams */}
-                      {currentRecord.internalReviewFiles && currentRecord.internalReviewFiles.length > 0 && (
-                        <div className="pt-2 border-t border-slate-100 space-y-2">
-                          <h4 className="text-xs font-bold text-[#336D9F]">Attached Internal Review Schematics & Workflows</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {currentRecord.internalReviewFiles.map((f: any) => (
-                              <div key={f.id} className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                                <div className="flex items-center gap-2.5 overflow-hidden">
-                                  <div className="w-8 h-8 rounded-lg bg-sky-100 text-[#004B87] flex items-center justify-center shrink-0 border border-sky-200">
-                                    <FileText className="w-4 h-4" />
-                                  </div>
-                                  <div className="truncate">
-                                    <p className="text-xs font-semibold text-slate-800 truncate">{f.name}</p>
-                                    <p className="text-[10px] text-slate-500">{f.size} • {f.uploadDate}</p>
-                                  </div>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => setPreviewModalFile({ name: f.name })}
-                                  className="px-2.5 py-1 text-slate-600 hover:text-[#004B87] hover:bg-white rounded-md text-xs font-medium flex items-center gap-1 border border-slate-200 cursor-pointer"
-                                >
-                                  <Eye className="w-3 h-3" />
-                                  Preview
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Section 6: Additional Details */}
-                  <div className="space-y-2 pt-1">
-                    <p className="text-xs font-bold text-[#336D9F]">Further QA/QC Details</p>
-                    <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs leading-relaxed min-h-[60px]">
-                      {currentRecord.qaFurtherDetails || 'No additional QA/QC details provided.'}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 4: SUPPORT DOCUMENTS & SUBMIT (READ-ONLY) */}
-              {activeTab === 'review-submit' && (
-                <div className="space-y-4 pt-1">
-                  {/* Supporting Documents (Facility Registration Style) */}
-                  <div>
-                    <h4 className="text-xs font-bold text-[#336D9F] mb-2.5">
-                      Supporting Documents
-                    </h4>
-                    <div className="flex-1 min-w-0 flex items-center gap-2.5 overflow-x-auto py-1 no-scrollbar">
-                      {supportingDocsFiles && supportingDocsFiles.length > 0 ? (
-                        supportingDocsFiles.map((file: any, idx: number) => (
-                          <div
-                            key={file.id || idx}
-                            className="border border-slate-200 bg-white rounded-lg py-1.5 px-3 flex items-center gap-2.5 shadow-2xs shrink-0 max-w-[240px]"
-                          >
-                            <div className="w-7 h-7 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center shrink-0">
-                              <FileText className="w-3.5 h-3.5 text-rose-600" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="text-xs font-bold text-slate-800 truncate" title={file.name}>
-                                {file.name}
-                              </div>
-                              <div className="text-[10px] text-slate-400 flex items-center gap-1.5 font-medium">
-                                <span>{file.size}</span>
-                                <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                <span className="text-emerald-600 font-bold">{file.status || 'Verified'}</span>
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setPreviewModalFile(file)}
-                              className="p-1 text-slate-400 hover:text-[#004B87] hover:bg-sky-50 rounded-md transition-colors cursor-pointer shrink-0"
-                              title="Preview file"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ))
-                      ) : (
-                        <span className="text-xs text-slate-400 italic">No files attached</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Section 2: Final Declaration */}
-                  <div className="rounded-xl border border-slate-200/90 overflow-hidden bg-white shadow-2xs">
-                    <div className="px-3.5 py-2.5 bg-[#F4F6F8] border-b border-slate-200/80 flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#336D9F]">Final Declaration</span>
-                    </div>
-                    <div className="p-3.5 sm:p-4 bg-white space-y-4">
-                      <div className="space-y-2.5">
-                        <div className="flex items-start gap-2.5">
-                          <div className={`w-4 h-4 mt-0.5 rounded flex items-center justify-center shrink-0 ${currentRecord.declarationChecks?.check1 ? 'bg-[#004B87] text-white' : 'bg-slate-100 text-slate-400 border border-slate-300'}`}>
-                            {currentRecord.declarationChecks?.check1 && <Check className="w-3 h-3 stroke-[3]" />}
-                          </div>
-                          <span className="text-xs text-slate-700 leading-snug">
-                            I confirm that the annual emission data provided is complete, true and accurate to the best of my knowledge.
-                          </span>
-                        </div>
-
-                        <div className="flex items-start gap-2.5">
-                          <div className={`w-4 h-4 mt-0.5 rounded flex items-center justify-center shrink-0 ${currentRecord.declarationChecks?.check2 ? 'bg-[#004B87] text-white' : 'bg-slate-100 text-slate-400 border border-slate-300'}`}>
-                            {currentRecord.declarationChecks?.check2 && <Check className="w-3 h-3 stroke-[3]" />}
-                          </div>
-                          <span className="text-xs text-slate-700 leading-snug">
-                            I understand that submitting false or misleading information may result in regulatory action by the Environment Agency – Abu Dhabi.
-                          </span>
-                        </div>
-
-                        <div className="flex items-start gap-2.5">
-                          <div className={`w-4 h-4 mt-0.5 rounded flex items-center justify-center shrink-0 ${currentRecord.declarationChecks?.check3 ? 'bg-[#004B87] text-white' : 'bg-slate-100 text-slate-400 border border-slate-300'}`}>
-                            {currentRecord.declarationChecks?.check3 && <Check className="w-3 h-3 stroke-[3]" />}
-                          </div>
-                          <span className="text-xs text-slate-700 leading-snug">
-                            I agree to submit this Annual Emission Data to the Environment Agency – Abu Dhabi.
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-2">
-                        <div>
-                          <label className="block text-slate-500 font-semibold mb-1 text-[11px]">Authorized Signatory</label>
-                          <p className="font-semibold text-slate-900 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200">{currentRecord.declarationForm?.name || '—'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-slate-500 font-semibold mb-1 text-[11px]">Designation</label>
-                          <p className="font-semibold text-slate-900 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200">{currentRecord.declarationForm?.designation || '—'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-slate-500 font-semibold mb-1 text-[11px]">Date of Sign-Off</label>
-                          <p className="font-semibold text-slate-900 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200">{currentRecord.declarationForm?.date || '—'}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Sticky Reviewer Comments & Regulatory Decision (Sticky at bottom of card for ALL tabs in Admin/Reviewer view) */}
-            {!isFacilityOperator && (
-              <div className="flex-shrink-0 pt-2.5 mt-2 border-t border-slate-200">
-                <div className="rounded-xl border border-slate-200/90 overflow-hidden bg-white shadow-2xs">
-                  <div className="px-3.5 py-2 bg-[#F4F6F8] border-b border-slate-200/80 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="w-4 h-4 text-[#336D9F]" />
-                      <span className="text-xs font-bold text-[#336D9F]">Reviewer Comments & Compliance Evaluation</span>
-                    </div>
-                  </div>
-                  <div className="p-3 bg-white space-y-2.5">
-                    <FieldTooltip content="Enter regulatory compliance remarks, observations, clarification requests, or reason for decision.">
-                      <textarea
-                        rows={2}
-                        value={reviewerComments}
-                        onChange={(e) => setReviewerComments(e.target.value)}
-                        placeholder="Enter reviewer comments, audit findings, clarification requests, or decision rationale..."
-                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-[#004B87] focus:bg-white shadow-2xs leading-relaxed resize-none font-medium"
-                      />
-                    </FieldTooltip>
-
-                    {/* 3 Decision Buttons inside Frame for Submitted records */}
-                    {(currentRecord.status === 'Submitted' || currentRecord.status === 'Under Review') && (
-                      <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2.5">
-                        <button
-                          type="button"
-                          onClick={() => setActiveReviewModal('revert')}
-                          className="px-5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-xs font-bold text-amber-800 flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
-                          title="Revert emission data to facility operator for correction"
-                        >
-                          <RotateCcw className="w-3.5 h-3.5 text-amber-700" />
-                          <span>Revert</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setActiveReviewModal('reject')}
-                          className="px-5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-300 text-xs font-bold text-rose-700 flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
-                          title="Reject annual emission submission"
-                        >
-                          <XCircle className="w-3.5 h-3.5 text-rose-600" />
-                          <span>Reject</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setActiveReviewModal('approve')}
-                          className="px-6 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-xs font-bold text-white flex items-center gap-2 shadow-md shadow-emerald-700/25 transition-all cursor-pointer active:scale-95"
-                          title="Approve annual emission report and issue compliance certificate"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Approve</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Bottom Action Buttons for View Mode (Outside White Frame) */}
-          <div className="flex-shrink-0 pt-2.5 pb-1 flex items-center justify-end gap-2.5">
-            <button
-              type="button"
-              onClick={() => setViewMode('table')}
-              className="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-700 flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
-            >
-              <span>Cancel</span>
-              <X className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Stepper Navigation for Data Provider only */}
-            {isFacilityOperator && (
-              <>
-                {activeTab === 'monitoring-methods' && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('mitigation-measures')}
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#004B87] to-[#006BB8] text-xs font-bold text-white flex items-center gap-2 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95"
-                  >
-                    <span>Next</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                )}
-
-                {activeTab === 'mitigation-measures' && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('qa-qc')}
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#004B87] to-[#006BB8] text-xs font-bold text-white flex items-center gap-2 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95"
-                  >
-                    <span>Next</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                )}
-
-                {activeTab === 'qa-qc' && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('review-submit')}
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#004B87] to-[#006BB8] text-xs font-bold text-white flex items-center gap-2 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95"
-                  >
-                    <span>Next</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                )}
-
-                {activeTab === 'review-submit' && (
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('table')}
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#004B87] to-[#006BB8] text-xs font-bold text-white flex items-center gap-2 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>Back to Overview Table</span>
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-  // =========================================================================
-  // 3. EDIT / ADD FORM VIEW (viewMode === 'form')
-  // =========================================================================
   return (
     <div className="h-full flex flex-col overflow-hidden font-sans py-0.5">
-      {/* Top Header Bar with Title, Status Chip, Facility Name, and Reporting Year Below Title */}
+      {/* Hidden file input for uploads */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        className="hidden"
+        multiple
+      />
+
+      {/* Top Header Bar with Title, Status Chip, Initiative Selector & Progress Report Period */}
       <div className="flex-shrink-0 flex flex-col gap-2 pb-3.5 pt-0.5">
         {/* Row 1: Back Arrow, Title, Status Chip, and Save Notice */}
         <div className="flex items-center justify-between gap-3 min-w-0">
@@ -1836,91 +1115,148 @@ export const AnnualEmissionDataView: React.FC = () => {
               <ArrowLeft className="w-4 h-4" />
             </button>
             <h1 className="text-[18px] font-bold font-display text-[#336D9F] tracking-tight whitespace-nowrap">
-              Annual Emission Data
+              Project Data Entry
             </h1>
             <span
               className={`px-3 py-0.5 rounded-full text-xs font-bold tracking-wide transition-all shrink-0 ${
-                currentRecord.status === 'Approved' || currentRecord.status === 'Verified' || currentRecord.status === 'EAD Approved'
+                currentRecord.workflowStatus === 'Approved / Published' || currentRecord.workflowStatus === 'Approved'
                   ? 'bg-[#D1FAE5] text-[#065F46] border border-emerald-200/60'
-                  : currentRecord.status === 'Submitted' || currentRecord.status?.includes('Submitted')
+                  : currentRecord.workflowStatus === 'Submitted'
                   ? 'bg-[#E0EEFA] text-[#0284C7] border border-sky-200/60'
+                  : currentRecord.workflowStatus === 'Returned for Correction'
+                  ? 'bg-amber-50 text-amber-700 border border-amber-200/60'
                   : 'bg-slate-100 text-slate-700 border border-slate-200'
               }`}
             >
-              {currentRecord.status === 'Approved' || currentRecord.status === 'Verified' || currentRecord.status === 'EAD Approved'
-                ? 'Approved'
-                : currentRecord.status === 'Submitted' || currentRecord.status?.includes('Submitted')
+              {currentRecord.workflowStatus === 'Approved / Published' || currentRecord.workflowStatus === 'Approved'
+                ? 'Approved / Published'
+                : currentRecord.workflowStatus === 'Submitted'
                 ? 'Submitted'
+                : currentRecord.workflowStatus === 'Returned for Correction'
+                ? 'Returned for Correction'
                 : 'Draft'}
             </span>
           </div>
 
-          {isSavedNotice && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 text-xs font-bold animate-fade-in shrink-0">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>{noticeMessage}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            {isSavedNotice && (
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 text-xs font-bold animate-fade-in shrink-0">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>{noticeMessage}</span>
+              </div>
+            )}
+
+            {isReadOnly && isFacilityOperator && (
+              <button
+                type="button"
+                onClick={() => setViewMode('form')}
+                className="h-8 px-4 bg-gradient-to-r from-[#004B87] to-[#006BB8] text-white rounded-[8px] text-xs font-bold flex items-center gap-1.5 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95 shrink-0"
+              >
+                <Edit className="w-3.5 h-3.5" />
+                <span>Edit Project Data</span>
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Row 2: Facility Name & Calendar Year below title (Image Style) */}
-        <div className="flex items-center gap-4 flex-wrap pt-0.5">
-          {/* Facility Name Input Field */}
+        {/* Row 2: Initiative Name & Progress Report Period (4-column grid layout with chips in remaining space) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-0.5 items-end">
+          {/* Col 1: Initiative Name Select / Readonly */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Facility Name</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Initiative Name
+            </label>
             <div className="relative">
-              <FieldTooltip content="Name of the reporting industrial facility.">
-                <input
-                  type="text"
-                  value={currentRecord.facilityName || ''}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    updateCurrentRecord((r) => ({ ...r, facilityName: val }));
-                  }}
-                  placeholder="Enter facility name"
-                  className="w-64 sm:w-80 h-9 px-3.5 bg-white border border-slate-200/90 rounded-xl text-xs text-slate-800 font-bold focus:outline-none focus:border-[#004B87] shadow-2xs"
-                />
+              <FieldTooltip content="Approved/published climate change initiative under CCRP.">
+                {isReadOnly ? (
+                  <input
+                    type="text"
+                    readOnly
+                    disabled
+                    value={formInitiativeName}
+                    className="w-full h-9 px-3.5 bg-slate-200/90 border border-slate-300 rounded-[8px] text-xs text-slate-800 font-bold cursor-not-allowed select-none truncate"
+                  />
+                ) : (
+                  <div className="relative">
+                    <select
+                      value={formInitiativeId}
+                      onChange={(e) => handleInitiativeChange(e.target.value)}
+                      className="w-full h-9 px-3.5 bg-white border border-slate-300 rounded-[8px] text-xs text-slate-800 font-bold focus:outline-none focus:border-[#004B87] shadow-2xs appearance-none pr-8 cursor-pointer truncate"
+                    >
+                      {CCRP_APPROVED_INITIATIVES.map((init) => (
+                        <option key={init.initiativeCode} value={init.initiativeCode}>
+                          {init.name} ({init.initiativeCode})
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                )}
               </FieldTooltip>
             </div>
           </div>
 
-          {/* Calendar Year Select with Chevron Dropdown */}
+          {/* Col 2: Progress Report Period Select */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Calendar Year</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Progress Report Period
+            </label>
             <div className="relative">
-              <FieldTooltip content="Designated statutory MRV reporting compliance calendar year.">
-                <select
-                  value={formReportingYear}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setFormReportingYear(val);
-                    updateCurrentRecord((r) => ({ ...r, reportingYear: val }));
-                  }}
-                  className="w-36 h-9 px-3.5 bg-white border border-slate-200/90 rounded-xl text-xs text-slate-800 font-bold focus:outline-none focus:border-[#004B87] shadow-2xs appearance-none pr-8 cursor-pointer"
-                >
-                  <option value="2026">2026</option>
-                  <option value="2025">2025</option>
-                  <option value="2024">2024</option>
-                  <option value="2023">2023</option>
-                </select>
+              <FieldTooltip content="Periodic reporting cycle based on initiative pillar cadence (Quarterly for Adaptation; Semiannual for Mitigation/Economic Diversification/Cross Cutting).">
+                {isReadOnly ? (
+                  <input
+                    type="text"
+                    readOnly
+                    disabled
+                    value={formProgressReportPeriod}
+                    className="w-full h-9 px-3.5 bg-slate-200/90 border border-slate-300 rounded-[8px] text-xs text-slate-800 font-bold cursor-not-allowed select-none"
+                  />
+                ) : (
+                  <div className="relative">
+                    <select
+                      value={formProgressReportPeriod}
+                      onChange={(e) => setFormProgressReportPeriod(e.target.value)}
+                      className="w-full h-9 px-3.5 bg-white border border-slate-300 rounded-[8px] text-xs text-slate-800 font-bold focus:outline-none focus:border-[#004B87] shadow-2xs appearance-none pr-8 cursor-pointer"
+                    >
+                      {availablePeriods.map((period) => (
+                        <option key={period} value={period}>
+                          {period}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                )}
               </FieldTooltip>
-              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
+          </div>
+
+          {/* Cols 3 & 4 (Remaining Area): Context Badges (Entity, Pillar, Cadence) */}
+          <div className="col-span-1 sm:col-span-2 lg:col-span-2 flex items-center gap-2 h-9 flex-wrap">
+            <span className="px-2.5 py-1.5 rounded-lg bg-sky-50 border border-sky-100 text-[11px] font-semibold text-sky-800 truncate" title={`Entity: ${formEntity}`}>
+              Entity: <span className="font-bold">{formEntity}</span>
+            </span>
+            <span className="px-2.5 py-1.5 rounded-lg bg-purple-50 border border-purple-100 text-[11px] font-semibold text-purple-800 shrink-0">
+              Pillar: <span className="font-bold">{formPillar}</span>
+            </span>
+            <span className="px-2.5 py-1.5 rounded-lg bg-emerald-50 border border-emerald-100 text-[11px] font-semibold text-emerald-800 shrink-0">
+              Cadence: <span className="font-bold">{formCadence}</span>
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Main Container on White Frame (Enclosing Tab Navigation at the top) */}
+      {/* Main Container on White Frame (Enclosing Stepper Tab Navigation at top) */}
       <div className="flex-1 min-h-0 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 sm:p-4 flex flex-col overflow-hidden">
-        {/* Sticky Tabs Navigation Bar (Fixed at top, outside scroll area) */}
+        {/* Stepper Tabs Bar */}
         <div className="flex-shrink-0 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar pb-2.5">
           <div className="inline-flex items-center gap-1.5 p-1 bg-white border border-slate-200 rounded-[6px] shadow-2xs">
-            {ANNUAL_EMISSION_STEPS.map((step, idx) => {
-              const subTabOrder = [
-                'monitoring-methods',
-                'mitigation-measures',
-                'qa-qc',
-                'review-submit',
+            {PERFORMANCE_REPORT_STEPS.map((step, idx) => {
+              const subTabOrder: StepTabId[] = [
+                'report-details',
+                'progress-status',
+                'ghg-emissions',
+                'supporting-submit',
               ];
               const currentStepNum = subTabOrder.indexOf(activeTab) + 1;
               const isActive = step.stepNumber === currentStepNum;
@@ -1931,7 +1267,7 @@ export const AnnualEmissionDataView: React.FC = () => {
                 <React.Fragment key={step.id}>
                   <button
                     type="button"
-                    onClick={() => setActiveTab(step.id as any)}
+                    onClick={() => setActiveTab(step.id as StepTabId)}
                     className={`px-3.5 py-1.5 rounded-[6px] text-xs transition-all flex items-center gap-2 cursor-pointer select-none ${
                       isActive
                         ? 'bg-gradient-to-r from-[#004B87] to-[#006BB8] text-white font-bold shadow-xs'
@@ -1957,8 +1293,8 @@ export const AnnualEmissionDataView: React.FC = () => {
                     <span className="whitespace-nowrap">{step.title}</span>
                   </button>
 
-                  {/* Arrow Indication between steps (Highlighted once finished) */}
-                  {idx < ANNUAL_EMISSION_STEPS.length - 1 && (
+                  {/* Arrow Indication between steps */}
+                  {idx < PERFORMANCE_REPORT_STEPS.length - 1 && (
                     <ChevronRight
                       className={`w-4 h-4 shrink-0 mx-0.5 transition-colors ${
                         isArrowHighlighted ? 'text-[#004B87] stroke-[2.5]' : 'text-slate-300'
@@ -1970,1572 +1306,831 @@ export const AnnualEmissionDataView: React.FC = () => {
             })}
           </div>
 
-          {activeTab === 'qa-qc' && (
-            <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>QA/QC Protocols & Procedures Configured</span>
+          {/* Pillar / Step Badge */}
+          {activeTab === 'ghg-emissions' && (
+            <div className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border shrink-0 ${
+              isGhgMandatory
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : isGhgOptional
+                ? 'bg-purple-50 text-purple-700 border-purple-200'
+                : 'bg-slate-100 text-slate-600 border-slate-200'
+            }`}>
+              <Flame className="w-3.5 h-3.5" />
+              <span>
+                {isGhgMandatory
+                  ? 'Mandatory for Mitigation Pillar'
+                  : isGhgOptional
+                  ? 'Optional for Cross Cutting Pillar'
+                  : 'Qualitative Focus for Adaptation/Diversification'}
+              </span>
             </div>
           )}
 
-          {activeTab === 'review-submit' && (
-            <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
-              <Clock className="w-3.5 h-3.5 text-amber-600" />
-              <span>Operator Sign-Off Pending</span>
+          {activeTab === 'supporting-submit' && (
+            <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 shrink-0">
+              <ShieldCheck className="w-3.5 h-3.5 text-sky-600" />
+              <span>
+                {isEvidenceMandatory ? 'Mandatory Closing Evidence Required' : 'Evidence Optional While In Progress'}
+              </span>
             </div>
           )}
         </div>
 
         {/* Scrollable Form Content */}
-        <div className="flex-1 min-h-0 overflow-y-auto space-y-[18px] pr-2.5 pt-2 pb-0.5 text-xs custom-scrollbar">
-            {/* TAB 1: MONITORING METHODS */}
-            {activeTab === 'monitoring-methods' && (
-              <div className="space-y-[18px]">
-                <MonitoringMethodsTab
-                  data={currentRecord.monitoringMethods}
-                  onChange={(methods) => {
-                    updateCurrentRecord((r) => ({ ...r, monitoringMethods: methods }));
-                  }}
-                />
-              </div>
-            )}
-
-            {/* TAB 2: MITIGATION MEASURES */}
-            {activeTab === 'mitigation-measures' && (
-              <div className="space-y-4 pt-1">
-                {/* Greenhouse Gas Mitigation Measures Table */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#336D9F]">
-                      Greenhouse Gas Mitigation Measures
-                    </span>
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-5 pr-2.5 pt-2 pb-0.5 text-xs custom-scrollbar">
+          {/* ================================================================ */}
+          {/* STEP 1: REPORT DETAILS */}
+          {/* ================================================================ */}
+          {activeTab === 'report-details' && (
+            <div className="space-y-5">
+              <div>
+                <h4 className="text-xs font-bold text-[#336D9F] mb-3">
+                  Report Cycle & Phase Parameters
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {/* Progress Report Period */}
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                      Progress Report Period *
+                    </label>
+                    <FieldTooltip content="Designated reporting period for this performance submission." example="Semiannual 1 (H1) / Q1">
+                      {isReadOnly ? (
+                        <input
+                          type="text"
+                          readOnly
+                          disabled
+                          value={formProgressReportPeriod}
+                          className="w-full px-3.5 py-2 bg-[#F1F5F9] border border-slate-200 rounded-lg text-slate-700 font-semibold text-xs cursor-not-allowed"
+                        />
+                      ) : (
+                        <select
+                          value={formProgressReportPeriod}
+                          onChange={(e) => setFormProgressReportPeriod(e.target.value)}
+                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#336D9F] shadow-xs cursor-pointer text-xs"
+                        >
+                          {availablePeriods.map((period) => (
+                            <option key={period} value={period}>
+                              {period}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </FieldTooltip>
                   </div>
 
-                  <div className="overflow-x-auto rounded-xl border border-slate-200 table-sticky-columns">
-                      <table className="w-full text-left text-xs min-w-[1550px]">
-                        <thead>
-                          <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold whitespace-nowrap">
-                            <th className="py-2.5 px-3 min-w-[200px]" title="Description of measure">Description of measure</th>
-                            <th className="py-2.5 px-3 min-w-[150px]" title="Category">Category</th>
-                            <th className="py-2.5 px-3 min-w-[90px]" title="Scope (1 / 2 / 3)">Scope (1 / 2 / 3)</th>
-                            <th className="py-2.5 px-3 min-w-[90px]" title="GHG">GHG</th>
-                            <th className="py-2.5 px-3 min-w-[100px]" title="Start year">Start year</th>
-                            <th className="py-2.5 px-3 min-w-[130px]" title="Status">Status</th>
-                            <th className="py-2.5 px-3 min-w-[180px]" title="Pre-measure reference [tCO₂e/yr]">Pre-measure reference [tCO₂e/yr]</th>
-                            <th className="py-2.5 px-3 min-w-[170px]" title="Reporting year reduction [tCO₂e/yr]">Reporting year reduction [tCO₂e/yr]</th>
-                            <th className="py-2.5 px-3 min-w-[170px]" title="Expected annual reduction [tCO₂e/yr]">Expected annual reduction [tCO₂e/yr]</th>
-                            <th className="py-2.5 px-3 min-w-[200px]" title="Methodology / standard">Methodology / standard</th>
-                            <th className="py-2.5 px-3 min-w-[160px]" title="Verification">Verification</th>
-                            <th className="py-2.5 px-3 text-center min-w-[65px]" title="Actions">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 bg-white">
-                          {mitigationMeasures.length === 0 ? (
-                            <tr>
-                              <td colSpan={12} className="py-6 text-center text-slate-400 font-medium">
-                                No greenhouse gas mitigation measures added yet. Click &ldquo;Add Measure&rdquo; above to record a measure.
-                              </td>
-                            </tr>
-                          ) : (
-                            mitigationMeasures.map((m, idx) => (
-                              <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                                {/* Description of measure */}
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Description of emissions mitigation or energy conservation measure." example="Waste Heat Recovery System">
-                                    <input
-                                      type="text"
-                                      value={m.description}
-                                      placeholder="e.g. Waste Heat Recovery System"
-                                      title={m.description || 'Description of measure'}
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setMitigationMeasures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].description = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full min-w-[190px] px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
+                  {/* Project Phase */}
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                      Project Phase *
+                    </label>
+                    <FieldTooltip content="Current lifecycle stage of the initiative from Climate Change Strategy Data master." example="Implementation">
+                      {isReadOnly ? (
+                        <input
+                          type="text"
+                          readOnly
+                          disabled
+                          value={formProjectPhase}
+                          className="w-full px-3.5 py-2 bg-[#F1F5F9] border border-slate-200 rounded-lg text-slate-700 font-semibold text-xs cursor-not-allowed"
+                        />
+                      ) : (
+                        <select
+                          value={formProjectPhase}
+                          onChange={(e) => setFormProjectPhase(e.target.value as any)}
+                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#336D9F] shadow-xs cursor-pointer text-xs"
+                        >
+                          {CCRP_PROJECT_PHASES.map((phase) => (
+                            <option key={phase} value={phase}>
+                              {phase}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </FieldTooltip>
+                  </div>
 
-                                {/* Category */}
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Category of mitigation action (e.g., Energy Efficiency, Fuel Switching).">
-                                    <select
-                                      value={m.category || 'Emission Reduction'}
-                                      title={m.category || 'Select category'}
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setMitigationMeasures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].category = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full min-w-[140px] px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-[#004B87] cursor-pointer shadow-xs"
-                                    >
-                                      <option value="Emission Reduction">Emission Reduction</option>
-                                      <option value="Energy Efficiency">Energy Efficiency</option>
-                                      <option value="Fuel Switching">Fuel Switching</option>
-                                      <option value="Carbon Capture (CCUS)">Carbon Capture (CCUS)</option>
-                                      <option value="Process Optimization">Process Optimization</option>
-                                      <option value="Alternative Raw Materials">Alternative Raw Materials</option>
-                                      <option value="Other">Other</option>
-                                    </select>
-                                  </FieldTooltip>
-                                </td>
+                  {/* Status */}
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                      Status *
+                    </label>
+                    <FieldTooltip content="Operational execution status of the climate initiative (from Excel Data sheet)." example="In Progress">
+                      {isReadOnly ? (
+                        <input
+                          type="text"
+                          readOnly
+                          disabled
+                          value={formReportStatus}
+                          className="w-full px-3.5 py-2 bg-[#F1F5F9] border border-slate-200 rounded-lg text-slate-700 font-semibold text-xs cursor-not-allowed"
+                        />
+                      ) : (
+                        <select
+                          value={formReportStatus}
+                          onChange={(e) => setFormReportStatus(e.target.value as any)}
+                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#336D9F] shadow-xs cursor-pointer text-xs"
+                        >
+                          {CCRP_REPORT_STATUSES.map((st) => (
+                            <option key={st} value={st}>
+                              {st}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </FieldTooltip>
+                  </div>
+                </div>
+              </div>
 
-                                {/* Scope (1 / 2 / 3) */}
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="GHG accounting scope classification (Scope 1, 2, or 3).">
-                                    <select
-                                      value={m.scope || '1'}
-                                      title={m.scope || 'Scope'}
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setMitigationMeasures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].scope = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full min-w-[80px] px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-[#004B87] cursor-pointer shadow-xs"
-                                    >
-                                      <option value="1">1</option>
-                                      <option value="2">2</option>
-                                      <option value="3">3</option>
-                                    </select>
-                                  </FieldTooltip>
-                                </td>
+              {/* Progress Percentage & Milestone Tracking */}
+              <div>
+                <h4 className="text-xs font-bold text-[#336D9F] mb-3">
+                  Progress Percentage & Milestone Tracking
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {/* Planned Progress (%) */}
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                      Planned Progress (%) *
+                    </label>
+                    <FieldTooltip content="Target planned percentage completion for this reporting period (0–100%)." example="75%">
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.1"
+                          readOnly={isReadOnly}
+                          disabled={isReadOnly}
+                          value={formPlannedProgress}
+                          onChange={(e) => setFormPlannedProgress(e.target.value)}
+                          placeholder="e.g. 75"
+                          className="w-full pl-3.5 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-bold focus:outline-none focus:border-[#336D9F] shadow-xs text-xs"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs pointer-events-none">
+                          %
+                        </span>
+                      </div>
+                    </FieldTooltip>
+                  </div>
 
-                                {/* GHG */}
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Primary greenhouse gas targeted for reduction (CO₂, CH₄, N₂O, etc.).">
-                                    <select
-                                      value={m.ghg || 'CO₂'}
-                                      title={m.ghg || 'GHG'}
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setMitigationMeasures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].ghg = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full min-w-[85px] px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-[#004B87] cursor-pointer shadow-xs"
-                                    >
-                                      <option value="CO₂">CO₂</option>
-                                      <option value="CH₄">CH₄</option>
-                                      <option value="N₂O">N₂O</option>
-                                      <option value="HFCs">HFCs</option>
-                                      <option value="PFCs">PFCs</option>
-                                      <option value="SF₆">SF₆</option>
-                                      <option value="NF₃">NF₃</option>
-                                      <option value="All GHGs">All GHGs</option>
-                                    </select>
-                                  </FieldTooltip>
-                                </td>
+                  {/* Actual Progress (%) */}
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                      Actual Progress (%) *
+                    </label>
+                    <FieldTooltip content="Realized actual percentage completion achieved up to this period (0–100%)." example="68%">
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.1"
+                          readOnly={isReadOnly}
+                          disabled={isReadOnly}
+                          value={formActualProgress}
+                          onChange={(e) => setFormActualProgress(e.target.value)}
+                          placeholder="e.g. 68"
+                          className="w-full pl-3.5 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-bold focus:outline-none focus:border-[#336D9F] shadow-xs text-xs"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs pointer-events-none">
+                          %
+                        </span>
+                      </div>
+                    </FieldTooltip>
+                  </div>
+                </div>
+              </div>
 
-                                {/* Start year */}
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Calendar year when implementation of the measure commenced." example="2026">
-                                    <input
-                                      type="text"
-                                      value={m.startYear || ''}
-                                      placeholder="2026"
-                                      title={m.startYear || 'Start year'}
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setMitigationMeasures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].startYear = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full min-w-[90px] px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
+              {/* Visual Progress Comparison Bar */}
+              <div className="p-4 bg-[#F8FAFC] border border-slate-200 rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-slate-800">Progress Delivery Comparison</span>
+                  {(() => {
+                    const diff = Number(formActualProgress) - Number(formPlannedProgress);
+                    if (diff > 0) {
+                      return (
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          +{diff.toFixed(1)}% Ahead of Schedule
+                        </span>
+                      );
+                    }
+                    if (diff < 0) {
+                      return (
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                          {diff.toFixed(1)}% Variance from Plan
+                        </span>
+                      );
+                    }
+                    return (
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                        100% On Track
+                      </span>
+                    );
+                  })()}
+                </div>
 
-                                {/* Status */}
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Operational or planning stage of the mitigation project.">
-                                    <select
-                                      value={m.status || 'Planned'}
-                                      title={m.status || 'Select status'}
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setMitigationMeasures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].status = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full min-w-[125px] px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-[#004B87] cursor-pointer shadow-xs"
-                                    >
-                                      <option value="Implemented">Implemented</option>
-                                      <option value="Planned">Planned</option>
-                                      <option value="Under Study">Under Study</option>
-                                      <option value="Decommissioned">Decommissioned</option>
-                                    </select>
-                                  </FieldTooltip>
-                                </td>
-
-                                {/* Pre-measure reference */}
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Baseline reference emissions rate before implementation." unit="tCO₂e/yr" example="4,200">
-                                    <input
-                                      type="text"
-                                      value={m.preMeasureRef || ''}
-                                      placeholder="e.g. 4,200 (2022 avg)"
-                                      title={m.preMeasureRef || 'Pre-measure reference [tCO₂e/yr]'}
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setMitigationMeasures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].preMeasureRef = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full min-w-[170px] px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-
-                                {/* Reporting year reduction */}
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Measured or estimated GHG reduction achieved in reporting year." unit="tCO₂e/yr" example="3,850">
-                                    <input
-                                      type="text"
-                                      value={m.reportingYearReduction || ''}
-                                      placeholder="e.g. 3,850"
-                                      title={m.reportingYearReduction ? `${m.reportingYearReduction} tCO₂e/yr` : 'Reporting year reduction [tCO₂e/yr]'}
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setMitigationMeasures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].reportingYearReduction = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full min-w-[150px] px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left font-mono focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-
-                                {/* Expected annual reduction */}
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Total anticipated ongoing annual GHG abatement." unit="tCO₂e/yr" example="4,000">
-                                    <input
-                                      type="text"
-                                      value={m.expectedAnnualReduction || ''}
-                                      placeholder="e.g. 4,000"
-                                      title={m.expectedAnnualReduction ? `${m.expectedAnnualReduction} tCO₂e/yr` : 'Expected annual reduction [tCO₂e/yr]'}
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setMitigationMeasures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].expectedAnnualReduction = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full min-w-[150px] px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left font-mono focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-
-                                {/* Methodology / standard */}
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Standard protocol or engineering calculation used to quantify reduction." example="ISO 50001 Energy Balance">
-                                    <input
-                                      type="text"
-                                      value={m.methodology || ''}
-                                      placeholder="e.g. Engineering energy balance (ISO 50001)"
-                                      title={m.methodology || 'Methodology / standard'}
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setMitigationMeasures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].methodology = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full min-w-[190px] px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-
-                                {/* Verification */}
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Verification status of the mitigation savings claim.">
-                                    <select
-                                      value={m.verification || 'Third-party verified'}
-                                      title={m.verification || 'Verification'}
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setMitigationMeasures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].verification = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full min-w-[150px] px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-[#004B87] cursor-pointer shadow-xs"
-                                    >
-                                      <option value="Third-party verified">Third-party verified</option>
-                                      <option value="Internally verified">Internally verified</option>
-                                      <option value="Self-declaration">Self-declaration</option>
-                                      <option value="Pending">Pending</option>
-                                    </select>
-                                  </FieldTooltip>
-                                </td>
-
-                                {/* Actions */}
-                                <td className="py-2 px-3 text-center">
-                                  {idx === 0 ? (
-                                    <button
-                                      type="button"
-                                      onClick={addMitigationMeasure}
-                                      className="w-6 h-6 rounded-full bg-sky-50 text-[#004B87] hover:bg-[#004B87] hover:text-white flex items-center justify-center mx-auto transition-colors border border-sky-200 cursor-pointer"
-                                      title="Add Measure"
-                                    >
-                                      <Plus className="w-3.5 h-3.5" />
-                                    </button>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      onClick={() => removeMitigationMeasure(idx)}
-                                      className="w-6 h-6 rounded-full bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white flex items-center justify-center mx-auto transition-colors border border-rose-200 cursor-pointer"
-                                      title="Remove Measure"
-                                    >
-                                      <X className="w-3.5 h-3.5" />
-                                    </button>
-                                  )}
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
+                {/* Progress bars */}
+                <div className="space-y-2">
+                  <div>
+                    <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 mb-1">
+                      <span>Planned Milestone Target</span>
+                      <span className="font-bold text-slate-700">{formPlannedProgress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="h-full bg-slate-500 rounded-full transition-all"
+                        style={{ width: `${Math.min(100, Math.max(0, Number(formPlannedProgress)))}%` }}
+                      />
                     </div>
                   </div>
 
-                {/* Section 2: Additional Relevant Information */}
-                <div className="space-y-2 pt-1">
-                  <p className="text-xs font-bold text-[#336D9F]">
-                    Please provide any other information that you think may be relevant. If there is nothing, please add N/A below.
-                  </p>
-                  <FieldTooltip content="Provide any other relevant mitigation details, technology descriptions, or N/A.">
+                  <div>
+                    <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 mb-1">
+                      <span>Actual Realized Progress</span>
+                      <span className="font-bold text-emerald-700">{formActualProgress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-[#004B87] to-[#00875A] rounded-full transition-all"
+                        style={{ width: `${Math.min(100, Math.max(0, Number(formActualProgress)))}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ================================================================ */}
+          {/* STEP 2: PROGRESS & STATUS */}
+          {/* ================================================================ */}
+          {activeTab === 'progress-status' && (
+            <div className="space-y-5">
+
+              {/* Budget & Financial Information */}
+              <div>
+                <h4 className="text-xs font-bold text-[#336D9F] mb-3">
+                  Budget & Financial Information
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {/* Budget */}
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                      Budget
+                    </label>
+                    <FieldTooltip content="Total financial budget amount allocated for the project." example="AED 3,200,000,000">
+                      <input
+                        type="text"
+                        readOnly={isReadOnly}
+                        disabled={isReadOnly}
+                        value={formBudget}
+                        onChange={(e) => setFormBudget(e.target.value)}
+                        placeholder="e.g. AED 3,200,000,000"
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#336D9F] shadow-xs text-xs"
+                      />
+                    </FieldTooltip>
+                  </div>
+
+                  {/* Budget Type */}
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                      Budget Type
+                    </label>
+                    <FieldTooltip content="Funding classification / capital expenditure model for this initiative." example="CAPEX">
+                      {isReadOnly ? (
+                        <input
+                          type="text"
+                          readOnly
+                          disabled
+                          value={formBudgetType}
+                          className="w-full px-3.5 py-2 bg-[#F1F5F9] border border-slate-200 rounded-lg text-slate-700 font-semibold text-xs cursor-not-allowed"
+                        />
+                      ) : (
+                        <select
+                          value={formBudgetType}
+                          onChange={(e) => setFormBudgetType(e.target.value)}
+                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#336D9F] shadow-xs cursor-pointer text-xs"
+                        >
+                          {CCRP_BUDGET_TYPES.map((bt) => (
+                            <option key={bt} value={bt}>
+                              {bt}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </FieldTooltip>
+                  </div>
+
+                  {/* Budget Status */}
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                      Budget Status
+                    </label>
+                    <FieldTooltip content="Current appropriation status of the financial budget." example="Allocated">
+                      {isReadOnly ? (
+                        <input
+                          type="text"
+                          readOnly
+                          disabled
+                          value={formBudgetStatus}
+                          className="w-full px-3.5 py-2 bg-[#F1F5F9] border border-slate-200 rounded-lg text-slate-700 font-semibold text-xs cursor-not-allowed"
+                        />
+                      ) : (
+                        <select
+                          value={formBudgetStatus}
+                          onChange={(e) => setFormBudgetStatus(e.target.value)}
+                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#336D9F] shadow-xs cursor-pointer text-xs"
+                        >
+                          {CCRP_BUDGET_STATUSES.map((bs) => (
+                            <option key={bs} value={bs}>
+                              {bs}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </FieldTooltip>
+                  </div>
+                </div>
+              </div>
+
+              {/* Challenges & Escalation */}
+              <div>
+                <h4 className="text-xs font-bold text-[#336D9F] mb-3">
+                  Challenges & Escalation
+                </h4>
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                    Challenges
+                  </label>
+                  <FieldTooltip content="Detail any operational, technical, financial, or supply chain bottlenecks encountered during this period.">
                     <textarea
                       rows={3}
-                      value={mitigationAdditionalInfo}
-                      placeholder="Please provide any other relevant mitigation details, or enter N/A..."
-                      onChange={(e) => setMitigationAdditionalInfo(e.target.value)}
-                      className="w-full p-3 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-[#004B87] shadow-xs leading-relaxed"
+                      readOnly={isReadOnly}
+                      disabled={isReadOnly}
+                      value={formChallenges}
+                      onChange={(e) => setFormChallenges(e.target.value)}
+                      placeholder="Describe any challenges or roadblocks faced during execution..."
+                      className="w-full p-3.5 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#336D9F] shadow-xs leading-relaxed text-xs"
                     />
+                  </FieldTooltip>
+                </div>
+
+                {/* Climate Change Committee Escalation Question */}
+                <div className="mt-3 flex items-center gap-3 select-none flex-nowrap">
+                  <label className="text-slate-700 font-semibold text-xs whitespace-nowrap">
+                    Does the challenge need to be raised to the Climate Change Committee?
+                  </label>
+                  <FieldTooltip content="Escalate critical inter-entity blockers or policy barriers directly to the Climate Change Committee." className="inline-flex items-center">
+                    <div className="flex items-center gap-2 select-none shrink-0">
+                      <span
+                        onClick={() => !isReadOnly && setFormRaiseToCommittee('No')}
+                        className={`text-xs transition-colors select-none ${
+                          !isReadOnly ? 'cursor-pointer' : 'cursor-default'
+                        } ${
+                          formRaiseToCommittee === 'No'
+                            ? 'text-slate-800 font-bold'
+                            : 'text-slate-400 font-medium'
+                        }`}
+                      >
+                        No
+                      </span>
+                      <button
+                        type="button"
+                        disabled={isReadOnly}
+                        onClick={() =>
+                          setFormRaiseToCommittee((prev) => (prev === 'Yes' ? 'No' : 'Yes'))
+                        }
+                        className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors cursor-pointer shrink-0 ${
+                          isReadOnly ? 'cursor-default opacity-80' : 'cursor-pointer hover:opacity-95'
+                        } ${formRaiseToCommittee === 'Yes' ? 'bg-[#004B87]' : 'bg-slate-300'}`}
+                      >
+                        <div
+                          className={`bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform ${
+                            formRaiseToCommittee === 'Yes' ? 'translate-x-4' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                      <span
+                        onClick={() => !isReadOnly && setFormRaiseToCommittee('Yes')}
+                        className={`text-xs transition-colors select-none ${
+                          !isReadOnly ? 'cursor-pointer' : 'cursor-default'
+                        } ${
+                          formRaiseToCommittee === 'Yes'
+                            ? 'text-[#004B87] font-bold'
+                            : 'text-slate-400 font-medium'
+                        }`}
+                      >
+                        Yes
+                      </span>
+                    </div>
                   </FieldTooltip>
                 </div>
               </div>
-            )}
 
-            {/* TAB 3: DATA MANAGEMENT & QA/QC */}
-            {activeTab === 'qa-qc' && (
-              <div className="space-y-[18px]">
-                {/* Internal QA/QC Methodology */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#336D9F]">
-                      Internal QA/QC Methodology
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 font-medium">
-                    Provide a detailed description of the internal QA/QC methodology applied for all source streams and sources
-                  </p>
-                  <FieldTooltip content="Detailed description of the internal QA/QC methodology applied for all source streams and sources.">
-                    <textarea
-                      rows={4}
-                      value={qaVerificationDesc}
-                      placeholder="Provide a detailed description of the internal QA/QC methodology applied for all source streams and sources..."
-                      onChange={(e) => setQaVerificationDesc(e.target.value)}
-                      className="w-full p-3 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-[#004B87] shadow-xs leading-relaxed"
-                    />
-                  </FieldTooltip>
-                </div>
+              {/* Activities / Outcomes / Output */}
+              <div>
+                <h4 className="text-xs font-bold text-[#336D9F] mb-1.5">
+                  Activities / Outcomes / Output
+                </h4>
+                <FieldTooltip content="Key operational deliverables, tangible outputs completed, and outcomes achieved during this reporting period.">
+                  <textarea
+                    rows={3}
+                    readOnly={isReadOnly}
+                    disabled={isReadOnly}
+                    value={formActivitiesOutcomesOutput}
+                    onChange={(e) => setFormActivitiesOutcomesOutput(e.target.value)}
+                    placeholder="Detail key activities carried out, milestone deliverables, and tangible outcomes achieved..."
+                    className="w-full p-3.5 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#336D9F] shadow-xs leading-relaxed text-xs"
+                  />
+                </FieldTooltip>
+              </div>
 
-                {/* Section 2: Data Gaps */}
-                <div className="rounded-xl border border-slate-200/90 overflow-hidden bg-white shadow-2xs">
-                  <div className="px-3.5 py-2.5 bg-[#F4F6F8] border-b border-slate-200/80 flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#336D9F]">Data Gaps</span>
-                  </div>
+              {/* Comments */}
+              <div>
+                <h4 className="text-xs font-bold text-[#336D9F] mb-1.5">
+                  Comments
+                </h4>
+                <FieldTooltip content="Additional stakeholder comments, strategic notes, or forward-looking updates.">
+                  <textarea
+                    rows={3}
+                    readOnly={isReadOnly}
+                    disabled={isReadOnly}
+                    value={formComments}
+                    onChange={(e) => setFormComments(e.target.value)}
+                    placeholder="Enter any additional remarks, strategic notes, or general commentary..."
+                    className="w-full p-3.5 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#336D9F] shadow-xs leading-relaxed text-xs"
+                  />
+                </FieldTooltip>
+              </div>
+            </div>
+          )}
 
-                  <div className="p-3.5 bg-white space-y-3">
-                    <div className="overflow-x-auto rounded-xl border border-slate-200">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead>
-                          <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold whitespace-nowrap">
-                            <th className="py-2.5 px-3 min-w-[180px]">Source Stream / ID</th>
-                            <th className="py-2.5 px-3 min-w-[130px]">From</th>
-                            <th className="py-2.5 px-3 min-w-[130px]">Until</th>
-                            <th className="py-2.5 px-3 min-w-[240px]">Description, Reasons And Methods</th>
-                            <th className="py-2.5 px-3 min-w-[170px]">Estimated Emissions (t CO₂e)</th>
-                            <th className="py-2.5 px-3 min-w-[210px]">Source Of Estimated Emissions</th>
-                            <th className="py-2.5 px-3 text-center min-w-[65px]">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 bg-white">
-                          {qaDataGaps.length === 0 ? (
-                            <tr>
-                              <td colSpan={7} className="py-5 text-center text-slate-400 font-medium">
-                                No data gaps reported for this reporting period. Click &ldquo;Add Data Gap&rdquo; above if any gaps occurred.
-                              </td>
-                            </tr>
-                          ) : (
-                            qaDataGaps.map((gap, idx) => (
-                              <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Source stream ID or emission point experiencing the data gap." example="S05 - Flare Vent">
-                                    <input
-                                      type="text"
-                                      value={gap.sourceStream || ''}
-                                      placeholder="e.g. S05 - Flare Vent"
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setQaDataGaps((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].sourceStream = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Start date of data gap outage period." format="DD-MMM-YYYY" example="01-Jan-2026">
-                                    <input
-                                      type="text"
-                                      value={gap.fromDate || ''}
-                                      placeholder="01-Jan-2026"
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setQaDataGaps((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].fromDate = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="End date of data gap outage period." format="DD-MMM-YYYY" example="15-Jan-2026">
-                                    <input
-                                      type="text"
-                                      value={gap.untilDate || ''}
-                                      placeholder="15-Jan-2026"
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setQaDataGaps((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].untilDate = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Explanation of root cause and estimation method applied." example="CEMS downtime">
-                                    <input
-                                      type="text"
-                                      value={gap.description || ''}
-                                      placeholder="e.g. CEMS downtime"
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setQaDataGaps((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].description = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Conservative estimated GHG emissions during data gap." unit="t CO₂e" example="12.40">
-                                    <input
-                                      type="text"
-                                      value={gap.estimatedEmissions || ''}
-                                      placeholder="12.40"
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setQaDataGaps((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].estimatedEmissions = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left font-mono focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Surrogate data source or historical benchmark applied." example="Similar period avg">
-                                    <input
-                                      type="text"
-                                      value={gap.sourceOfEstimate || ''}
-                                      placeholder="e.g. Similar period avg"
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setQaDataGaps((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].sourceOfEstimate = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-                                <td className="py-2 px-3 text-center">
-                                  {idx === 0 ? (
-                                    <button
-                                      type="button"
-                                      onClick={addQaDataGap}
-                                      className="w-6 h-6 rounded-full bg-sky-50 text-[#004B87] hover:bg-[#004B87] hover:text-white flex items-center justify-center mx-auto transition-colors border border-sky-200 cursor-pointer"
-                                      title="Add Data Gap"
-                                    >
-                                      <Plus className="w-3.5 h-3.5" />
-                                    </button>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      onClick={() => removeQaDataGap(idx)}
-                                      className="w-6 h-6 rounded-full bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white flex items-center justify-center mx-auto transition-colors border border-rose-200 cursor-pointer"
-                                      title="Remove Gap"
-                                    >
-                                      <X className="w-3.5 h-3.5" />
-                                    </button>
-                                  )}
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
+          {/* ================================================================ */}
+          {/* STEP 3: GHG EMISSIONS (PILLAR-AWARE DYNAMIC) */}
+          {/* ================================================================ */}
+          {activeTab === 'ghg-emissions' && (
+            <div className="space-y-5">
+              {isGhgOptional && (
+                <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl flex items-start gap-2.5 text-xs text-purple-900">
+                  <Info className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold">Cross Cutting Pillar Initiative:</span> GHG emissions reduction metrics are optional. Complete if your multi-sectoral initiative generates quantified decarbonization impacts.
                   </div>
                 </div>
+              )}
 
-                {/* Section 3: Management Responsibilities */}
-                <div className="rounded-xl border border-slate-200/90 overflow-hidden bg-white shadow-2xs">
-                  <div className="px-3.5 py-2.5 bg-[#F4F6F8] border-b border-slate-200/80 flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#336D9F]">Management Responsibilities</span>
-                  </div>
-
-                  <div className="p-3.5 bg-white space-y-3">
-                    <div className="overflow-x-auto rounded-xl border border-slate-200">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead>
-                          <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold whitespace-nowrap">
-                            <th className="py-2.5 px-3 min-w-[280px]">Job Title / Post</th>
-                            <th className="py-2.5 px-3 min-w-[500px]">Responsibilities</th>
-                            <th className="py-2.5 px-3 text-center min-w-[65px]">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 bg-white">
-                          {qaManagementResp.length === 0 ? (
-                            <tr>
-                              <td colSpan={3} className="py-5 text-center text-slate-400 font-medium">
-                                No management responsibilities defined yet. Click &ldquo;Add Responsibility&rdquo; above to assign roles.
-                              </td>
-                            </tr>
-                          ) : (
-                            qaManagementResp.map((resp, idx) => (
-                              <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Organizational job title or designated role." example="GHG Manager">
-                                    <input
-                                      type="text"
-                                      value={resp.jobTitle || ''}
-                                      placeholder="e.g. GHG Manager"
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setQaManagementResp((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].jobTitle = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Specific MRV compliance and data governance responsibilities." example="Supervise MRV operations, review activity registers">
-                                    <input
-                                      type="text"
-                                      value={resp.responsibilities || ''}
-                                      placeholder="e.g. Supervise MRV operations, review activity registers"
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setQaManagementResp((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].responsibilities = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-                                <td className="py-2 px-3 text-center">
-                                  {idx === 0 ? (
-                                    <button
-                                      type="button"
-                                      onClick={addQaManagementResp}
-                                      className="w-6 h-6 rounded-full bg-sky-50 text-[#004B87] hover:bg-[#004B87] hover:text-white flex items-center justify-center mx-auto transition-colors border border-sky-200 cursor-pointer"
-                                      title="Add Responsibility"
-                                    >
-                                      <Plus className="w-3.5 h-3.5" />
-                                    </button>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      onClick={() => removeQaManagementResp(idx)}
-                                      className="w-6 h-6 rounded-full bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white flex items-center justify-center mx-auto transition-colors border border-rose-200 cursor-pointer"
-                                      title="Remove Responsibility"
-                                    >
-                                      <X className="w-3.5 h-3.5" />
-                                    </button>
-                                  )}
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
+              {isGhgNotRequired && (
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-start gap-2.5 text-xs text-slate-700">
+                  <Info className="w-4 h-4 text-[#004B87] shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold">{formPillar} Pillar Focus:</span> GHG emissions reduction metrics are not required for {formPillar} initiatives. Reporting for this initiative focuses on qualitative indicators, resilience benchmarks, and progress milestones.
                   </div>
                 </div>
+              )}
 
-                {/* Section 4: Quality Assurance Procedures */}
-                <div className="rounded-xl border border-slate-200/90 overflow-hidden bg-white shadow-2xs">
-                  <div className="px-3.5 py-2.5 bg-[#F4F6F8] border-b border-slate-200/80 flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#336D9F]">Quality Assurance Procedures</span>
+              {/* GHG Input Fields */}
+              <div>
+                <h4 className="text-xs font-bold text-[#336D9F] mb-3">
+                  Greenhouse Gas Emission Reduction Metrics (Metric tonnes CO₂e)
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {/* Planned GHG Emissions Reduction */}
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                      Planned GHG Emissions Reduction (Metric tonnes) {isGhgMandatory ? '*' : '(If applicable)'}
+                    </label>
+                    <FieldTooltip content="Target planned annual greenhouse gas reduction in metric tonnes CO₂e from Climate Change Strategy baseline." example="142,800">
+                      <input
+                        type="text"
+                        readOnly={isReadOnly}
+                        disabled={isReadOnly}
+                        value={formPlannedGhgReduction}
+                        onChange={(e) => setFormPlannedGhgReduction(e.target.value)}
+                        placeholder="e.g. 142,800"
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-bold focus:outline-none focus:border-[#336D9F] shadow-xs text-xs"
+                      />
+                    </FieldTooltip>
                   </div>
 
-                  <div className="p-3.5 bg-white space-y-4">
-                    <div className="overflow-x-auto rounded-xl border border-slate-200">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead>
-                          <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold whitespace-nowrap">
-                            <th className="py-2.5 px-3 min-w-[180px]">Title of Procedure</th>
-                            <th className="py-2.5 px-3 min-w-[160px]">Reference for Procedure</th>
-                            <th className="py-2.5 px-3 min-w-[260px]">Brief Description of Procedure</th>
-                            <th className="py-2.5 px-3 min-w-[200px]">Post / Department Responsible</th>
-                            <th className="py-2.5 px-3 min-w-[200px]">Location Where Records Are Kept</th>
-                            <th className="py-2.5 px-3 text-center min-w-[65px]">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 bg-white">
-                          {qaProcedures.length === 0 ? (
-                            <tr>
-                              <td colSpan={6} className="py-5 text-center text-slate-400 font-medium">
-                                No QA procedures configured yet. Click &ldquo;Add Procedure&rdquo; above to define quality assurance protocols.
-                              </td>
-                            </tr>
-                          ) : (
-                            qaProcedures.map((proc, idx) => (
-                              <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Formal title of written quality assurance procedure." example="ETS QA/QC of MI">
-                                    <input
-                                      type="text"
-                                      value={proc.procedureTitle || ''}
-                                      placeholder="e.g. ETS QA/QC of MI"
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setQaProcedures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].procedureTitle = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Document control reference code." format="EAD_QA_QC_XX" example="EAD_QA_QC_01">
-                                    <input
-                                      type="text"
-                                      value={proc.reference || ''}
-                                      placeholder="e.g. EAD_QA_QC_01"
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setQaProcedures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].reference = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left font-mono focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Summary of quality assurance controls and calibration checks.">
-                                    <input
-                                      type="text"
-                                      value={proc.briefDescription || ''}
-                                      placeholder="e.g. Quality control procedures for measure"
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setQaProcedures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].briefDescription = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Internal operating department executing the procedure." example="Measurement & Control">
-                                    <input
-                                      type="text"
-                                      value={proc.responsibleDept || ''}
-                                      placeholder="e.g. Measurement & Control"
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setQaProcedures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].responsibleDept = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Physical or digital storage location of QA logs and calibration certificates." example="QA/QC Records Archive">
-                                    <input
-                                      type="text"
-                                      value={proc.recordStorage || ''}
-                                      placeholder="e.g. QA/QC Records"
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setQaProcedures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].recordStorage = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-                                <td className="py-2 px-3 text-center">
-                                  {idx === 0 ? (
-                                    <button
-                                      type="button"
-                                      onClick={addQaProcedure}
-                                      className="w-6 h-6 rounded-full bg-sky-50 text-[#004B87] hover:bg-[#004B87] hover:text-white flex items-center justify-center mx-auto transition-colors border border-sky-200 cursor-pointer"
-                                      title="Add Procedure"
-                                    >
-                                      <Plus className="w-3.5 h-3.5" />
-                                    </button>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      onClick={() => removeQaProcedure(idx)}
-                                      className="w-6 h-6 rounded-full bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white flex items-center justify-center mx-auto transition-colors border border-rose-200 cursor-pointer"
-                                      title="Remove Procedure"
-                                    >
-                                      <X className="w-3.5 h-3.5" />
-                                    </button>
-                                  )}
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Diagram References (Optional) */}
-                    <div className="pt-2 border-t border-slate-100 space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div>
-                          <h4 className="text-xs font-bold text-[#336D9F]">Diagram References (Optional)</h4>
-                          <p className="text-[11px] text-slate-500">Attach diagram-related workflows, schematics, or architecture documents for the QA procedures.</p>
-                        </div>
-                        <div>
-                          <input
-                            type="file"
-                            ref={qaDiagramInputRef}
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                setQaDiagramFiles((prev) => [
-                                  ...prev,
-                                  {
-                                    id: `qa-${Date.now()}`,
-                                    name: file.name,
-                                    size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-                                    uploadDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-                                  },
-                                ]);
-                              }
-                            }}
-                          />
-                          <FieldTooltip content="Upload schematics, calibration flowcharts, or QA procedure diagrams.">
-                            <button
-                              type="button"
-                              onClick={() => qaDiagramInputRef.current?.click()}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#004B87] hover:bg-[#003B6B] text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-                            >
-                              <Upload className="w-3.5 h-3.5" />
-                              Upload Diagram / Supporting File
-                            </button>
-                          </FieldTooltip>
-                        </div>
-                      </div>
-
-                      {qaDiagramFiles.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
-                          {qaDiagramFiles.map((f) => (
-                            <div
-                              key={f.id}
-                              className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100/70 transition-colors"
-                            >
-                              <div className="flex items-center gap-2.5 overflow-hidden">
-                                <div className="w-8 h-8 rounded-lg bg-sky-100 text-[#004B87] flex items-center justify-center shrink-0 border border-sky-200">
-                                  <FileText className="w-4 h-4" />
-                                </div>
-                                <div className="truncate">
-                                  <p className="text-xs font-semibold text-slate-800 truncate" title={f.name}>{f.name}</p>
-                                  <p className="text-[10px] text-slate-500">{f.size} • {f.uploadDate}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1 shrink-0 ml-2">
-                                <button
-                                  type="button"
-                                  onClick={() => setPreviewModalFile({ name: f.name })}
-                                  className="px-2 py-1 text-slate-600 hover:text-[#004B87] hover:bg-white rounded-md text-xs font-medium flex items-center gap-1 border border-slate-200 cursor-pointer"
-                                >
-                                  <Eye className="w-3 h-3" />
-                                  Preview
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setQaDiagramFiles((prev) => prev.filter((item) => item.id !== f.id))}
-                                  className="p-1 text-slate-400 hover:text-rose-600 rounded-md cursor-pointer"
-                                  title="Remove file"
-                                >
-                                  <X className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                  {/* Actual Annual Emission Reduction */}
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                      Actual Annual Emission Reduction (Metric tonnes) {isGhgMandatory ? '*' : '(If applicable)'}
+                    </label>
+                    <FieldTooltip content="Realized annual emissions reduction achieved in metric tonnes CO₂e." example="138,500">
+                      <input
+                        type="text"
+                        readOnly={isReadOnly}
+                        disabled={isReadOnly}
+                        value={formActualAnnualEmissionReduction}
+                        onChange={(e) => setFormActualAnnualEmissionReduction(e.target.value)}
+                        placeholder="e.g. 138,500"
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-bold focus:outline-none focus:border-[#336D9F] shadow-xs text-xs"
+                      />
+                    </FieldTooltip>
                   </div>
-                </div>
-
-                {/* Section 5: Internal Review & Validation */}
-                <div className="rounded-xl border border-slate-200/90 overflow-hidden bg-white shadow-2xs">
-                  <div className="px-3.5 py-2.5 bg-[#F4F6F8] border-b border-slate-200/80 flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#336D9F]">Internal Review & Validation</span>
-                  </div>
-
-                  <div className="p-3.5 bg-white space-y-4">
-                    <div className="overflow-x-auto rounded-xl border border-slate-200">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead>
-                          <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold whitespace-nowrap">
-                            <th className="py-2.5 px-3 min-w-[180px]">Title of Procedure</th>
-                            <th className="py-2.5 px-3 min-w-[160px]">Reference for Procedure</th>
-                            <th className="py-2.5 px-3 min-w-[260px]">Brief Description of Procedure</th>
-                            <th className="py-2.5 px-3 min-w-[200px]">Post / Department Responsible</th>
-                            <th className="py-2.5 px-3 min-w-[200px]">Location Where Records Are Kept</th>
-                            <th className="py-2.5 px-3 text-center min-w-[65px]">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 bg-white">
-                          {internalReviewProcedures.length === 0 ? (
-                            <tr>
-                              <td colSpan={6} className="py-5 text-center text-slate-400 font-medium">
-                                No internal review procedures configured yet. Click &ldquo;Add Procedure&rdquo; above to record review protocols.
-                              </td>
-                            </tr>
-                          ) : (
-                            internalReviewProcedures.map((proc, idx) => (
-                              <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Title of four-eye internal data review procedure." example="ETS Data Validation">
-                                    <input
-                                      type="text"
-                                      value={proc.procedureTitle || ''}
-                                      placeholder="e.g. ETS Data Validation"
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setInternalReviewProcedures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].procedureTitle = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Internal standard operating procedure reference code." example="EAD_VAL_01">
-                                    <input
-                                      type="text"
-                                      value={proc.reference || ''}
-                                      placeholder="e.g. EAD_VAL_01"
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setInternalReviewProcedures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].reference = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left font-mono focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Summary of data review and validation workflow steps.">
-                                    <input
-                                      type="text"
-                                      value={proc.briefDescription || ''}
-                                      placeholder="e.g. Independent cross-check of data logs"
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setInternalReviewProcedures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].briefDescription = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Department responsible for independent review." example="Measurement & Control">
-                                    <input
-                                      type="text"
-                                      value={proc.responsibleDept || ''}
-                                      placeholder="e.g. Measurement & Control"
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setInternalReviewProcedures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].responsibleDept = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-                                <td className="py-2 px-3">
-                                  <FieldTooltip content="Secure repository where signed validation logs are archived." example="Validation Records Archive">
-                                    <input
-                                      type="text"
-                                      value={proc.recordStorage || ''}
-                                      placeholder="e.g. Validation Records"
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setInternalReviewProcedures((prev) => {
-                                          const copy = [...prev];
-                                          copy[idx].recordStorage = val;
-                                          return copy;
-                                        });
-                                      }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs text-left focus:outline-none focus:border-[#004B87]"
-                                    />
-                                  </FieldTooltip>
-                                </td>
-                                <td className="py-2 px-3 text-center">
-                                  {idx === 0 ? (
-                                    <button
-                                      type="button"
-                                      onClick={addInternalReviewProcedure}
-                                      className="w-6 h-6 rounded-full bg-sky-50 text-[#004B87] hover:bg-[#004B87] hover:text-white flex items-center justify-center mx-auto transition-colors border border-sky-200 cursor-pointer"
-                                      title="Add Procedure"
-                                    >
-                                      <Plus className="w-3.5 h-3.5" />
-                                    </button>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      onClick={() => removeInternalReviewProcedure(idx)}
-                                      className="w-6 h-6 rounded-full bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white flex items-center justify-center mx-auto transition-colors border border-rose-200 cursor-pointer"
-                                      title="Remove Procedure"
-                                    >
-                                      <X className="w-3.5 h-3.5" />
-                                    </button>
-                                  )}
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Diagram References (Optional) */}
-                    <div className="pt-2 border-t border-slate-100 space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div>
-                          <h4 className="text-xs font-bold text-[#336D9F]">Diagram References (Optional)</h4>
-                          <p className="text-[11px] text-slate-500">Attach diagram-related workflows, review trees, or validation process schematics for internal review procedures.</p>
-                        </div>
-                        <div>
-                          <input
-                            type="file"
-                            ref={internalReviewInputRef}
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                setInternalReviewFiles((prev) => [
-                                  ...prev,
-                                  {
-                                    id: `ir-${Date.now()}`,
-                                    name: file.name,
-                                    size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-                                    uploadDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-                                  },
-                                ]);
-                              }
-                            }}
-                          />
-                          <FieldTooltip content="Upload validation workflows, review trees, or schematic files.">
-                            <button
-                              type="button"
-                              onClick={() => internalReviewInputRef.current?.click()}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#004B87] hover:bg-[#003B6B] text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-                            >
-                              <Upload className="w-3.5 h-3.5" />
-                              Upload Diagram / Supporting File
-                            </button>
-                          </FieldTooltip>
-                        </div>
-                      </div>
-
-                      {internalReviewFiles.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
-                          {internalReviewFiles.map((f) => (
-                            <div
-                              key={f.id}
-                              className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100/70 transition-colors"
-                            >
-                              <div className="flex items-center gap-2.5 overflow-hidden">
-                                <div className="w-8 h-8 rounded-lg bg-sky-100 text-[#004B87] flex items-center justify-center shrink-0 border border-sky-200">
-                                  <FileText className="w-4 h-4" />
-                                </div>
-                                <div className="truncate">
-                                  <p className="text-xs font-semibold text-slate-800 truncate" title={f.name}>{f.name}</p>
-                                  <p className="text-[10px] text-slate-500">{f.size} • {f.uploadDate}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1 shrink-0 ml-2">
-                                <button
-                                  type="button"
-                                  onClick={() => setPreviewModalFile({ name: f.name })}
-                                  className="px-2 py-1 text-slate-600 hover:text-[#004B87] hover:bg-white rounded-md text-xs font-medium flex items-center gap-1 border border-slate-200 cursor-pointer"
-                                >
-                                  <Eye className="w-3 h-3" />
-                                  Preview
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setInternalReviewFiles((prev) => prev.filter((item) => item.id !== f.id))}
-                                  className="p-1 text-slate-400 hover:text-rose-600 rounded-md cursor-pointer"
-                                  title="Remove file"
-                                >
-                                  <X className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section 6: Additional Details */}
-                <div className="space-y-2 pt-1">
-                  <p className="text-xs font-bold text-[#336D9F]">
-                    Please provide any further details pertaining to quality control / quality assurance that you think may be relevant
-                  </p>
-                  <FieldTooltip content="Enter any additional quality control or quality assurance details, or note N/A.">
-                    <textarea
-                      rows={4}
-                      value={qaFurtherDetails}
-                      onChange={(e) => setQaFurtherDetails(e.target.value)}
-                      placeholder="Enter any additional quality control / quality assurance details..."
-                      className="w-full p-3 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-[#004B87] shadow-xs leading-relaxed"
-                    />
-                  </FieldTooltip>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* TAB 4: SUPPORT DOCUMENTS & SUBMIT */}
-            {activeTab === 'review-submit' && (
-              <div className="space-y-4 pt-1">
-                {/* Supporting Documents Upload (Facility Registration Style) */}
-                <div>
-                  <h4 className="text-xs font-bold text-[#336D9F] mb-2.5">
-                    Supporting Documents
+          {/* ================================================================ */}
+          {/* STEP 4: SUPPORTING DOCUMENTS & SUBMIT */}
+          {/* ================================================================ */}
+          {activeTab === 'supporting-submit' && (
+            <div className="space-y-5">
+              {/* Supporting Documents Upload */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-xs font-bold text-[#336D9F]">
+                    Supporting Documents & Evidence
                   </h4>
-                  <FieldTooltip content="Upload official statutory attachments including verification statements, CEMS calibration logs, lab reports, or calculation sheets." format="PDF, PNG, JPG, XLSX (Max 25MB)">
-                    <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
-                      {/* Upload Input Area */}
+                  <span className={`text-[11px] font-medium ${isEvidenceMandatory ? 'text-rose-600 font-bold' : 'text-slate-500 italic'}`}>
+                    {isEvidenceMandatory
+                      ? '(Mandatory for final closing report / completed submission)'
+                      : '(Optional while initiative is in progress)'}
+                  </span>
+                </div>
+
+                <FieldTooltip content="Upload initiative progress reports, telemetry extracts, commissioning certificates, or third-party audit statements." format="PDF, PNG, JPG (Max 25MB)">
+                  <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+                    {/* Upload Input Button Area */}
+                    {!isReadOnly && (
                       <div
-                        onClick={() => supportingDocsInputRef.current?.click()}
+                        onClick={() => fileInputRef.current?.click()}
                         className="border border-dashed border-sky-300 bg-sky-50/40 hover:bg-sky-50/70 rounded-lg px-4 py-2 flex items-center justify-between gap-3 shrink-0 cursor-pointer transition-colors min-w-[280px]"
                       >
-                        <input
-                          type="file"
-                          ref={supportingDocsInputRef}
-                          multiple
-                          className="hidden"
-                          onChange={handleSupportingDocsUpload}
-                          accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"
-                        />
                         <div className="flex items-center gap-2 text-slate-600 text-xs font-medium">
                           <Upload className="w-4 h-4 text-slate-500 shrink-0" />
-                          <span className="whitespace-nowrap">Drag and drop files here or upload</span>
+                          <span className="whitespace-nowrap">Upload progress evidence files</span>
                         </div>
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            supportingDocsInputRef.current?.click();
+                            fileInputRef.current?.click();
                           }}
                           className="px-3.5 py-1.5 bg-white border border-slate-300 hover:border-slate-400 text-xs font-bold text-slate-700 rounded-lg shadow-2xs transition-colors shrink-0 cursor-pointer"
                         >
                           Upload
                         </button>
                       </div>
+                    )}
 
-                      {/* Remaining area: Uploaded documents in horizontal scrolling chips */}
-                      <div className="flex-1 min-w-0 flex items-center gap-2.5 overflow-x-auto py-1 no-scrollbar">
-                        {supportingDocsFiles && supportingDocsFiles.length > 0 ? (
-                          supportingDocsFiles.map((file: any, idx: number) => (
-                            <div
-                              key={file.id || idx}
-                              className="border border-slate-200 bg-white rounded-lg py-1.5 px-3 flex items-center gap-2.5 shadow-2xs shrink-0 max-w-[240px] hover:border-slate-300 transition-all"
-                            >
-                              <div className="w-7 h-7 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center shrink-0">
-                                <FileText className="w-3.5 h-3.5 text-rose-600" />
+                    {/* Attached Files List */}
+                    <div className="flex-1 min-w-0 flex items-center gap-2.5 overflow-x-auto py-1 no-scrollbar">
+                      {formSupportingDocs.length > 0 ? (
+                        formSupportingDocs.map((file, idx) => (
+                          <div
+                            key={file.id || idx}
+                            className="border border-slate-200 bg-white rounded-lg py-1.5 px-3 flex items-center gap-2.5 shadow-2xs shrink-0 max-w-[260px] hover:border-slate-300 transition-all"
+                          >
+                            <div className="w-7 h-7 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center shrink-0">
+                              <FileText className="w-3.5 h-3.5 text-rose-600" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-bold text-slate-800 truncate" title={file.name}>
+                                {file.name}
                               </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="text-xs font-bold text-slate-800 truncate" title={file.name}>
-                                  {file.name}
-                                </div>
-                                <div className="text-[10px] text-slate-400 flex items-center gap-1.5 font-medium">
-                                  <span>{file.size}</span>
-                                  <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                  <span className="text-emerald-600 font-bold">{file.status || 'Completed'}</span>
-                                </div>
+                              <div className="text-[10px] text-slate-400 flex items-center gap-1.5 font-medium">
+                                <span>{file.size}</span>
+                                <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                <span className="text-emerald-600 font-bold">Uploaded</span>
                               </div>
+                            </div>
+                            {!isReadOnly && (
                               <button
                                 type="button"
                                 onClick={() =>
-                                  setSupportingDocsFiles((prev) => prev.filter((_: any, i: number) => i !== idx))
+                                  setFormSupportingDocs((prev) => prev.filter((_, i) => i !== idx))
                                 }
                                 className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer shrink-0"
                                 title="Remove file"
                               >
                                 <X className="w-3.5 h-3.5" />
                               </button>
-                            </div>
-                          ))
-                        ) : (
-                          <span className="text-xs text-slate-400 italic">No files attached yet</span>
-                        )}
-                      </div>
-                    </div>
-                  </FieldTooltip>
-                </div>
-
-                {/* Section 2: Final Declaration */}
-                <div className="rounded-xl border border-slate-200/90 overflow-hidden bg-white shadow-2xs">
-                  <div className="px-3.5 py-2.5 bg-[#F4F6F8] border-b border-slate-200/80 flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#336D9F]">Final Declaration</span>
-                  </div>
-                  <div className="p-3.5 sm:p-4 bg-white space-y-4">
-                    <div className="space-y-2.5">
-                      <label className="flex items-start gap-2.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={declarationChecks.check1}
-                          onChange={(e) => setDeclarationChecks({ ...declarationChecks, check1: e.target.checked })}
-                          className="w-4 h-4 mt-0.5 text-[#004B87] rounded cursor-pointer shrink-0"
-                        />
-                        <span className="text-xs text-slate-700 leading-snug">
-                          I confirm that the annual emission data provided is complete, true and accurate to the best of my knowledge.
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">
+                          No evidence attached yet {isEvidenceMandatory ? '(Required before final submission)' : '(Optional)'}
                         </span>
-                      </label>
-
-                      <label className="flex items-start gap-2.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={declarationChecks.check2}
-                          onChange={(e) => setDeclarationChecks({ ...declarationChecks, check2: e.target.checked })}
-                          className="w-4 h-4 mt-0.5 text-[#004B87] rounded cursor-pointer shrink-0"
-                        />
-                        <span className="text-xs text-slate-700 leading-snug">
-                          I understand that submitting false or misleading information may result in regulatory action by the Environment Agency – Abu Dhabi.
-                        </span>
-                      </label>
-
-                      <label className="flex items-start gap-2.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={declarationChecks.check3}
-                          onChange={(e) => setDeclarationChecks({ ...declarationChecks, check3: e.target.checked })}
-                          className="w-4 h-4 mt-0.5 text-[#004B87] rounded cursor-pointer shrink-0"
-                        />
-                        <span className="text-xs text-slate-700 leading-snug">
-                          I agree to submit this Annual Emission Data to the Environment Agency – Abu Dhabi.
-                        </span>
-                      </label>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-2">
-                      <div>
-                        <label className="block text-slate-600 font-semibold mb-1 text-xs">Name</label>
-                        <FieldTooltip content="Full legal name of authorized facility operator representative." example="Ahmed Al-Zaabi">
-                          <input
-                            type="text"
-                            value={declarationForm.name}
-                            placeholder="Enter full name of authorized operator"
-                            onChange={(e) => setDeclarationForm({ ...declarationForm, name: e.target.value })}
-                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-[#004B87]"
-                          />
-                        </FieldTooltip>
-                      </div>
-                      <div>
-                        <label className="block text-slate-600 font-semibold mb-1 text-xs">Designation</label>
-                        <FieldTooltip content="Official corporate designation or title of signatory." example="Senior Compliance & MRV Lead">
-                          <input
-                            type="text"
-                            value={declarationForm.designation}
-                            placeholder="Enter job designation / title"
-                            onChange={(e) => setDeclarationForm({ ...declarationForm, designation: e.target.value })}
-                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-[#004B87]"
-                          />
-                        </FieldTooltip>
-                      </div>
-                      <div>
-                        <label className="block text-slate-600 font-semibold mb-1 text-xs">Date</label>
-                        <FieldTooltip content="Automatic date timestamp of declaration sign-off.">
-                          <input
-                            type="text"
-                            value={declarationForm.date}
-                            readOnly
-                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs"
-                          />
-                        </FieldTooltip>
-                      </div>
+                      )}
                     </div>
                   </div>
-                </div>
+                </FieldTooltip>
               </div>
-            )}
-          </div>
+
+              {/* EAD Reviewer Comments in Read-Only Mode */}
+              {isReadOnly && reviewerComments && (
+                <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl space-y-1">
+                  <div className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5 text-amber-700" />
+                    <span>EAD Reviewer Official Remarks</span>
+                  </div>
+                  <p className="text-xs text-amber-800 font-medium">{reviewerComments}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
+      </div>
 
-      {/* Bottom Action Buttons */}
-      <div className="flex-shrink-0 pt-2 pb-1 flex items-center justify-end gap-2.5">
-        <button
-          onClick={() => setViewMode('table')}
-          className="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-700 flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
-        >
-          <span>Cancel</span>
-          <X className="w-3.5 h-3.5" />
-        </button>
+      {/* Bottom Action Bar (Preserving exact layout and buttons) */}
+      <div className="flex-shrink-0 pt-3 flex items-center justify-end gap-3">
+        {isReadOnly ? (
+          <>
+            {/* Cancel Button */}
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              className="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-700 flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Cancel</span>
+            </button>
 
-        <button
-          onClick={handleSave}
-          className="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-[#004B87] text-xs font-bold text-[#004B87] flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
-        >
-          <span>Save Draft</span>
-          <Bookmark className="w-3.5 h-3.5 fill-current" />
-        </button>
+            {/* Next or Back to Overview */}
+            {activeTab !== 'supporting-submit' ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const subTabOrder: StepTabId[] = [
+                    'report-details',
+                    'progress-status',
+                    'ghg-emissions',
+                    'supporting-submit',
+                  ];
+                  const curIdx = subTabOrder.indexOf(activeTab);
+                  if (curIdx < subTabOrder.length - 1) {
+                    setActiveTab(subTabOrder[curIdx + 1]);
+                  }
+                }}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#004B87] to-[#006BB8] text-xs font-bold text-white flex items-center gap-2 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95"
+              >
+                <span>Next</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                className="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-700 flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+              >
+                <span>Back to Overview</span>
+              </button>
+            )}
 
-        {activeTab === 'monitoring-methods' && (
-          <button
-            type="button"
-            onClick={() => setActiveTab('mitigation-measures')}
-            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#004B87] to-[#006BB8] text-xs font-bold text-white flex items-center gap-2 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95"
-          >
-            <span>Next</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        )}
+            {isEadReviewerOrAdmin && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setActiveReviewModal('revert')}
+                  className="px-5 py-2.5 rounded-xl bg-white hover:bg-amber-50 border border-amber-300 text-xs font-bold text-amber-700 flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Return for Correction</span>
+                </button>
 
-        {activeTab === 'mitigation-measures' && (
-          <button
-            type="button"
-            onClick={() => setActiveTab('qa-qc')}
-            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#004B87] to-[#006BB8] text-xs font-bold text-white flex items-center gap-2 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95"
-          >
-            <span>Next</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        )}
+                <button
+                  type="button"
+                  onClick={() => setActiveReviewModal('approve')}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-emerald-600/25 hover:shadow-lg transition-all cursor-pointer active:scale-95"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Approve & Publish</span>
+                </button>
+              </>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Cancel Button */}
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              className="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-700 flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Cancel</span>
+            </button>
 
-        {activeTab === 'qa-qc' && (
-          <button
-            type="button"
-            onClick={() => setActiveTab('review-submit')}
-            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#004B87] to-[#006BB8] text-xs font-bold text-white flex items-center gap-2 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95"
-          >
-            <span>Next</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        )}
+            {/* Save Draft Button */}
+            <button
+              type="button"
+              onClick={handleSave}
+              className="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-[#004B87] text-xs font-bold text-[#004B87] flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            >
+              <Bookmark className="w-3.5 h-3.5 fill-current" />
+              <span>Save Draft</span>
+            </button>
 
-        {activeTab === 'review-submit' && (
-          <button
-            onClick={handleSubmit}
-            disabled={!isDeclarationComplete}
-            title={isDeclarationComplete ? 'Submit Annual Emission Data' : 'Please check all final declaration boxes and fill name/designation to submit'}
-            className={`px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all select-none ${
-              !isDeclarationComplete
-                ? 'bg-[#DFE7EF] text-[#64748B] border border-[#CBD5E1] shadow-2xs cursor-not-allowed'
-                : 'bg-gradient-to-r from-[#004B87] to-[#006BB8] text-white shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] cursor-pointer active:scale-95'
-            }`}
-          >
-            <span>Submit Annual Emission Data</span>
-            <Send className="w-3.5 h-3.5 fill-current opacity-80" />
-          </button>
+            {/* Next Steps Buttons */}
+            {activeTab === 'report-details' && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('progress-status')}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#004B87] to-[#006BB8] text-xs font-bold text-white flex items-center gap-2 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95"
+              >
+                <span>Next</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            {activeTab === 'progress-status' && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('ghg-emissions')}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#004B87] to-[#006BB8] text-xs font-bold text-white flex items-center gap-2 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95"
+              >
+                <span>Next</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            {activeTab === 'ghg-emissions' && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('supporting-submit')}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#004B87] to-[#006BB8] text-xs font-bold text-white flex items-center gap-2 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95"
+              >
+                <span>Next</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            {activeTab === 'supporting-submit' && (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#004B87] to-[#006BB8] text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95"
+                title="Submit Performance Report"
+              >
+                <span>Submit Performance Report</span>
+                <Send className="w-3.5 h-3.5 fill-current opacity-80" />
+              </button>
+            )}
+          </>
         )}
       </div>
 
-      {/* Document Preview Modal */}
-      {previewModalFile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden">
-            <div className="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#004B87]" />
-                <h3 className="text-sm font-bold text-slate-800 truncate">{previewModalFile.name}</h3>
-              </div>
+      {/* Reviewer Action Modal */}
+      {activeReviewModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-800">
+                {activeReviewModal === 'approve' ? 'Approve & Publish Performance Report' : 'Return Performance Report for Correction'}
+              </h3>
               <button
-                onClick={() => setPreviewModalFile(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                onClick={() => setActiveReviewModal(null)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="p-6 text-center space-y-4">
-              <div className="w-16 h-16 rounded-2xl bg-sky-50 text-[#004B87] flex items-center justify-center mx-auto border border-sky-100">
-                <FileText className="w-8 h-8" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-slate-900">{previewModalFile.name}</h4>
-                <p className="text-xs text-slate-500 mt-1">EAD MRV Supporting Architecture & Procedure Document</p>
-              </div>
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 text-left space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Document Status:</span>
-                  <span className="font-semibold text-emerald-600">Attached & Verified</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Security:</span>
-                  <span className="font-semibold text-slate-700">AES-256 Encrypted</span>
-                </div>
-              </div>
-            </div>
-            <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex justify-end">
-              <button
-                onClick={() => setPreviewModalFile(null)}
-                className="px-4 py-1.5 bg-[#004B87] text-white rounded-xl text-xs font-bold hover:bg-[#003B6B] transition-colors cursor-pointer"
-              >
-                Close Preview
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Admin Review Action Modal: Approve */}
-      {activeReviewModal === 'approve' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden">
-            <div className="px-5 py-4 bg-emerald-50 border-b border-emerald-100 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-emerald-800">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                <h3 className="text-sm font-bold">Approve Annual Emission Data</h3>
-              </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Official Reviewer Notes / Feedback
+              </label>
+              <textarea
+                rows={3}
+                value={reviewerComments}
+                onChange={(e) => setReviewerComments(e.target.value)}
+                placeholder={
+                  activeReviewModal === 'approve'
+                    ? 'All performance deliverables, indicators, and reported metrics verified.'
+                    : 'Please specify the exact milestones or evidence requiring correction...'
+                }
+                className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-[#004B87]"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
               <button
                 onClick={() => setActiveReviewModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-white/80 transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="p-5 space-y-3.5">
-              <p className="text-xs text-slate-600 leading-relaxed">
-                You are approving the statutory Annual Emission Data for <strong className="text-slate-800">{currentRecord.facilityName}</strong> (Reporting Year: {currentRecord.reportingYear || '2026'}).
-              </p>
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1.5">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Total Scope 1 Emissions:</span>
-                  <span className="font-mono font-bold text-[#004B87]">{currentRecord.totalScope1 || currentRecord.totalEmissions} tCO₂e</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Reporting Status:</span>
-                  <span className="font-semibold text-emerald-700">Official EAD Approval</span>
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Approval Notes / Certificate Reference</label>
-                <textarea
-                  rows={2}
-                  value={reviewerComments}
-                  onChange={(e) => setReviewerComments(e.target.value)}
-                  placeholder="Enter approval notes or compliance certification reference..."
-                  className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-emerald-600"
-                />
-              </div>
-            </div>
-            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end gap-2.5">
-              <button
-                onClick={() => setActiveReviewModal(null)}
-                className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-100 transition-colors cursor-pointer"
+                className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
               >
                 Cancel
               </button>
-              <button
-                onClick={handleApproveEmission}
-                className="px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-xl text-xs font-bold hover:from-emerald-700 hover:to-teal-800 shadow-md shadow-emerald-700/20 transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Confirm Approval</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Admin Review Action Modal: Reject */}
-      {activeReviewModal === 'reject' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden">
-            <div className="px-5 py-4 bg-rose-50 border-b border-rose-100 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-rose-800">
-                <XCircle className="w-5 h-5 text-rose-600" />
-                <h3 className="text-sm font-bold">Reject Annual Emission Data</h3>
-              </div>
-              <button
-                onClick={() => setActiveReviewModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-white/80 transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="p-5 space-y-3.5">
-              <p className="text-xs text-slate-600 leading-relaxed">
-                You are formally rejecting the statutory Annual Emission Data for <strong className="text-slate-800">{currentRecord.facilityName}</strong>. Please provide regulatory justification.
-              </p>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Rejection Reason *</label>
-                <textarea
-                  rows={3}
-                  value={reviewerComments}
-                  onChange={(e) => setReviewerComments(e.target.value)}
-                  placeholder="Enter detailed justification for rejection under EAD regulatory guidelines..."
-                  className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-rose-600"
-                />
-              </div>
-            </div>
-            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end gap-2.5">
-              <button
-                onClick={() => setActiveReviewModal(null)}
-                className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleRejectEmission}
-                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-md shadow-rose-600/20 transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
-              >
-                <XCircle className="w-3.5 h-3.5" />
-                <span>Confirm Rejection</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Admin Review Action Modal: Revert */}
-      {activeReviewModal === 'revert' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden">
-            <div className="px-5 py-4 bg-amber-50 border-b border-amber-100 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-amber-800">
-                <RotateCcw className="w-5 h-5 text-amber-600" />
-                <h3 className="text-sm font-bold">Revert to Facility Operator</h3>
-              </div>
-              <button
-                onClick={() => setActiveReviewModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-white/80 transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="p-5 space-y-3.5">
-              <p className="text-xs text-slate-600 leading-relaxed">
-                The dossier will be sent back to <strong className="text-slate-800">{currentRecord.facilityName}</strong> for correction. The operator will be notified to revise and resubmit.
-              </p>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Required Corrections / Instructions *</label>
-                <textarea
-                  rows={3}
-                  value={reviewerComments}
-                  onChange={(e) => setReviewerComments(e.target.value)}
-                  placeholder="Specify required corrections, missing attachments, or discrepancies..."
-                  className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-amber-600"
-                />
-              </div>
-            </div>
-            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end gap-2.5">
-              <button
-                onClick={() => setActiveReviewModal(null)}
-                className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleRevertEmission}
-                className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-md shadow-amber-600/20 transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Confirm Revert</span>
-              </button>
+              {activeReviewModal === 'approve' ? (
+                <button
+                  onClick={handleApproveReport}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Confirm Approval</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleRevertReport}
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Confirm Return</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

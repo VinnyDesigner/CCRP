@@ -1,1289 +1,1114 @@
 import React, { useState } from 'react';
 import {
-  Building2,
-  Users,
-  FileText,
-  ShieldCheck,
+  FolderKanban,
+  Send,
+  Bookmark,
+  Database,
+  RotateCcw,
   TrendingUp,
   CheckCircle2,
-  AlertTriangle,
-  AlertCircle,
   Clock,
   Calendar,
-  Edit3,
-  UploadCloud,
   Download,
   ArrowRight,
   ChevronDown,
   Plus,
-  Check,
-  CheckCheck,
-  Archive,
-  ShieldAlert,
   Eye,
-  FileSearch,
+  FileText,
+  Sparkles,
+  ShieldCheck,
+  Layers,
+  BarChart3,
+  Building2,
+  ExternalLink,
+  Flame,
+  Leaf,
+  Wind,
+  Sun,
+  Activity,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
-  ComposedChart,
+  AreaChart,
+  Area,
   LineChart,
   Line,
   XAxis,
   YAxis,
   Tooltip,
   CartesianGrid,
-  Area,
-  AreaChart,
 } from 'recharts';
 import { useMRV } from '../context/MRVContext';
 import { NotchCard } from '../components/ui/NotchCard';
 
-// Dashboard Period-specific Data Dictionary
+// Dashboard Period-specific Climate Change Data Dictionary
 const PERIOD_DATA: Record<
   string,
   {
     kpis: {
-      totalFacilities: { value: string; sub: string };
-      activeFacilities: { value: string; sub: string };
-      dataSubmission: { value: string; total: string; sub: string; percent: string };
-      pendingVerification: { value: string; sub: string; isZero?: boolean };
-      compliance: { value: string; sub: string };
+      totalProjects: { value: string; sub: string };
+      submittedProjects: { value: string; total: string; sub: string; percent: string };
+      draftProjects: { value: string; sub: string };
+      dataEntryProjects: { value: string; total: string; sub: string; percent: string };
+      pendingAmendments: { value: string; sub: string };
     };
-    monthlyDataTotal: { name: string; current: number; previous: number }[];
-    monthlyDataScope1: { name: string; current: number; previous: number }[];
-    monthlyDataScope2: { name: string; current: number; previous: number }[];
+    monthlyDataGhg: { name: string; current: number; previous: number }[];
+    monthlyDataCleanEnergy: { name: string; current: number; previous: number }[];
+    monthlyDataEfficiency: { name: string; current: number; previous: number }[];
     quarterlyData: { name: string; current: number; previous: number }[];
     legend: { current: string; previous: string };
     workflow: {
+      draft: number;
+      draftPct: string;
       registered: number;
       registeredPct: string;
       dataEntry: number;
       dataEntryPct: string;
-      submitted: number;
-      submittedPct: string;
-      underVerification: number;
-      underVerificationPct: string;
-      verified: number;
-      verifiedPct: string;
-      rate: string;
+      amendment: number;
+      amendmentPct: string;
+      reported: number;
+      reportedPct: string;
+      activeRate: string;
     };
-    attentionRequired: {
-      id: number;
-      type: 'red' | 'orange' | 'amber' | 'blue' | 'emerald';
-      title: string;
-      category: string;
-      actionText: string;
-      targetView: string;
+    pillarData: { name: string; percent: string; width: string; color: string; count: number }[];
+    projectsList: {
+      id: string;
+      name: string;
+      code: string;
+      entity: string;
+      pillar: 'Mitigation' | 'Adaptation' | 'Economic Diversification' | 'Cross Cutting';
+      sector: string;
+      status: 'Approved' | 'Submitted' | 'Under Review' | 'Correction Requested' | 'Registry Update Pending' | 'Draft';
+      dataEntryStatus: 'Active' | 'Completed' | 'Pending';
+      targetGhgReduction: string;
+      targetCapacity?: string;
+      targetView: 'registration' | 'data-entry' | 'amendments' | 'reports';
+      actionLabel: string;
     }[];
-    sectorData: { name: string; percent: string; width: string; color: string }[];
-    completeness: {
-      overall: number;
-      dashoffset: number;
-      energy: number;
-      fuel: number;
-      electricity: number;
-      waste: number;
-      other: number;
-      highest: string;
-    };
-    activities: {
+    recentActivities: {
       time: string;
       text: string;
       badge: string;
       badgeClass: string;
       dotColor: string;
     }[];
-    auditSummary: string;
+    highlights: {
+      totalGhgTarget: string;
+      totalCleanCap: string;
+      milestoneRate: string;
+    };
   }
 > = {
   'FY 2026–27': {
     kpis: {
-      totalFacilities: { value: '128', sub: '+8 this period' },
-      activeFacilities: { value: '114', sub: '89% Active' },
-      dataSubmission: { value: '96', total: '/ 114', sub: '84% submitted', percent: '84%' },
-      pendingVerification: { value: '18', sub: 'Needs verification' },
-      compliance: { value: '87%', sub: '+4.2%' },
+      totalProjects: { value: '12', sub: '+3 registered this cycle' },
+      submittedProjects: { value: '8', total: '/ 12', sub: '67% submitted & active', percent: '67%' },
+      draftProjects: { value: '2', sub: '17% pending submission' },
+      dataEntryProjects: { value: '6', total: '/ 12', sub: '50% monitoring active', percent: '50%' },
+      pendingAmendments: { value: '3', sub: 'Active reviews & tickets' },
     },
-    monthlyDataTotal: [
-      { name: 'Jan', current: 10800, previous: 4500 },
-      { name: 'Feb', current: 13200, previous: 6200 },
-      { name: 'Mar', current: 16900, previous: 8100 },
-      { name: 'Apr', current: 15100, previous: 9500 },
-      { name: 'May', current: 17800, previous: 11200 },
-      { name: 'Jun', current: 19200, previous: 13000 },
-      { name: 'Jul', current: 22100, previous: 14200 },
-      { name: 'Aug', current: 20400, previous: 13800 },
+    monthlyDataGhg: [
+      { name: 'Jan', current: 320, previous: 180 },
+      { name: 'Feb', current: 480, previous: 240 },
+      { name: 'Mar', current: 750, previous: 380 },
+      { name: 'Apr', current: 690, previous: 420 },
+      { name: 'May', current: 890, previous: 510 },
+      { name: 'Jun', current: 1040, previous: 620 },
+      { name: 'Jul', current: 1220, previous: 710 },
+      { name: 'Aug', current: 1180, previous: 750 },
     ],
-    monthlyDataScope1: [
-      { name: 'Jan', current: 7200, previous: 3100 },
-      { name: 'Feb', current: 8900, previous: 4200 },
-      { name: 'Mar', current: 11400, previous: 5500 },
-      { name: 'Apr', current: 10100, previous: 6400 },
-      { name: 'May', current: 12000, previous: 7600 },
-      { name: 'Jun', current: 12900, previous: 8800 },
-      { name: 'Jul', current: 14800, previous: 9600 },
-      { name: 'Aug', current: 13700, previous: 9300 },
+    monthlyDataCleanEnergy: [
+      { name: 'Jan', current: 450, previous: 200 },
+      { name: 'Feb', current: 680, previous: 350 },
+      { name: 'Mar', current: 1100, previous: 500 },
+      { name: 'Apr', current: 1350, previous: 650 },
+      { name: 'May', current: 1750, previous: 850 },
+      { name: 'Jun', current: 2100, previous: 1100 },
+      { name: 'Jul', current: 2350, previous: 1300 },
+      { name: 'Aug', current: 2450, previous: 1400 },
     ],
-    monthlyDataScope2: [
-      { name: 'Jan', current: 3600, previous: 1400 },
-      { name: 'Feb', current: 4300, previous: 2000 },
-      { name: 'Mar', current: 5500, previous: 2600 },
-      { name: 'Apr', current: 5000, previous: 3100 },
-      { name: 'May', current: 5800, previous: 3600 },
-      { name: 'Jun', current: 6300, previous: 4200 },
-      { name: 'Jul', current: 7300, previous: 4600 },
-      { name: 'Aug', current: 6700, previous: 4500 },
+    monthlyDataEfficiency: [
+      { name: 'Jan', current: 4.2, previous: 2.1 },
+      { name: 'Feb', current: 6.5, previous: 3.4 },
+      { name: 'Mar', current: 8.8, previous: 4.6 },
+      { name: 'Apr', current: 10.2, previous: 5.8 },
+      { name: 'May', current: 12.1, previous: 7.0 },
+      { name: 'Jun', current: 13.9, previous: 8.3 },
+      { name: 'Jul', current: 15.4, previous: 9.5 },
+      { name: 'Aug', current: 16.2, previous: 10.1 },
     ],
     quarterlyData: [
-      { name: 'Q1', current: 40900, previous: 18800 },
-      { name: 'Q2', current: 52100, previous: 33700 },
-      { name: 'Q3', current: 42500, previous: 28000 },
-      { name: 'Q4 (Est)', current: 46800, previous: 31200 },
+      { name: 'Q1', current: 1550, previous: 800 },
+      { name: 'Q2', current: 2620, previous: 1550 },
+      { name: 'Q3', current: 3100, previous: 1980 },
+      { name: 'Q4 (Est)', current: 4850, previous: 3200 },
     ],
     legend: { current: 'FY 2026–27', previous: 'FY 2025–26' },
     workflow: {
-      registered: 128,
-      registeredPct: '100%',
-      dataEntry: 114,
-      dataEntryPct: '89%',
-      submitted: 96,
-      submittedPct: '75%',
-      underVerification: 18,
-      underVerificationPct: '14%',
-      verified: 78,
-      verifiedPct: '61%',
-      rate: '81.3% (78 / 96)',
+      draft: 2,
+      draftPct: '16.7%',
+      registered: 8,
+      registeredPct: '66.7%',
+      dataEntry: 6,
+      dataEntryPct: '50.0%',
+      amendment: 3,
+      amendmentPct: '25.0%',
+      reported: 5,
+      reportedPct: '41.7%',
+      activeRate: '83.3% (10 / 12 Projects)',
     },
-    attentionRequired: [
+    pillarData: [
+      { name: 'Mitigation', percent: '42%', width: '42%', color: 'bg-[#004B87]', count: 5 },
+      { name: 'Adaptation', percent: '28%', width: '28%', color: 'bg-[#0284C7]', count: 3 },
+      { name: 'Economic Diversification', percent: '18%', width: '18%', color: 'bg-[#8B5CF6]', count: 2 },
+      { name: 'Cross Cutting', percent: '12%', width: '12%', color: 'bg-[#F59E0B]', count: 2 },
+    ],
+    projectsList: [
       {
-        id: 1,
-        type: 'red',
-        title: '12 facilities have incomplete data',
-        category: 'Data Entry',
-        actionText: 'Review →',
+        id: 'fac-1',
+        name: 'Al Dhafra Solar PV Decarbonization Program',
+        code: 'CCRP-INIT-2026-7073',
+        entity: 'Department of Energy (DoE)',
+        pillar: 'Mitigation',
+        sector: 'Energy',
+        status: 'Approved',
+        dataEntryStatus: 'Active',
+        targetGhgReduction: '2,400,000 tCO₂e / yr',
+        targetCapacity: '2,000 MW',
         targetView: 'data-entry',
+        actionLabel: 'Open Data Entry',
       },
       {
-        id: 2,
-        type: 'orange',
-        title: '18 submissions awaiting verification',
-        category: 'Verification',
-        actionText: 'Review →',
-        targetView: 'data-review',
+        id: 'fac-2',
+        name: 'Low-Carbon Industrial Transition & Green Hydrogen Hub',
+        code: 'CCRP-INIT-2026-0118',
+        entity: 'Abu Dhabi Department of Economic Development (ADDED)',
+        pillar: 'Economic Diversification',
+        sector: 'Industry & Manufacturing',
+        status: 'Submitted',
+        dataEntryStatus: 'Pending',
+        targetGhgReduction: '850,000 tCO₂e / yr',
+        targetCapacity: '150 MW H₂',
+        targetView: 'amendments',
+        actionLabel: 'View Amendment',
       },
       {
-        id: 3,
-        type: 'amber',
-        title: '7 facilities have overdue submissions',
-        category: 'Reporting Period',
-        actionText: 'View →',
-        targetView: 'reports',
+        id: 'fac-3',
+        name: 'Abu Dhabi Mangrove & Blue Carbon Coastal Restoration',
+        code: 'CCRP-INIT-2026-0422',
+        entity: 'Environment Agency – Abu Dhabi (EAD)',
+        pillar: 'Adaptation',
+        sector: 'Coastal Ecosystems',
+        status: 'Approved',
+        dataEntryStatus: 'Completed',
+        targetGhgReduction: '320,000 tCO₂e / yr',
+        targetCapacity: '12,000 Hectares',
+        targetView: 'registration',
+        actionLabel: 'View Details',
       },
       {
-        id: 4,
-        type: 'blue',
-        title: '4 facilities require data correction',
-        category: 'Data Entry',
-        actionText: 'Review →',
+        id: 'fac-4',
+        name: 'Electric Public Transit Fleet & EV Fast-Charging Network',
+        code: 'CCRP-INIT-2026-0305',
+        entity: 'Department of Municipalities and Transport (DMT)',
+        pillar: 'Mitigation',
+        sector: 'Transport',
+        status: 'Registry Update Pending',
+        dataEntryStatus: 'Active',
+        targetGhgReduction: '185,000 tCO₂e / yr',
+        targetCapacity: '160 EV Hubs',
+        targetView: 'amendments',
+        actionLabel: 'View Ticket',
+      },
+      {
+        id: 'fac-5',
+        name: 'Integrated Organic Waste & Biogas Energy Recovery Program',
+        code: 'CCRP-INIT-2026-0775',
+        entity: 'Abu Dhabi Waste Management Centre (Tadweer)',
+        pillar: 'Cross Cutting',
+        sector: 'Waste Management',
+        status: 'Under Review',
+        dataEntryStatus: 'Active',
+        targetGhgReduction: '410,000 tCO₂e / yr',
+        targetCapacity: '35 MW Biogas',
         targetView: 'data-entry',
+        actionLabel: 'Open Data Entry',
+      },
+      {
+        id: 'fac-6',
+        name: 'Climate Resilient Urban Infrastructure & Stormwater Drainage Upgrade',
+        code: 'CCRP-INIT-2026-0619',
+        entity: 'Department of Municipalities and Transport (DMT)',
+        pillar: 'Adaptation',
+        sector: 'Infrastructure & Built Environment',
+        status: 'Correction Requested',
+        dataEntryStatus: 'Pending',
+        targetGhgReduction: 'Resilience Index +34%',
+        targetCapacity: '5 Retention Basins',
+        targetView: 'registration',
+        actionLabel: 'Edit Project',
       },
     ],
-    sectorData: [
-      { name: 'Industrial', percent: '52%', width: '52%', color: 'bg-[#004B87]' },
-      { name: 'Commercial', percent: '27%', width: '27%', color: 'bg-[#00B2FE]' },
-      { name: 'Institutional', percent: '13%', width: '13%', color: 'bg-[#8B5CF6]' },
-      { name: 'Residential', percent: '5%', width: '5%', color: 'bg-[#F97316]' },
-      { name: 'Other', percent: '3%', width: '3%', color: 'bg-slate-400' },
-    ],
-    completeness: {
-      overall: 84,
-      dashoffset: 40.2,
-      energy: 92,
-      fuel: 88,
-      electricity: 95,
-      waste: 72,
-      other: 81,
-      highest: 'Electricity (95%)',
-    },
-    activities: [
+    recentActivities: [
       {
         time: '10:42 AM',
-        text: 'Facility A submitted energy data',
-        badge: 'Data Entry',
+        text: 'Al Dhafra Solar PV completed 2026 Q2 performance data entry',
+        badge: 'Project Data Entry',
         badgeClass: 'bg-blue-50 text-blue-700 border-blue-200/60',
         dotColor: 'bg-blue-500',
       },
       {
-        time: '10:18 AM',
-        text: 'Facility B registration completed',
-        badge: 'Registration',
-        badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
-        dotColor: 'bg-emerald-500',
+        time: '09:15 AM',
+        text: 'Green Hydrogen Hub amendment request submitted by ADDED',
+        badge: 'Amendments',
+        badgeClass: 'bg-purple-50 text-purple-700 border-purple-200/60',
+        dotColor: 'bg-purple-500',
       },
       {
-        time: '09:56 AM',
-        text: 'Facility C verification completed',
-        badge: 'Verification',
+        time: 'Yesterday',
+        text: 'Electric Public Transit Fleet raised registry update ticket TCK-2026-0305-AM',
+        badge: 'Amendments',
         badgeClass: 'bg-amber-50 text-amber-700 border-amber-200/60',
         dotColor: 'bg-amber-500',
       },
       {
-        time: '09:31 AM',
-        text: 'Facility D updated fuel consumption',
-        badge: 'Data Entry',
-        badgeClass: 'bg-blue-50 text-blue-700 border-blue-200/60',
-        dotColor: 'bg-blue-500',
-      },
-      {
-        time: '09:05 AM',
-        text: 'Facility E data returned for correction',
-        badge: 'Data Entry',
-        badgeClass: 'bg-rose-50 text-rose-700 border-rose-200/60',
-        dotColor: 'bg-rose-500',
+        time: '26 Sep 2026',
+        text: 'Mangrove & Blue Carbon initiative approved & published',
+        badge: 'Project Registration',
+        badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
+        dotColor: 'bg-emerald-500',
       },
     ],
-    auditSummary: '5 recorded today',
+    highlights: {
+      totalGhgTarget: '4.85M tCO₂e / yr',
+      totalCleanCap: '2,450 MW',
+      milestoneRate: '94.2%',
+    },
   },
 
   'FY 2025–26': {
     kpis: {
-      totalFacilities: { value: '120', sub: '+12 this period' },
-      activeFacilities: { value: '110', sub: '92% Active' },
-      dataSubmission: { value: '110', total: '/ 110', sub: '100% submitted', percent: '100%' },
-      pendingVerification: { value: '0', sub: 'Fully Audited', isZero: true },
-      compliance: { value: '96%', sub: '+5.8%' },
+      totalProjects: { value: '9', sub: '+2 registered in FY 25' },
+      submittedProjects: { value: '7', total: '/ 9', sub: '78% submission rate', percent: '78%' },
+      draftProjects: { value: '1', sub: '11% pending submission' },
+      dataEntryProjects: { value: '5', total: '/ 9', sub: '55% monitoring active', percent: '55%' },
+      pendingAmendments: { value: '1', sub: 'Completed amendment' },
     },
-    monthlyDataTotal: [
-      { name: 'Jan', current: 9400, previous: 7800 },
-      { name: 'Feb', current: 11800, previous: 8900 },
-      { name: 'Mar', current: 14200, previous: 10100 },
-      { name: 'Apr', current: 13500, previous: 9800 },
-      { name: 'May', current: 15600, previous: 11400 },
-      { name: 'Jun', current: 17100, previous: 12800 },
-      { name: 'Jul', current: 18900, previous: 13900 },
-      { name: 'Aug', current: 17600, previous: 13200 },
+    monthlyDataGhg: [
+      { name: 'Jan', current: 180, previous: 110 },
+      { name: 'Feb', current: 240, previous: 150 },
+      { name: 'Mar', current: 380, previous: 220 },
+      { name: 'Apr', current: 420, previous: 280 },
+      { name: 'May', current: 510, previous: 350 },
+      { name: 'Jun', current: 620, previous: 410 },
+      { name: 'Jul', current: 710, previous: 490 },
+      { name: 'Aug', current: 750, previous: 530 },
     ],
-    monthlyDataScope1: [
-      { name: 'Jan', current: 6300, previous: 5200 },
-      { name: 'Feb', current: 7900, previous: 6000 },
-      { name: 'Mar', current: 9600, previous: 6800 },
-      { name: 'Apr', current: 9100, previous: 6600 },
-      { name: 'May', current: 10500, previous: 7700 },
-      { name: 'Jun', current: 11500, previous: 8600 },
-      { name: 'Jul', current: 12700, previous: 9300 },
-      { name: 'Aug', current: 11800, previous: 8900 },
+    monthlyDataCleanEnergy: [
+      { name: 'Jan', current: 200, previous: 120 },
+      { name: 'Feb', current: 350, previous: 210 },
+      { name: 'Mar', current: 500, previous: 300 },
+      { name: 'Apr', current: 650, previous: 410 },
+      { name: 'May', current: 850, previous: 520 },
+      { name: 'Jun', current: 1100, previous: 680 },
+      { name: 'Jul', current: 1300, previous: 790 },
+      { name: 'Aug', current: 1400, previous: 850 },
     ],
-    monthlyDataScope2: [
-      { name: 'Jan', current: 3100, previous: 2600 },
-      { name: 'Feb', current: 3900, previous: 2900 },
-      { name: 'Mar', current: 4600, previous: 3300 },
-      { name: 'Apr', current: 4400, previous: 3200 },
-      { name: 'May', current: 5100, previous: 3700 },
-      { name: 'Jun', current: 5600, previous: 4200 },
-      { name: 'Jul', current: 6200, previous: 4600 },
-      { name: 'Aug', current: 5800, previous: 4300 },
+    monthlyDataEfficiency: [
+      { name: 'Jan', current: 2.1, previous: 1.0 },
+      { name: 'Feb', current: 3.4, previous: 1.8 },
+      { name: 'Mar', current: 4.6, previous: 2.5 },
+      { name: 'Apr', current: 5.8, previous: 3.2 },
+      { name: 'May', current: 7.0, previous: 4.0 },
+      { name: 'Jun', current: 8.3, previous: 5.1 },
+      { name: 'Jul', current: 9.5, previous: 6.0 },
+      { name: 'Aug', current: 10.1, previous: 6.6 },
     ],
     quarterlyData: [
-      { name: 'Q1', current: 35400, previous: 26800 },
-      { name: 'Q2', current: 46200, previous: 34000 },
-      { name: 'Q3', current: 53600, previous: 39900 },
-      { name: 'Q4', current: 48900, previous: 36500 },
+      { name: 'Q1', current: 800, previous: 480 },
+      { name: 'Q2', current: 1550, previous: 980 },
+      { name: 'Q3', current: 1980, previous: 1250 },
+      { name: 'Q4 (Est)', current: 3200, previous: 2100 },
     ],
     legend: { current: 'FY 2025–26', previous: 'FY 2024–25' },
     workflow: {
-      registered: 120,
-      registeredPct: '100%',
-      dataEntry: 118,
-      dataEntryPct: '98%',
-      submitted: 110,
-      submittedPct: '92%',
-      underVerification: 0,
-      underVerificationPct: '0%',
-      verified: 110,
-      verifiedPct: '92%',
-      rate: '100% (110 / 110)',
+      draft: 1,
+      draftPct: '11.1%',
+      registered: 7,
+      registeredPct: '77.8%',
+      dataEntry: 5,
+      dataEntryPct: '55.6%',
+      amendment: 1,
+      amendmentPct: '11.1%',
+      reported: 4,
+      reportedPct: '44.4%',
+      activeRate: '88.9% (8 / 9 Projects)',
     },
-    attentionRequired: [
+    pillarData: [
+      { name: 'Mitigation', percent: '44%', width: '44%', color: 'bg-[#004B87]', count: 4 },
+      { name: 'Adaptation', percent: '33%', width: '33%', color: 'bg-[#0284C7]', count: 3 },
+      { name: 'Economic Diversification', percent: '12%', width: '12%', color: 'bg-[#8B5CF6]', count: 1 },
+      { name: 'Cross Cutting', percent: '11%', width: '11%', color: 'bg-[#F59E0B]', count: 1 },
+    ],
+    projectsList: [
       {
-        id: 1,
-        type: 'emerald',
-        title: 'All 110 annual submissions approved by EAD',
-        category: 'Cycle Complete',
-        actionText: 'View →',
-        targetView: 'reports',
+        id: 'fac-1',
+        name: 'Al Dhafra Solar PV Decarbonization Program',
+        code: 'CCRP-INIT-2026-7073',
+        entity: 'Department of Energy (DoE)',
+        pillar: 'Mitigation',
+        sector: 'Energy',
+        status: 'Approved',
+        dataEntryStatus: 'Completed',
+        targetGhgReduction: '2,400,000 tCO₂e / yr',
+        targetCapacity: '2,000 MW',
+        targetView: 'data-entry',
+        actionLabel: 'Open Data Entry',
       },
       {
-        id: 2,
-        type: 'blue',
-        title: 'Third-party verification opinions archived',
-        category: 'Audits Complete',
-        actionText: 'Review →',
-        targetView: 'data-review',
-      },
-      {
-        id: 3,
-        type: 'amber',
-        title: '1 facility permit renewal scheduled for 2027',
-        category: 'Facility Permits',
-        actionText: 'View →',
+        id: 'fac-3',
+        name: 'Abu Dhabi Mangrove & Blue Carbon Coastal Restoration',
+        code: 'CCRP-INIT-2026-0422',
+        entity: 'Environment Agency – Abu Dhabi (EAD)',
+        pillar: 'Adaptation',
+        sector: 'Coastal Ecosystems',
+        status: 'Approved',
+        dataEntryStatus: 'Completed',
+        targetGhgReduction: '320,000 tCO₂e / yr',
+        targetCapacity: '12,000 Hectares',
         targetView: 'registration',
-      },
-      {
-        id: 4,
-        type: 'emerald',
-        title: 'Abu Dhabi Subnational Inventory published',
-        category: 'Official Release',
-        actionText: 'View →',
-        targetView: 'reports',
+        actionLabel: 'View Details',
       },
     ],
-    sectorData: [
-      { name: 'Industrial', percent: '54%', width: '54%', color: 'bg-[#004B87]' },
-      { name: 'Commercial', percent: '26%', width: '26%', color: 'bg-[#00B2FE]' },
-      { name: 'Institutional', percent: '11%', width: '11%', color: 'bg-[#8B5CF6]' },
-      { name: 'Residential', percent: '6%', width: '6%', color: 'bg-[#F97316]' },
-      { name: 'Other', percent: '3%', width: '3%', color: 'bg-slate-400' },
-    ],
-    completeness: {
-      overall: 98,
-      dashoffset: 5.0,
-      energy: 99,
-      fuel: 98,
-      electricity: 99,
-      waste: 96,
-      other: 97,
-      highest: 'Energy & Electricity (99%)',
-    },
-    activities: [
+    recentActivities: [
       {
-        time: '28 Mar 2026',
-        text: 'EAD Regulatory Committee issued compliance certificate',
-        badge: 'Approved',
-        badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
-        dotColor: 'bg-emerald-500',
-      },
-      {
-        time: '22 Mar 2026',
-        text: 'Bureau Veritas uploaded final assurance opinion',
-        badge: 'Verification',
-        badgeClass: 'bg-amber-50 text-amber-700 border-amber-200/60',
-        dotColor: 'bg-amber-500',
-      },
-      {
-        time: '15 Mar 2026',
-        text: 'All 110 submissions successfully validated',
+        time: '14 Jan 2026',
+        text: 'Al Dhafra Solar PV annual baseline reporting approved',
         badge: 'Reports',
-        badgeClass: 'bg-blue-50 text-blue-700 border-blue-200/60',
-        dotColor: 'bg-blue-500',
-      },
-      {
-        time: '02 Mar 2026',
-        text: 'Emirates Steel annual verified report approved',
-        badge: 'Approved',
-        badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
-        dotColor: 'bg-emerald-500',
-      },
-      {
-        time: '14 Feb 2026',
-        text: 'Al Noor Energy submitted supplementary lab logs',
-        badge: 'Data Entry',
-        badgeClass: 'bg-blue-50 text-blue-700 border-blue-200/60',
-        dotColor: 'bg-blue-500',
-      },
-    ],
-    auditSummary: 'Historical Cycle Closed',
-  },
-
-  'FY 2024–25': {
-    kpis: {
-      totalFacilities: { value: '108', sub: '+15 this period' },
-      activeFacilities: { value: '98', sub: '91% Active' },
-      dataSubmission: { value: '98', total: '/ 98', sub: '100% submitted', percent: '100%' },
-      pendingVerification: { value: '0', sub: 'Baseline Certified', isZero: true },
-      compliance: { value: '91%', sub: '+8.4%' },
-    },
-    monthlyDataTotal: [
-      { name: 'Jan', current: 8100, previous: 6200 },
-      { name: 'Feb', current: 9900, previous: 7100 },
-      { name: 'Mar', current: 12400, previous: 8500 },
-      { name: 'Apr', current: 11800, previous: 8200 },
-      { name: 'May', current: 13600, previous: 9700 },
-      { name: 'Jun', current: 14900, previous: 10900 },
-      { name: 'Jul', current: 16200, previous: 11800 },
-      { name: 'Aug', current: 15300, previous: 11200 },
-    ],
-    monthlyDataScope1: [
-      { name: 'Jan', current: 5400, previous: 4100 },
-      { name: 'Feb', current: 6600, previous: 4700 },
-      { name: 'Mar', current: 8300, previous: 5700 },
-      { name: 'Apr', current: 7900, previous: 5500 },
-      { name: 'May', current: 9100, previous: 6500 },
-      { name: 'Jun', current: 10000, previous: 7300 },
-      { name: 'Jul', current: 10800, previous: 7900 },
-      { name: 'Aug', current: 10200, previous: 7500 },
-    ],
-    monthlyDataScope2: [
-      { name: 'Jan', current: 2700, previous: 2100 },
-      { name: 'Feb', current: 3300, previous: 2400 },
-      { name: 'Mar', current: 4100, previous: 2800 },
-      { name: 'Apr', current: 3900, previous: 2700 },
-      { name: 'May', current: 4500, previous: 3200 },
-      { name: 'Jun', current: 4900, previous: 3600 },
-      { name: 'Jul', current: 5400, previous: 3900 },
-      { name: 'Aug', current: 5100, previous: 3700 },
-    ],
-    quarterlyData: [
-      { name: 'Q1', current: 30400, previous: 21800 },
-      { name: 'Q2', current: 40300, previous: 28800 },
-      { name: 'Q3', current: 46400, previous: 33900 },
-      { name: 'Q4', current: 41500, previous: 30200 },
-    ],
-    legend: { current: 'FY 2024–25', previous: 'FY 2023–24' },
-    workflow: {
-      registered: 108,
-      registeredPct: '100%',
-      dataEntry: 106,
-      dataEntryPct: '98%',
-      submitted: 98,
-      submittedPct: '91%',
-      underVerification: 0,
-      underVerificationPct: '0%',
-      verified: 98,
-      verifiedPct: '91%',
-      rate: '100% (98 / 98)',
-    },
-    attentionRequired: [
-      {
-        id: 1,
-        type: 'emerald',
-        title: 'Historical baseline locked & validated',
-        category: 'Archive',
-        actionText: 'View →',
-        targetView: 'reports',
-      },
-      {
-        id: 2,
-        type: 'blue',
-        title: 'ISO 14065 full compliance verified',
-        category: 'Assurance',
-        actionText: 'View →',
-        targetView: 'data-review',
-      },
-      {
-        id: 3,
-        type: 'emerald',
-        title: 'All 98 facilities achieved baseline compliance',
-        category: 'Regulatory Approval',
-        actionText: 'View →',
-        targetView: 'reports',
-      },
-      {
-        id: 4,
-        type: 'blue',
-        title: 'Federal emission reduction record reconciled',
-        category: 'Federal MRV',
-        actionText: 'Review →',
-        targetView: 'reports',
-      },
-    ],
-    sectorData: [
-      { name: 'Industrial', percent: '57%', width: '57%', color: 'bg-[#004B87]' },
-      { name: 'Commercial', percent: '23%', width: '23%', color: 'bg-[#00B2FE]' },
-      { name: 'Institutional', percent: '11%', width: '11%', color: 'bg-[#8B5CF6]' },
-      { name: 'Residential', percent: '6%', width: '6%', color: 'bg-[#F97316]' },
-      { name: 'Other', percent: '3%', width: '3%', color: 'bg-slate-400' },
-    ],
-    completeness: {
-      overall: 100,
-      dashoffset: 0,
-      energy: 100,
-      fuel: 100,
-      electricity: 100,
-      waste: 100,
-      other: 100,
-      highest: 'All Streams (100%)',
-    },
-    activities: [
-      {
-        time: '31 Mar 2025',
-        text: 'Annual subnational MRV cycle formally closed',
-        badge: 'Closed',
-        badgeClass: 'bg-slate-100 text-slate-700 border-slate-200/60',
-        dotColor: 'bg-slate-500',
-      },
-      {
-        time: '20 Mar 2025',
-        text: 'Audited emissions report endorsed by Environment Agency',
-        badge: 'Approved',
-        badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
-        dotColor: 'bg-emerald-500',
-      },
-      {
-        time: '10 Mar 2025',
-        text: 'Final verified data transferred to federal registry',
-        badge: 'Transferred',
-        badgeClass: 'bg-blue-50 text-blue-700 border-blue-200/60',
-        dotColor: 'bg-blue-500',
-      },
-      {
-        time: '18 Feb 2025',
-        text: 'TÜV SÜD verified Scope 1 & 2 carbon inventory',
-        badge: 'Verification',
-        badgeClass: 'bg-amber-50 text-amber-700 border-amber-200/60',
-        dotColor: 'bg-amber-500',
-      },
-      {
-        time: '25 Jan 2025',
-        text: 'Industrial cluster baseline verified',
-        badge: 'Registration',
         badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
         dotColor: 'bg-emerald-500',
       },
     ],
-    auditSummary: 'Archived Baseline Record',
+    highlights: {
+      totalGhgTarget: '3.20M tCO₂e / yr',
+      totalCleanCap: '1,400 MW',
+      milestoneRate: '88.0%',
+    },
   },
 };
 
 export const FacilityDashboardView: React.FC = () => {
-  const { setActiveView, openReadOnlyViewer } = useMRV();
+  const { setActiveView, currentRole } = useMRV();
 
-  // Filter States
+  // Period filter state
   const [selectedPeriod, setSelectedPeriod] = useState<string>('FY 2026–27');
-  const [scopeFilter, setScopeFilter] = useState<'Total' | 'Scope 1' | 'Scope 2'>('Total');
-  const [timeframe, setTimeframe] = useState<'Monthly' | 'Quarterly'>('Monthly');
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportSuccess, setExportSuccess] = useState(false);
+  const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
 
-  // Active Period Dataset
-  const activePeriodData = PERIOD_DATA[selectedPeriod] || PERIOD_DATA['FY 2026–27'];
+  // Metric Toggle for the chart
+  const [activeChartMetric, setActiveChartMetric] = useState<'ghg' | 'cleanEnergy' | 'efficiency'>('ghg');
 
-  const activeChartData =
-    timeframe === 'Quarterly'
-      ? activePeriodData.quarterlyData
-      : scopeFilter === 'Scope 1'
-      ? activePeriodData.monthlyDataScope1
-      : scopeFilter === 'Scope 2'
-      ? activePeriodData.monthlyDataScope2
-      : activePeriodData.monthlyDataTotal;
+  const periodData = PERIOD_DATA[selectedPeriod] || PERIOD_DATA['FY 2026–27'];
+  const { kpis, workflow, pillarData, projectsList, recentActivities, highlights } = periodData;
 
-  // Handle Export Simulation
-  const handleExport = () => {
-    setIsExporting(true);
-    setTimeout(() => {
-      setIsExporting(false);
-      setExportSuccess(true);
-      setTimeout(() => setExportSuccess(false), 3000);
-    }, 1200);
+  const chartData =
+    activeChartMetric === 'ghg'
+      ? periodData.monthlyDataGhg
+      : activeChartMetric === 'cleanEnergy'
+      ? periodData.monthlyDataCleanEnergy
+      : periodData.monthlyDataEfficiency;
+
+  const chartUnit =
+    activeChartMetric === 'ghg'
+      ? 'k tCO₂e'
+      : activeChartMetric === 'cleanEnergy'
+      ? 'MW'
+      : '%';
+
+  const chartTitle =
+    activeChartMetric === 'ghg'
+      ? 'Cumulative GHG Reductions Target'
+      : activeChartMetric === 'cleanEnergy'
+      ? 'Clean Energy Installed Generation Capacity'
+      : 'Energy Efficiency Improvement Rate';
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'Approved':
+        return (
+          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E8F8F0] text-[#00875A] border border-[#00875A]/25 inline-block">
+            Approved
+          </span>
+        );
+      case 'Submitted':
+        return (
+          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E0EEFA] text-[#0284C7] border border-sky-200/60 inline-block">
+            Submitted
+          </span>
+        );
+      case 'Under Review':
+        return (
+          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200/60 inline-block">
+            Under Review
+          </span>
+        );
+      case 'Correction Requested':
+        return (
+          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60 inline-block">
+            Correction Requested
+          </span>
+        );
+      case 'Registry Update Pending':
+        return (
+          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200/60 inline-block">
+            Registry Update Pending
+          </span>
+        );
+      default:
+        return (
+          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 inline-block">
+            Draft
+          </span>
+        );
+    }
+  };
+
+  const getPillarBadge = (pillar: string) => {
+    switch (pillar) {
+      case 'Mitigation':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'Adaptation':
+        return 'bg-sky-50 text-sky-700 border-sky-200';
+      case 'Economic Diversification':
+        return 'bg-purple-50 text-purple-700 border-purple-200';
+      case 'Cross Cutting':
+        return 'bg-amber-50 text-amber-700 border-amber-200';
+      default:
+        return 'bg-slate-50 text-slate-700 border-slate-200';
+    }
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden font-sans animate-fade-in">
-      {/* 1. TOP FIXED HEADER (Title & Date / Export Controls) */}
-      <div className="flex-shrink-0 pt-0.5 pb-[18px] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="h-full flex flex-col overflow-y-auto font-sans py-1 pr-1 custom-scrollbar space-y-4 animate-fade-in">
+      {/* =================================================================== */}
+      {/* 1. TOP HEADER & PERIOD SELECTOR */}
+      {/* =================================================================== */}
+      <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-3 pb-1">
         <div>
-          <h1 className="text-[18px] font-bold font-display text-[#004B87] tracking-tight">
-            Facility MRV Dashboard
+          <h1 className="text-[20px] font-bold font-display text-[#004B87] tracking-tight">
+            Climate Change Projects Dashboard
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Environmental Monitoring, Reporting & Verification
+            Comprehensive initiative tracking, reporting cadence, amendments & climate action metrics
           </p>
         </div>
 
-        {/* Action Controls: Only Date Filter and Export Report Button */}
         <div className="flex items-center gap-2.5">
-          {/* Period Selector */}
-          <div className="relative flex items-center h-9 bg-white border border-slate-200/90 rounded-xl px-3 shadow-xs text-xs font-semibold text-slate-700 hover:border-slate-300 transition-colors">
-            <Calendar className="w-4 h-4 text-[#004B87] mr-1.5 shrink-0" />
-            <select
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="bg-transparent text-xs font-bold text-navy-900 focus:outline-hidden cursor-pointer h-full pr-1"
+          {/* Period Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setIsPeriodDropdownOpen(!isPeriodDropdownOpen)}
+              className="h-9 px-3 bg-white border border-slate-200/90 rounded-[8px] text-xs font-semibold text-slate-700 flex items-center gap-2 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
             >
-              <option value="FY 2026–27">FY 2026–27</option>
-              <option value="FY 2025–26">FY 2025–26</option>
-              <option value="FY 2024–25">FY 2024–25</option>
-            </select>
+              <Calendar className="w-3.5 h-3.5 text-[#004B87]" />
+              <span>{selectedPeriod}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            </button>
+
+            {isPeriodDropdownOpen && (
+              <div className="absolute right-0 top-10 z-30 w-36 bg-white rounded-xl border border-slate-200 shadow-lg py-1 text-xs">
+                {Object.keys(PERIOD_DATA).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => {
+                      setSelectedPeriod(p);
+                      setIsPeriodDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-1.5 hover:bg-slate-50 font-medium cursor-pointer ${
+                      selectedPeriod === p ? 'text-[#004B87] font-bold bg-sky-50/50' : 'text-slate-700'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Export Report Button */}
+          {/* Quick Action Button */}
           <button
-            onClick={handleExport}
-            disabled={isExporting}
-            className={`h-9 px-4 rounded-xl font-bold text-xs flex items-center gap-2 shadow-md transition-all duration-200 cursor-pointer shrink-0 whitespace-nowrap ${
-              exportSuccess
-                ? 'bg-emerald-600 text-white shadow-emerald-600/30'
-                : 'bg-gradient-to-r from-[#004B87] to-[#006BB8] text-white shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e]'
-            }`}
+            onClick={() => setActiveView('reports')}
+            className="h-9 px-3.5 bg-gradient-to-r from-[#004B87] to-[#006BB8] text-white rounded-[8px] text-xs font-bold flex items-center gap-1.5 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95"
           >
-            {isExporting ? (
-              <>
-                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Exporting...</span>
-              </>
-            ) : exportSuccess ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-white" />
-                <span>Report Exported</span>
-              </>
-            ) : (
-              <>
-                <Download className="w-3.5 h-3.5 text-white" />
-                <span>Export Report</span>
-              </>
-            )}
+            <Download className="w-3.5 h-3.5" />
+            <span>Export Report</span>
           </button>
         </div>
       </div>
 
-      {/* 2. SCROLLABLE DASHBOARD BODY */}
-      <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-[18px] pb-16 font-sans no-scrollbar">
-        {/* 2. TOP METRIC CARDS (Using the NotchCard scooped-corner design as before) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {/* Metric 1: Total Facilities */}
+      {/* =================================================================== */}
+      {/* 2. SUMMARY KPI NOTCH CARDS (5 PROJECT-LEVEL CARDS) */}
+      {/* =================================================================== */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        {/* Card 1: Total Projects */}
         <NotchCard
-          icon={<Building2 className="w-3.5 h-3.5" />}
-          iconGradient="from-[#005B9F] to-[#004B87]"
-          iconShadow="shadow-blue-900/25"
-          badgeShape="circle"
+          icon={<FolderKanban className="w-4 h-4 text-white" />}
+          iconGradient="from-[#004B87] to-[#006BB8]"
+          iconShadow="shadow-[#004B87]/20"
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveView('registration')}
         >
-          <p className="text-[11px] font-bold text-slate-800 leading-tight max-w-[65%]">
-            Total<br />Facilities
-          </p>
-          <div className="my-auto py-0.5">
-            <div className="text-[20px] font-extrabold text-[#004B87] tracking-tight leading-none">
-              {activePeriodData.kpis.totalFacilities.value}
-            </div>
-            <p className="text-[9.5px] text-slate-400 font-medium mt-0.5">Registered Facilities</p>
-          </div>
-          <div className="border-t border-slate-100 pt-1 flex items-center justify-between text-[10px]">
-            <span className="text-slate-400 font-medium">Cycle</span>
-            <span className="text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.2 rounded-full">
-              {activePeriodData.kpis.totalFacilities.sub}
-            </span>
-          </div>
-        </NotchCard>
-
-        {/* Metric 2: Active Facilities */}
-        <NotchCard
-          icon={<Users className="w-3.5 h-3.5" />}
-          iconGradient="from-emerald-500 to-emerald-600"
-          iconShadow="shadow-emerald-500/25"
-          badgeShape="circle"
-        >
-          <p className="text-[11px] font-bold text-slate-800 leading-tight max-w-[65%]">
-            Active<br />Facilities
-          </p>
-          <div className="my-auto py-0.5">
-            <div className="text-[20px] font-extrabold text-emerald-600 tracking-tight leading-none">
-              {activePeriodData.kpis.activeFacilities.value}
-            </div>
-            <p className="text-[9.5px] text-slate-400 font-medium mt-0.5">89% of registered</p>
-          </div>
-          <div className="border-t border-slate-100 pt-1 flex items-center justify-between text-[10px]">
-            <span className="text-slate-400 font-medium">Status</span>
-            <span className="text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.2 rounded-full">
-              {activePeriodData.kpis.activeFacilities.sub}
-            </span>
-          </div>
-        </NotchCard>
-
-        {/* Metric 3: Data Submission */}
-        <NotchCard
-          icon={<FileText className="w-3.5 h-3.5" />}
-          iconGradient="from-purple-500 to-purple-600"
-          iconShadow="shadow-purple-500/25"
-          badgeShape="circle"
-        >
-          <p className="text-[11px] font-bold text-slate-800 leading-tight max-w-[65%]">
-            Data<br />Submission
-          </p>
-          <div className="space-y-1 my-auto py-0.5">
-            <div className="text-[18px] font-extrabold text-purple-700 tracking-tight leading-none">
-              {activePeriodData.kpis.dataSubmission.value}{' '}
-              <span className="text-[11px] font-semibold text-slate-400">
-                {activePeriodData.kpis.dataSubmission.total}
+          <div className="flex flex-col justify-between h-full pt-1 pb-0.5">
+            <div>
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                Total Projects
+              </span>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-2xl font-bold font-display text-navy-950">
+                  {kpis.totalProjects.value}
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-500 block mt-0.5">
+                Registered Initiatives
               </span>
             </div>
-            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-              <div
-                className="bg-purple-600 h-full rounded-full transition-all duration-500"
-                style={{ width: activePeriodData.kpis.dataSubmission.percent }}
-              ></div>
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
+              <span className="text-slate-400">Cycle</span>
+              <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                {kpis.totalProjects.sub}
+              </span>
             </div>
-          </div>
-          <div className="border-t border-slate-100 pt-1 flex items-center justify-between text-[10px]">
-            <span className="text-slate-400 font-medium">Rate</span>
-            <span className="text-purple-700 font-bold bg-purple-50 px-1.5 py-0.2 rounded-full">
-              {activePeriodData.kpis.dataSubmission.sub}
-            </span>
           </div>
         </NotchCard>
 
-        {/* Metric 4: Pending Verification */}
+        {/* Card 2: Submitted Projects */}
         <NotchCard
-          icon={<ShieldCheck className="w-3.5 h-3.5" />}
-          iconGradient="from-amber-400 to-amber-500"
-          iconShadow="shadow-amber-500/25"
-          badgeShape="circle"
+          icon={<Send className="w-4 h-4 text-white" />}
+          iconGradient="from-emerald-600 to-emerald-700"
+          iconShadow="shadow-emerald-600/20"
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveView('registration')}
         >
-          <p className="text-[11px] font-bold text-slate-800 leading-tight max-w-[65%]">
-            Pending<br />Verification
-          </p>
-          <div className="my-auto py-0.5">
-            <div
-              className={`text-[20px] font-extrabold tracking-tight leading-none ${
-                activePeriodData.kpis.pendingVerification.isZero ? 'text-emerald-600' : 'text-amber-500'
-              }`}
-            >
-              {activePeriodData.kpis.pendingVerification.value}
+          <div className="flex flex-col justify-between h-full pt-1 pb-0.5">
+            <div>
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                Submitted Projects
+              </span>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-2xl font-bold font-display text-emerald-700">
+                  {kpis.submittedProjects.value}
+                </span>
+                <span className="text-xs font-semibold text-slate-400">
+                  {kpis.submittedProjects.total}
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-500 block mt-0.5">
+                Approved & Under Review
+              </span>
             </div>
-            <p className="text-[9.5px] text-slate-400 font-medium mt-0.5">
-              {activePeriodData.kpis.pendingVerification.isZero ? 'All Finalized' : 'Awaiting 3rd-party'}
-            </p>
-          </div>
-          <div className="border-t border-slate-100 pt-1 flex items-center justify-between text-[10px]">
-            <span className="text-slate-400 font-medium">Audit</span>
-            <span
-              className={`font-bold px-1.5 py-0.2 rounded-full ${
-                activePeriodData.kpis.pendingVerification.isZero
-                  ? 'text-emerald-700 bg-emerald-50'
-                  : 'text-amber-700 bg-amber-50'
-              }`}
-            >
-              {activePeriodData.kpis.pendingVerification.sub}
-            </span>
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
+              <span className="text-slate-400">Rate</span>
+              <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                {kpis.submittedProjects.sub}
+              </span>
+            </div>
           </div>
         </NotchCard>
 
-        {/* Metric 5: Reporting Compliance */}
+        {/* Card 3: Projects in Draft */}
         <NotchCard
-          icon={<TrendingUp className="w-3.5 h-3.5" />}
-          iconGradient="from-teal-500 to-teal-600"
-          iconShadow="shadow-teal-500/25"
-          badgeShape="circle"
+          icon={<Bookmark className="w-4 h-4 text-white fill-current" />}
+          iconGradient="from-amber-500 to-amber-600"
+          iconShadow="shadow-amber-500/20"
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveView('registration')}
         >
-          <p className="text-[11px] font-bold text-slate-800 leading-tight max-w-[65%]">
-            Reporting<br />Compliance
-          </p>
-          <div className="space-y-1 my-auto py-0.5">
-            <div className="text-[20px] font-extrabold text-teal-700 tracking-tight leading-none">
-              {activePeriodData.kpis.compliance.value}
+          <div className="flex flex-col justify-between h-full pt-1 pb-0.5">
+            <div>
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                Projects in Draft
+              </span>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-2xl font-bold font-display text-amber-700">
+                  {kpis.draftProjects.value}
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-500 block mt-0.5">
+                Pending Registration
+              </span>
             </div>
-            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-              <div
-                className="bg-teal-600 h-full rounded-full transition-all duration-500"
-                style={{ width: activePeriodData.kpis.compliance.value }}
-              ></div>
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
+              <span className="text-slate-400">Status</span>
+              <span className="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
+                {kpis.draftProjects.sub}
+              </span>
             </div>
           </div>
-          <div className="border-t border-slate-100 pt-1 flex items-center justify-between text-[10px]">
-            <span className="text-slate-400 font-medium">vs Prev</span>
-            <span className="text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.2 rounded-full">
-              {activePeriodData.kpis.compliance.sub}
-            </span>
+        </NotchCard>
+
+        {/* Card 4: Projects with Data Entry */}
+        <NotchCard
+          icon={<Database className="w-4 h-4 text-white" />}
+          iconGradient="from-[#0284C7] to-[#0369A1]"
+          iconShadow="shadow-[#0284C7]/20"
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveView('data-entry')}
+        >
+          <div className="flex flex-col justify-between h-full pt-1 pb-0.5">
+            <div>
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                Projects Data Entry
+              </span>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-2xl font-bold font-display text-[#004B87]">
+                  {kpis.dataEntryProjects.value}
+                </span>
+                <span className="text-xs font-semibold text-slate-400">
+                  {kpis.dataEntryProjects.total}
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-500 block mt-0.5">
+                Monitoring Plans Active
+              </span>
+            </div>
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
+              <span className="text-slate-400">Completion</span>
+              <span className="font-semibold text-[#004B87] bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">
+                {kpis.dataEntryProjects.sub}
+              </span>
+            </div>
+          </div>
+        </NotchCard>
+
+        {/* Card 5: Pending Amendments */}
+        <NotchCard
+          icon={<RotateCcw className="w-4 h-4 text-white" />}
+          iconGradient="from-purple-600 to-indigo-600"
+          iconShadow="shadow-purple-600/20"
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveView('amendments')}
+        >
+          <div className="flex flex-col justify-between h-full pt-1 pb-0.5">
+            <div>
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                Pending Amendments
+              </span>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-2xl font-bold font-display text-purple-700">
+                  {kpis.pendingAmendments.value}
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-500 block mt-0.5">
+                In Review & Updates
+              </span>
+            </div>
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
+              <span className="text-slate-400">Review</span>
+              <span className="font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">
+                {kpis.pendingAmendments.sub}
+              </span>
+            </div>
           </div>
         </NotchCard>
       </div>
 
-      {/* 3. MIDDLE SECTION: GHG EMISSIONS OVERVIEW & MRV WORKFLOW STATUS */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left (7 Cols): GHG Emissions Overview */}
-        <div className="lg:col-span-7 h-[380px] bg-gradient-to-b from-white/95 via-white/90 to-sky-50/60 backdrop-blur-xl rounded-2xl border border-white/90 p-4 sm:p-5 shadow-[0_12px_32px_-6px_rgba(0,75,135,0.08),0_1px_1px_rgba(255,255,255,1)_inset] relative overflow-hidden group flex flex-col justify-between">
+      {/* =================================================================== */}
+      {/* 3. MIDDLE SECTION: PROJECT DATA OVERVIEW + WORKFLOW STATUS PIPELINE */}
+      {/* =================================================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
+        {/* Left: Project Data & Decarbonization Targets Chart (7 cols) */}
+        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col justify-between">
           <div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
               <div>
-                <h3 className="text-base font-bold font-display text-navy-900 flex items-center gap-2">
-                  GHG Emissions Overview
+                <h3 className="text-sm font-bold text-navy-950 font-display">
+                  Project Data & Decarbonization Trajectory
                 </h3>
-                <p className="text-xs text-slate-500 font-medium">
-                  Total reported emissions across registered facilities
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Aggregated performance metrics across registered climate change initiatives
                 </p>
               </div>
 
-              {/* Timeframe Toggle */}
-              <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/70 self-start sm:self-auto">
+              {/* Metric Switcher Pills */}
+              <div className="inline-flex items-center gap-1 p-0.5 bg-slate-100/90 rounded-lg text-[11px] font-semibold">
                 <button
-                  onClick={() => setTimeframe('Monthly')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    timeframe === 'Monthly'
-                      ? 'bg-[#004B87] text-white shadow-xs'
-                      : 'text-slate-600 hover:text-navy-900'
+                  onClick={() => setActiveChartMetric('ghg')}
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                    activeChartMetric === 'ghg'
+                      ? 'bg-white text-[#004B87] shadow-2xs font-bold'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  Monthly
+                  GHG (tCO₂e)
                 </button>
                 <button
-                  onClick={() => setTimeframe('Quarterly')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    timeframe === 'Quarterly'
-                      ? 'bg-[#004B87] text-white shadow-xs'
-                      : 'text-slate-600 hover:text-navy-900'
+                  onClick={() => setActiveChartMetric('cleanEnergy')}
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                    activeChartMetric === 'cleanEnergy'
+                      ? 'bg-white text-[#004B87] shadow-2xs font-bold'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  Quarterly
+                  Clean Energy (MW)
+                </button>
+                <button
+                  onClick={() => setActiveChartMetric('efficiency')}
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                    activeChartMetric === 'efficiency'
+                      ? 'bg-white text-[#004B87] shadow-2xs font-bold'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Efficiency (%)
                 </button>
               </div>
             </div>
 
-            {/* Scope Filters & Unit */}
-            <div className="flex items-center justify-between gap-2 mb-1">
-              <div className="flex items-center gap-1.5">
-                {(['Total', 'Scope 1', 'Scope 2'] as const).map((scope) => (
-                  <button
-                    key={scope}
-                    onClick={() => setScopeFilter(scope)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                      scopeFilter === scope
-                        ? 'bg-[#004B87] text-white shadow-xs'
-                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-navy-900'
-                    }`}
-                  >
-                    {scope}
-                  </button>
-                ))}
+            {/* Quick Metrics Summary Strip */}
+            <div className="grid grid-cols-3 gap-2 py-3 border-b border-slate-100 text-xs">
+              <div className="p-2 bg-sky-50/50 rounded-xl border border-sky-100">
+                <span className="text-[10.5px] font-semibold text-slate-500 block">Total Expected Reductions</span>
+                <span className="text-sm font-bold text-[#004B87] mt-0.5 block">{highlights.totalGhgTarget}</span>
               </div>
-              <div className="text-[11px] font-bold text-slate-400">tCO₂e</div>
+              <div className="p-2 bg-emerald-50/50 rounded-xl border border-emerald-100">
+                <span className="text-[10.5px] font-semibold text-slate-500 block">Clean Power Generation</span>
+                <span className="text-sm font-bold text-emerald-700 mt-0.5 block">{highlights.totalCleanCap}</span>
+              </div>
+              <div className="p-2 bg-purple-50/50 rounded-xl border border-purple-100">
+                <span className="text-[10.5px] font-semibold text-slate-500 block">Milestone Rate</span>
+                <span className="text-sm font-bold text-purple-700 mt-0.5 block">{highlights.milestoneRate}</span>
+              </div>
             </div>
-          </div>
 
-          {/* Area Line Chart (Flex to fill available vertical space within 380px) */}
-          <div className="flex-1 min-h-0 w-full my-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={activeChartData} margin={{ top: 5, right: 15, left: -10, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="emissionsGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0070F3" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#0070F3" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid vertical={false} stroke="#E2E8F0" strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="name"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 10, fill: '#64748B', fontWeight: 600 }}
-                  dy={5}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 10, fill: '#64748B', fontWeight: 600 }}
-                  domain={[0, 25000]}
-                  ticks={[0, 5000, 10000, 15000, 20000, 25000]}
-                  tickFormatter={(val) => val.toLocaleString()}
-                />
-                <Tooltip
-                  formatter={(val: any, name: any) => [`${Number(val).toLocaleString()} tCO₂e`, name]}
-                  contentStyle={{
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: '12px',
-                    border: '1px solid #E2E8F0',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="current"
-                  name={activePeriodData.legend.current}
-                  stroke="#0066CC"
-                  strokeWidth={2.5}
-                  fill="url(#emissionsGradient)"
-                  dot={{ r: 3.5, fill: '#0066CC', strokeWidth: 2, stroke: '#FFFFFF' }}
-                  activeDot={{ r: 5, fill: '#004B87' }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="previous"
-                  name={activePeriodData.legend.previous}
-                  stroke="#0284C7"
-                  strokeWidth={2}
-                  strokeDasharray="4 4"
-                  fill="none"
-                  dot={{ r: 3, fill: '#0284C7', strokeWidth: 1.5, stroke: '#FFFFFF' }}
-                  activeDot={{ r: 5, fill: '#0369A1' }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {/* Recharts Area Chart */}
+            <div className="h-[210px] w-full pt-3">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorCurrent" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#004B87" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="#004B87" stopOpacity={0.0} />
+                    </linearGradient>
+                    <linearGradient id="colorPrev" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0284C7" stopOpacity={0.15} />
+                      <stop offset="95%" stopColor="#0284C7" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} axisLine={{ stroke: '#CBD5E1' }} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748B' }} axisLine={{ stroke: '#CBD5E1' }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      borderRadius: '10px',
+                      border: '1px solid #E2E8F0',
+                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                      fontSize: '11px',
+                    }}
+                    formatter={(value: any) => [`${value} ${chartUnit}`, '']}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="current"
+                    name={periodData.legend.current}
+                    stroke="#004B87"
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill="url(#colorCurrent)"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="previous"
+                    name={periodData.legend.previous}
+                    stroke="#94A3B8"
+                    strokeWidth={1.5}
+                    strokeDasharray="4 4"
+                    fillOpacity={1}
+                    fill="url(#colorPrev)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
           {/* Chart Legend */}
-          <div className="flex items-center justify-center gap-6 pt-2 border-t border-slate-100 text-xs font-bold shrink-0">
-            <div className="flex items-center gap-2 text-navy-900">
-              <span className="w-5 h-0.5 bg-[#0066CC] rounded-full inline-block"></span>
-              <span>{activePeriodData.legend.current}</span>
+          <div className="flex items-center justify-center gap-6 pt-2 border-t border-slate-100 text-[11px] font-medium text-slate-600">
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-[#004B87]" />
+              <span>{periodData.legend.current} (Active Cycle)</span>
             </div>
-            <div className="flex items-center gap-2 text-slate-500">
-              <span className="w-5 h-0.5 border-b-2 border-dashed border-sky-500 inline-block"></span>
-              <span>{activePeriodData.legend.previous}</span>
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-0.5 border-b-2 border-dashed border-slate-400" />
+              <span>{periodData.legend.previous} (Baseline Cycle)</span>
             </div>
           </div>
         </div>
 
-        {/* Right (5 Cols): MRV Workflow Status */}
-        <div className="lg:col-span-5 h-[380px] bg-gradient-to-b from-white/95 via-white/90 to-sky-50/60 backdrop-blur-xl rounded-2xl border border-white/90 p-4 sm:p-5 shadow-[0_12px_32px_-6px_rgba(0,75,135,0.08),0_1px_1px_rgba(255,255,255,1)_inset] flex flex-col justify-between">
+        {/* Right: Project Status Overview (Workflow Pipeline) (5 cols) */}
+        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col justify-between">
           <div>
-            <h3 className="text-base font-bold font-display text-navy-900">MRV Workflow Status</h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Facilities count across the MRV process
-            </p>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="text-sm font-bold text-navy-950 font-display">
+                  Project Status Overview
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Lifecycle progression across Climate Change modules
+                </p>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {workflow.activeRate}
+              </span>
+            </div>
+
+            {/* Workflow Pipeline Progress Bars */}
+            <div className="space-y-3.5 pt-3">
+              {/* Step 1: Draft */}
+              <div>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <div className="flex items-center gap-2 font-semibold text-slate-700">
+                    <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-600 text-[10.5px] font-bold flex items-center justify-center">
+                      1
+                    </span>
+                    <span>Draft</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+                    <span className="font-bold text-slate-800">{workflow.draft}</span>
+                    <span className="text-[11px]">({workflow.draftPct})</span>
+                  </div>
+                </div>
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-slate-400 rounded-full transition-all duration-500" style={{ width: workflow.draftPct }} />
+                </div>
+              </div>
+
+              {/* Step 2: Registered / Submitted */}
+              <div>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <div className="flex items-center gap-2 font-semibold text-slate-700">
+                    <span className="w-5 h-5 rounded-full bg-blue-100 text-[#004B87] text-[10.5px] font-bold flex items-center justify-center">
+                      2
+                    </span>
+                    <span>Registered / Submitted</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+                    <span className="font-bold text-[#004B87]">{workflow.registered}</span>
+                    <span className="text-[11px]">({workflow.registeredPct})</span>
+                  </div>
+                </div>
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-[#004B87] rounded-full transition-all duration-500" style={{ width: workflow.registeredPct }} />
+                </div>
+              </div>
+
+              {/* Step 3: Data Entry */}
+              <div>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <div className="flex items-center gap-2 font-semibold text-slate-700">
+                    <span className="w-5 h-5 rounded-full bg-sky-100 text-sky-700 text-[10.5px] font-bold flex items-center justify-center">
+                      3
+                    </span>
+                    <span>Project Data Entry</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+                    <span className="font-bold text-sky-700">{workflow.dataEntry}</span>
+                    <span className="text-[11px]">({workflow.dataEntryPct})</span>
+                  </div>
+                </div>
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-[#0284C7] rounded-full transition-all duration-500" style={{ width: workflow.dataEntryPct }} />
+                </div>
+              </div>
+
+              {/* Step 4: Amendment / Review */}
+              <div>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <div className="flex items-center gap-2 font-semibold text-slate-700">
+                    <span className="w-5 h-5 rounded-full bg-purple-100 text-purple-700 text-[10.5px] font-bold flex items-center justify-center">
+                      4
+                    </span>
+                    <span>Amendment / Review</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+                    <span className="font-bold text-purple-700">{workflow.amendment}</span>
+                    <span className="text-[11px]">({workflow.amendmentPct})</span>
+                  </div>
+                </div>
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-purple-600 rounded-full transition-all duration-500" style={{ width: workflow.amendmentPct }} />
+                </div>
+              </div>
+
+              {/* Step 5: Reported */}
+              <div>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <div className="flex items-center gap-2 font-semibold text-slate-700">
+                    <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10.5px] font-bold flex items-center justify-center">
+                      5
+                    </span>
+                    <span>Reported & Published</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+                    <span className="font-bold text-emerald-700">{workflow.reported}</span>
+                    <span className="text-[11px]">({workflow.reportedPct})</span>
+                  </div>
+                </div>
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-600 rounded-full transition-all duration-500" style={{ width: workflow.reportedPct }} />
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Connected Process Flow Steps with Centered Continuous Dotted Line */}
-          <div className="relative flex flex-col justify-between my-auto py-1 space-y-2.5">
-            {/* Continuous Vertical Dashed Line passing through all 5 icon centers */}
-            <div className="absolute left-[16px] -translate-x-1/2 top-4 bottom-4 w-px border-l-2 border-dashed border-blue-300/80 pointer-events-none z-0" />
-
-            {/* Step 1: Registered */}
-            <div className="relative flex items-center gap-3 z-10">
-              <div className="w-8 h-8 rounded-full bg-[#EEF4FF] border border-blue-200 flex items-center justify-center text-[#1D63ED] shadow-2xs shrink-0">
-                <FileText className="w-4 h-4" />
-              </div>
-              <span className="w-28 sm:w-32 text-xs sm:text-[13px] font-bold text-slate-800 shrink-0">
-                Registered
-              </span>
-              <div className="flex-1 bg-slate-100/90 h-2 rounded-full overflow-hidden">
-                <div
-                  className="bg-[#0055FF] h-full rounded-full transition-all duration-500"
-                  style={{ width: activePeriodData.workflow.registeredPct }}
-                />
-              </div>
-              <span className="text-navy-900 font-extrabold text-sm sm:text-base w-8 text-right shrink-0">
-                {activePeriodData.workflow.registered}
-              </span>
+          {/* Workflow Stage Flow Connector */}
+          <div className="pt-3 mt-3 border-t border-slate-100">
+            <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              <span>Draft</span>
+              <ArrowRight className="w-3 h-3 text-slate-400" />
+              <span>Registered</span>
+              <ArrowRight className="w-3 h-3 text-slate-400" />
+              <span>Data Entry</span>
+              <ArrowRight className="w-3 h-3 text-slate-400" />
+              <span>Amendment</span>
+              <ArrowRight className="w-3 h-3 text-slate-400" />
+              <span>Reported</span>
             </div>
-
-            {/* Step 2: Data Entry */}
-            <div className="relative flex items-center gap-3 z-10">
-              <div className="w-8 h-8 rounded-full bg-[#ECFDF5] border border-emerald-200 flex items-center justify-center text-[#059669] shadow-2xs shrink-0">
-                <Building2 className="w-4 h-4" />
-              </div>
-              <span className="w-28 sm:w-32 text-xs sm:text-[13px] font-bold text-slate-800 shrink-0">
-                Data Entry
-              </span>
-              <div className="flex-1 bg-slate-100/90 h-2 rounded-full overflow-hidden">
-                <div
-                  className="bg-[#00A86B] h-full rounded-full transition-all duration-500"
-                  style={{ width: activePeriodData.workflow.dataEntryPct }}
-                />
-              </div>
-              <span className="text-navy-900 font-extrabold text-sm sm:text-base w-8 text-right shrink-0">
-                {activePeriodData.workflow.dataEntry}
-              </span>
-            </div>
-
-            {/* Step 3: Submitted */}
-            <div className="relative flex items-center gap-3 z-10">
-              <div className="w-8 h-8 rounded-full bg-[#F5F3FF] border border-purple-200 flex items-center justify-center text-[#7C3AED] shadow-2xs shrink-0">
-                <FileText className="w-4 h-4" />
-              </div>
-              <span className="w-28 sm:w-32 text-xs sm:text-[13px] font-bold text-slate-800 shrink-0">
-                Submitted
-              </span>
-              <div className="flex-1 bg-slate-100/90 h-2 rounded-full overflow-hidden">
-                <div
-                  className="bg-[#7048E8] h-full rounded-full transition-all duration-500"
-                  style={{ width: activePeriodData.workflow.submittedPct }}
-                />
-              </div>
-              <span className="text-navy-900 font-extrabold text-sm sm:text-base w-8 text-right shrink-0">
-                {activePeriodData.workflow.submitted}
-              </span>
-            </div>
-
-            {/* Step 4: Under Verification */}
-            <div className="relative flex items-center gap-3 z-10">
-              <div className="w-8 h-8 rounded-full bg-[#FFF7ED] border border-orange-200 flex items-center justify-center text-[#EA580C] shadow-2xs shrink-0">
-                <ShieldAlert className="w-4 h-4" />
-              </div>
-              <span className="w-28 sm:w-32 text-xs sm:text-[13px] font-bold text-slate-800 shrink-0">
-                Under Verification
-              </span>
-              <div className="flex-1 bg-slate-100/90 h-2 rounded-full overflow-hidden">
-                <div
-                  className="bg-[#FF6B00] h-full rounded-full transition-all duration-500"
-                  style={{ width: activePeriodData.workflow.underVerificationPct }}
-                />
-              </div>
-              <span className="text-navy-900 font-extrabold text-sm sm:text-base w-8 text-right shrink-0">
-                {activePeriodData.workflow.underVerification}
-              </span>
-            </div>
-
-            {/* Step 5: Verified */}
-            <div className="relative flex items-center gap-3 z-10">
-              <div className="w-8 h-8 rounded-full bg-[#ECFDF5] border border-emerald-200 flex items-center justify-center text-[#16A34A] shadow-2xs shrink-0">
-                <CheckCircle2 className="w-4 h-4" />
-              </div>
-              <span className="w-28 sm:w-32 text-xs sm:text-[13px] font-bold text-slate-800 shrink-0">
-                Verified
-              </span>
-              <div className="flex-1 bg-slate-100/90 h-2 rounded-full overflow-hidden">
-                <div
-                  className="bg-[#0CA678] h-full rounded-full transition-all duration-500"
-                  style={{ width: activePeriodData.workflow.verifiedPct }}
-                />
-              </div>
-              <span className="text-navy-900 font-extrabold text-sm sm:text-base w-8 text-right shrink-0">
-                {activePeriodData.workflow.verified}
-              </span>
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-500 shrink-0">
-            <span>Overall Verification Rate</span>
-            <span className="text-emerald-600 font-bold">{activePeriodData.workflow.rate}</span>
           </div>
         </div>
       </div>
 
-      {/* 4. ACTION & COMPLIANCE STATUS (Unified Single Section Card) */}
-      <div className="bg-gradient-to-b from-white/95 via-white/90 to-sky-50/60 backdrop-blur-xl rounded-2xl border border-white/90 p-5 shadow-[0_12px_32px_-6px_rgba(0,75,135,0.08),0_1px_1px_rgba(255,255,255,1)_inset]">
-        <div className="flex items-center justify-between mb-3.5">
-          <h3 className="text-sm font-bold text-[#004B87] flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#004B87] animate-pulse"></span>
-            Action & Compliance Status ({selectedPeriod})
-          </h3>
-          <span className="text-xs text-slate-400 font-medium">
-            {activePeriodData.attentionRequired.length} items require attention
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-          {activePeriodData.attentionRequired.map((item) => (
-            <div
-              key={item.id}
-              className={`bg-white rounded-xl border p-3.5 shadow-2xs hover:shadow-sm transition-all duration-200 flex items-center justify-between gap-3 group ${
-                item.type === 'red'
-                  ? 'border-rose-200/80'
-                  : item.type === 'orange'
-                  ? 'border-orange-200/80'
-                  : item.type === 'amber'
-                  ? 'border-amber-200/80'
-                  : item.type === 'emerald'
-                  ? 'border-emerald-200/80'
-                  : 'border-blue-200/80'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <div
-                  className={`w-9 h-9 rounded-full text-white flex items-center justify-center shrink-0 shadow-2xs ${
-                    item.type === 'red'
-                      ? 'bg-rose-500'
-                      : item.type === 'orange'
-                      ? 'bg-orange-500'
-                      : item.type === 'amber'
-                      ? 'bg-amber-500'
-                      : item.type === 'emerald'
-                      ? 'bg-emerald-500'
-                      : 'bg-[#0066CC]'
-                  }`}
-                >
-                  {item.type === 'red' && <AlertCircle className="w-4 h-4" />}
-                  {item.type === 'orange' && <Clock className="w-4 h-4" />}
-                  {item.type === 'amber' && <Calendar className="w-4 h-4" />}
-                  {item.type === 'emerald' && <CheckCircle2 className="w-4 h-4" />}
-                  {item.type === 'blue' && <Edit3 className="w-4 h-4" />}
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-navy-900 leading-snug">{item.title}</p>
-                  <span className="text-[10px] text-slate-400 font-medium">{item.category}</span>
-                </div>
+      {/* =================================================================== */}
+      {/* 4. BOTTOM SECTION: ACTIVE CLIMATE PROJECTS & REPORTING STATUS */}
+      {/* =================================================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 pb-2">
+        {/* Active Projects Table (8 cols) */}
+        <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                <h3 className="text-sm font-bold text-navy-950 font-display">
+                  Active Climate Initiatives ({selectedPeriod})
+                </h3>
               </div>
               <button
-                onClick={() => setActiveView(item.targetView)}
-                className="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-navy-900 hover:border-slate-300 text-xs font-bold flex items-center gap-1 shrink-0 transition-colors shadow-2xs cursor-pointer"
+                onClick={() => setActiveView('registration')}
+                className="text-xs font-bold text-[#004B87] hover:text-[#003d6e] flex items-center gap-1 cursor-pointer"
               >
-                {item.actionText}
+                <span>View All Projects</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
-          ))}
-        </div>
-      </div>
 
-      {/* 5. BOTTOM SECTION (3 PANELS): EMISSIONS BY SECTOR | DATA COMPLETENESS | RECENT ACTIVITY */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Panel 1: Emissions by Sector */}
-        <div className="bg-gradient-to-b from-white/95 via-white/90 to-sky-50/60 backdrop-blur-xl rounded-2xl border border-white/90 p-5 sm:p-6 shadow-[0_12px_32px_-6px_rgba(0,75,135,0.08),0_1px_1px_rgba(255,255,255,1)_inset] flex flex-col justify-between">
-          <div>
-            <h3 className="text-base font-bold font-display text-navy-900">Emissions by Sector</h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Share of total emissions ({selectedPeriod})</p>
-          </div>
-
-          <div className="space-y-4 my-auto py-2">
-            {activePeriodData.sectorData.map((sec) => (
-              <div key={sec.name}>
-                <div className="flex items-center justify-between text-xs font-bold mb-1">
-                  <span className="text-slate-700">{sec.name}</span>
-                  <span className="text-navy-900 font-extrabold">{sec.percent}</span>
-                </div>
-                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                  <div className={`${sec.color} h-full rounded-full`} style={{ width: sec.width }}></div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-500">
-            <span>Primary Emitter</span>
-            <span className="text-[#004B87] font-bold">Industrial (Heavy Industry)</span>
-          </div>
-        </div>
-
-        {/* Panel 2: Data Completeness */}
-        <div className="bg-gradient-to-b from-white/95 via-white/90 to-emerald-50/40 backdrop-blur-xl rounded-2xl border border-white/90 p-5 sm:p-6 shadow-[0_12px_32px_-6px_rgba(0,75,135,0.08),0_1px_1px_rgba(255,255,255,1)_inset] flex flex-col justify-between">
-          <div>
-            <h3 className="text-base font-bold font-display text-navy-900">Data Completeness</h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Overall completeness of submitted data</p>
-          </div>
-
-          <div className="flex items-center gap-5 my-auto py-2">
-            {/* Radial / Donut Ring */}
-            <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="40" stroke="#E2E8F0" strokeWidth="9" fill="transparent" />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  stroke="#10B981"
-                  strokeWidth="9"
-                  strokeDasharray="251.2"
-                  strokeDashoffset={activePeriodData.completeness.dashoffset}
-                  strokeLinecap="round"
-                  fill="transparent"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-xl font-black font-display text-navy-900">
-                  {activePeriodData.completeness.overall}%
-                </span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase leading-tight">
-                  Overall
-                  <br />
-                  Complete
-                </span>
-              </div>
+            {/* Table */}
+            <div className="overflow-x-auto pt-2">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-500 font-semibold">
+                    <th className="py-2 px-2.5">Project Name & ID</th>
+                    <th className="py-2 px-2.5">Lead Entity</th>
+                    <th className="py-2 px-2.5">Pillar</th>
+                    <th className="py-2 px-2.5">Status</th>
+                    <th className="py-2 px-2.5 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {projectsList.map((project) => (
+                    <tr key={project.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-2.5 px-2.5 font-medium">
+                        <div className="text-slate-900 font-bold line-clamp-1">{project.name}</div>
+                        <div className="text-[10.5px] font-mono text-slate-400 mt-0.5">{project.code}</div>
+                      </td>
+                      <td className="py-2.5 px-2.5 text-slate-600 line-clamp-1 max-w-[160px] truncate">
+                        {project.entity}
+                      </td>
+                      <td className="py-2.5 px-2.5 whitespace-nowrap">
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10.5px] font-semibold border ${getPillarBadge(
+                            project.pillar
+                          )}`}
+                        >
+                          {project.pillar}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-2.5 whitespace-nowrap">
+                        {getStatusBadge(project.status)}
+                      </td>
+                      <td className="py-2.5 px-2.5 text-right whitespace-nowrap">
+                        <button
+                          onClick={() => setActiveView(project.targetView)}
+                          className="px-2.5 py-1 bg-white hover:bg-sky-50 border border-slate-200 text-[#004B87] hover:border-[#004B87] rounded-lg text-[11px] font-bold shadow-2xs transition-colors cursor-pointer inline-flex items-center gap-1"
+                        >
+                          <span>{project.actionLabel}</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+          </div>
+        </div>
 
-            {/* Breakdown Bars */}
-            <div className="flex-1 space-y-2.5">
-              <div>
-                <div className="flex justify-between text-[11px] font-semibold text-slate-700 mb-0.5">
-                  <span>Energy Consumption</span>
-                  <span className="font-bold text-navy-900">{activePeriodData.completeness.energy}%</span>
-                </div>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-[#10B981] h-full rounded-full"
-                    style={{ width: `${activePeriodData.completeness.energy}%` }}
-                  ></div>
-                </div>
-              </div>
+        {/* Pillar Breakdown & Recent Activity (4 cols) */}
+        <div className="lg:col-span-4 space-y-3.5">
+          {/* Strategy Pillar Distribution */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4">
+            <h3 className="text-sm font-bold text-navy-950 font-display mb-1">
+              Strategy Pillar Distribution
+            </h3>
+            <p className="text-[11px] text-slate-500 mb-3">
+              Abu Dhabi Climate Change Strategy project allocation
+            </p>
 
-              <div>
-                <div className="flex justify-between text-[11px] font-semibold text-slate-700 mb-0.5">
-                  <span>Fuel Consumption</span>
-                  <span className="font-bold text-navy-900">{activePeriodData.completeness.fuel}%</span>
+            <div className="space-y-2.5 text-xs">
+              {pillarData.map((item) => (
+                <div key={item.name}>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-semibold text-slate-700 text-[11.5px]">{item.name}</span>
+                    <span className="font-bold text-slate-800 text-[11.5px]">
+                      {item.count} projects ({item.percent})
+                    </span>
+                  </div>
+                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className={`h-full ${item.color} rounded-full`} style={{ width: item.width }} />
+                  </div>
                 </div>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-[#10B981] h-full rounded-full"
-                    style={{ width: `${activePeriodData.completeness.fuel}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-[11px] font-semibold text-slate-700 mb-0.5">
-                  <span>Electricity</span>
-                  <span className="font-bold text-navy-900">{activePeriodData.completeness.electricity}%</span>
-                </div>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-[#10B981] h-full rounded-full"
-                    style={{ width: `${activePeriodData.completeness.electricity}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-[11px] font-semibold text-slate-700 mb-0.5">
-                  <span>Waste</span>
-                  <span className="font-bold text-navy-900">{activePeriodData.completeness.waste}%</span>
-                </div>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-[#10B981] h-full rounded-full"
-                    style={{ width: `${activePeriodData.completeness.waste}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-[11px] font-semibold text-slate-700 mb-0.5">
-                  <span>Other</span>
-                  <span className="font-bold text-navy-900">{activePeriodData.completeness.other}%</span>
-                </div>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-[#10B981] h-full rounded-full"
-                    style={{ width: `${activePeriodData.completeness.other}%` }}
-                  ></div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
 
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-500">
-            <span>Highest Completeness</span>
-            <span className="text-emerald-600 font-bold">{activePeriodData.completeness.highest}</span>
-          </div>
-        </div>
+          {/* Recent Activity Stream */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4">
+            <h3 className="text-sm font-bold text-navy-950 font-display mb-1">
+              Recent Activity Feed
+            </h3>
+            <p className="text-[11px] text-slate-500 mb-3">
+              Latest statutory submissions and amendment actions
+            </p>
 
-        {/* Panel 3: Recent Activity */}
-        <div className="bg-gradient-to-b from-white/95 via-white/90 to-sky-50/60 backdrop-blur-xl rounded-2xl border border-white/90 p-5 sm:p-6 shadow-[0_12px_32px_-6px_rgba(0,75,135,0.08),0_1px_1px_rgba(255,255,255,1)_inset] flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-base font-bold font-display text-navy-900">Recent Activity</h3>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Timeline activity for {selectedPeriod}
-              </p>
-            </div>
-            <button
-              onClick={() => setActiveView('reports')}
-              className="text-xs font-bold text-[#004B87] hover:underline cursor-pointer"
-            >
-              View All
-            </button>
-          </div>
-
-          {/* Activity Timeline List */}
-          <div className="space-y-3.5 my-auto py-2">
-            {activePeriodData.activities.map((act, index) => (
-              <div key={index} className="flex items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2.5 truncate">
-                  <span className={`w-2 h-2 rounded-full ${act.dotColor} shrink-0`}></span>
-                  <span className="text-slate-400 font-semibold text-[11px] shrink-0">{act.time}</span>
-                  <span className="font-semibold text-navy-900 truncate">{act.text}</span>
+            <div className="space-y-3">
+              {recentActivities.map((act, i) => (
+                <div key={i} className="flex items-start gap-2.5 text-xs">
+                  <span className={`w-2 h-2 rounded-full ${act.dotColor} shrink-0 mt-1.5`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-slate-800 font-medium leading-snug line-clamp-2">{act.text}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] text-slate-400">{act.time}</span>
+                      <span className={`px-1.5 py-0.2 rounded text-[10px] font-semibold border ${act.badgeClass}`}>
+                        {act.badge}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <span
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold border shrink-0 ${act.badgeClass}`}
-                >
-                  {act.badge}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-500">
-            <span>Cycle Status</span>
-            <span className="text-slate-700 font-bold">{activePeriodData.auditSummary}</span>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
       </div>
     </div>
   );
 };
+
+export default FacilityDashboardView;

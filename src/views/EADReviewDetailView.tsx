@@ -17,7 +17,6 @@ import {
   UserCheck,
   History,
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 import { useMRV } from '../context/MRVContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { Badge } from '../components/ui/Badge';
@@ -51,12 +50,6 @@ export const EADReviewDetailView: React.FC = () => {
     eadApproveSubmission(sub.id, decisionNotes || 'Full compliance criteria verified.');
     setActiveModal(null);
     setActionSuccessNotice('Submission Approved — Official EAD Compliance Certificate Issued');
-    confetti({
-      particleCount: 80,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#10B981', '#0878C9', '#19B5D8'],
-    });
   };
 
   const handleRevert = () => {
