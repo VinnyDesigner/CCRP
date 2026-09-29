@@ -96,6 +96,7 @@ const MainAppContent: React.FC = () => {
       case 'notifications':
         return <NotificationsView />;
       case 'help':
+      case 'help-guidance':
         return <HelpGuidanceView />;
       case 'ead-queue':
         return <EADReviewQueueView />;

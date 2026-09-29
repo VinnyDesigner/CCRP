@@ -136,12 +136,12 @@ export const NotchCard: React.FC<NotchCardProps> = ({
       {/* Top Specular Rim Highlight */}
       <div className="absolute inset-x-5 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-white to-transparent pointer-events-none z-20 opacity-90" />
 
-      {/* Top-Right Nestled Icon Badge */}
-      <div className="absolute top-[4px] right-[4px] p-0.5 bg-white/70 backdrop-blur-md rounded-full shadow-[0_3px_8px_rgba(0,75,135,0.08),inset_0_1px_1px_rgba(255,255,255,0.9)] border border-white/80 z-10">
+      {/* Top-Right Nestled Icon Badge (3px white background stroke) */}
+      <div className="absolute top-[4px] right-[4px] p-[3px] bg-white rounded-full shadow-[0_2px_8px_rgba(0,75,135,0.1)] z-10">
         <div
           className={`w-[34px] h-[34px] ${
             badgeShape === 'squircle' ? 'rounded-[10px]' : 'rounded-full'
-          } bg-gradient-to-br ${iconGradient} flex items-center justify-center text-white shadow-sm ${iconShadow} ring-2 ring-white/90 group-hover:scale-105 transition-all duration-300`}
+          } bg-gradient-to-br ${iconGradient} flex items-center justify-center text-white shadow-xs ${iconShadow} group-hover:scale-105 transition-all duration-300`}
         >
           {icon}
         </div>

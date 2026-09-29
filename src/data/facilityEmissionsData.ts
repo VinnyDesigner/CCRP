@@ -3,7 +3,7 @@ export interface PerformanceReportData {
   initiativeId: string;
   entity: string;
   pillar: 'Adaptation' | 'Mitigation' | 'Economic Diversification' | 'Cross Cutting';
-  reportingCadence: 'Quarterly' | 'Semiannual';
+  reportingCadence: 'Quarterly' | 'Semiannual' | 'Annual' | string;
 
   // Step 1: Report Details
   progressReportPeriod: string;
@@ -106,11 +106,29 @@ export const CCRP_PILLARS = [
   'Cross Cutting',
 ] as const;
 
+export const CCRP_REPORTING_PERIODS_BY_CADENCE: Record<string, string[]> = {
+  Semiannual: ['Semiannual 1 (H1)', 'Semiannual 2 (H2)'],
+  Quarterly: ['Q1', 'Q2', 'Q3', 'Q4'],
+  Annual: ['Annual'],
+};
+
+export const getReportingPeriodsForCadence = (cadence?: string): string[] => {
+  if (!cadence) return ['Semiannual 1 (H1)', 'Semiannual 2 (H2)'];
+  const norm = String(cadence).trim().toLowerCase();
+  if (norm.includes('quarter')) {
+    return ['Q1', 'Q2', 'Q3', 'Q4'];
+  }
+  if (norm.includes('annu')) {
+    return ['Annual'];
+  }
+  return ['Semiannual 1 (H1)', 'Semiannual 2 (H2)'];
+};
+
 export const CCRP_REPORTING_PERIODS_BY_PILLAR: Record<string, string[]> = {
   Adaptation: ['Q1', 'Q2', 'Q3', 'Q4'],
-  Mitigation: ['Semiannual 1 (H1)', 'Semiannual 2 (H2)', 'Q1', 'Q2', 'Q3', 'Q4'],
-  'Economic Diversification': ['Semiannual 1 (H1)', 'Semiannual 2 (H2)', 'Q1', 'Q2', 'Q3', 'Q4'],
-  'Cross Cutting': ['Semiannual 1 (H1)', 'Semiannual 2 (H2)', 'Q1', 'Q2', 'Q3', 'Q4'],
+  Mitigation: ['Semiannual 1 (H1)', 'Semiannual 2 (H2)'],
+  'Economic Diversification': ['Semiannual 1 (H1)', 'Semiannual 2 (H2)'],
+  'Cross Cutting': ['Semiannual 1 (H1)', 'Semiannual 2 (H2)'],
 };
 
 export interface CCRPApprovedInitiative {
@@ -119,7 +137,7 @@ export interface CCRPApprovedInitiative {
   name: string;
   entity: string;
   pillar: 'Adaptation' | 'Mitigation' | 'Economic Diversification' | 'Cross Cutting';
-  cadence: 'Quarterly' | 'Semiannual';
+  cadence: 'Quarterly' | 'Semiannual' | 'Annual' | string;
   sector: string;
   strategicObjective: string;
   startDate: string;

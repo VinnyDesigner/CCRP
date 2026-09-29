@@ -12,6 +12,8 @@ import {
   Download,
   ArrowRight,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Plus,
   Eye,
   FileText,
@@ -34,6 +36,10 @@ import {
   Area,
   LineChart,
   Line,
+  PieChart,
+  Pie,
+  Cell,
+  Sector,
   XAxis,
   YAxis,
   Tooltip,
@@ -41,6 +47,9 @@ import {
 } from 'recharts';
 import { useMRV } from '../context/MRVContext';
 import { NotchCard } from '../components/ui/NotchCard';
+import { INITIAL_FACILITY_REGISTRATIONS } from '../data/facilityRegistrationsData';
+import { INITIAL_FACILITY_EMISSIONS } from '../data/facilityEmissionsData';
+import { INITIAL_AMENDMENTS } from '../data/amendmentsData';
 
 // Dashboard Period-specific Climate Change Data Dictionary
 const PERIOD_DATA: Record<
@@ -53,11 +62,10 @@ const PERIOD_DATA: Record<
       dataEntryProjects: { value: string; total: string; sub: string; percent: string };
       pendingAmendments: { value: string; sub: string };
     };
-    monthlyDataGhg: { name: string; current: number; previous: number }[];
-    monthlyDataCleanEnergy: { name: string; current: number; previous: number }[];
-    monthlyDataEfficiency: { name: string; current: number; previous: number }[];
-    quarterlyData: { name: string; current: number; previous: number }[];
-    legend: { current: string; previous: string };
+    monthlyDataGhg: { name: string; planned: number; actual: number }[];
+    monthlyDataCleanEnergy: { name: string; planned: number; actual: number }[];
+    monthlyDataEfficiency: { name: string; planned: number; actual: number }[];
+    legend: { planned: string; actual: string };
     workflow: {
       draft: number;
       draftPct: string;
@@ -102,67 +110,52 @@ const PERIOD_DATA: Record<
 > = {
   'FY 2026–27': {
     kpis: {
-      totalProjects: { value: '12', sub: '+3 registered this cycle' },
-      submittedProjects: { value: '8', total: '/ 12', sub: '67% submitted & active', percent: '67%' },
-      draftProjects: { value: '2', sub: '17% pending submission' },
-      dataEntryProjects: { value: '6', total: '/ 12', sub: '50% monitoring active', percent: '50%' },
-      pendingAmendments: { value: '3', sub: 'Active reviews & tickets' },
+      totalProjects: { value: '7', sub: 'Registered Initiatives' },
+      submittedProjects: { value: '6', total: '/ 7', sub: '85.7% submitted & active', percent: '85.7%' },
+      draftProjects: { value: '1', sub: '14.3% in formulation' },
+      dataEntryProjects: { value: '4', total: '/ 7', sub: '57.1% monitoring active', percent: '57.1%' },
+      pendingAmendments: { value: '1', sub: 'Active amendment review' },
     },
     monthlyDataGhg: [
-      { name: 'Jan', current: 320, previous: 180 },
-      { name: 'Feb', current: 480, previous: 240 },
-      { name: 'Mar', current: 750, previous: 380 },
-      { name: 'Apr', current: 690, previous: 420 },
-      { name: 'May', current: 890, previous: 510 },
-      { name: 'Jun', current: 1040, previous: 620 },
-      { name: 'Jul', current: 1220, previous: 710 },
-      { name: 'Aug', current: 1180, previous: 750 },
+      { name: 'Al Dhafra Solar', planned: 142.8, actual: 138.5 },
+      { name: 'Biogas Recovery', planned: 38.5, actual: 41.2 },
+      { name: 'Electric Transit', planned: 24.0, actual: 21.5 },
+      { name: 'Portfolio Total', planned: 205.3, actual: 201.2 },
     ],
     monthlyDataCleanEnergy: [
-      { name: 'Jan', current: 450, previous: 200 },
-      { name: 'Feb', current: 680, previous: 350 },
-      { name: 'Mar', current: 1100, previous: 500 },
-      { name: 'Apr', current: 1350, previous: 650 },
-      { name: 'May', current: 1750, previous: 850 },
-      { name: 'Jun', current: 2100, previous: 1100 },
-      { name: 'Jul', current: 2350, previous: 1300 },
-      { name: 'Aug', current: 2450, previous: 1400 },
+      { name: 'Al Dhafra Solar', planned: 2000, actual: 2000 },
+      { name: 'Green Hydrogen Hub', planned: 150, actual: 50 },
+      { name: 'Biogas Energy', planned: 35, actual: 35 },
+      { name: 'Portfolio Total', planned: 2185, actual: 2085 },
     ],
     monthlyDataEfficiency: [
-      { name: 'Jan', current: 4.2, previous: 2.1 },
-      { name: 'Feb', current: 6.5, previous: 3.4 },
-      { name: 'Mar', current: 8.8, previous: 4.6 },
-      { name: 'Apr', current: 10.2, previous: 5.8 },
-      { name: 'May', current: 12.1, previous: 7.0 },
-      { name: 'Jun', current: 13.9, previous: 8.3 },
-      { name: 'Jul', current: 15.4, previous: 9.5 },
-      { name: 'Aug', current: 16.2, previous: 10.1 },
+      { name: 'Al Dhafra Solar', planned: 75, actual: 68 },
+      { name: 'Green Hydrogen', planned: 35, actual: 30 },
+      { name: 'Mangrove Restore', planned: 50, actual: 52 },
+      { name: 'Electric Transit', planned: 60, actual: 55 },
+      { name: 'Biogas Recovery', planned: 100, actual: 100 },
+      { name: 'Stormwater Infra', planned: 45, actual: 40 },
+      { name: 'Smart Irrigation', planned: 25, actual: 20 },
     ],
-    quarterlyData: [
-      { name: 'Q1', current: 1550, previous: 800 },
-      { name: 'Q2', current: 2620, previous: 1550 },
-      { name: 'Q3', current: 3100, previous: 1980 },
-      { name: 'Q4 (Est)', current: 4850, previous: 3200 },
-    ],
-    legend: { current: 'FY 2026–27', previous: 'FY 2025–26' },
+    legend: { planned: 'Planned Target', actual: 'Actual Performance' },
     workflow: {
-      draft: 2,
-      draftPct: '16.7%',
-      registered: 8,
-      registeredPct: '66.7%',
-      dataEntry: 6,
-      dataEntryPct: '50.0%',
-      amendment: 3,
-      amendmentPct: '25.0%',
-      reported: 5,
-      reportedPct: '41.7%',
-      activeRate: '83.3% (10 / 12 Projects)',
+      draft: 1,
+      draftPct: '14.3%',
+      registered: 2,
+      registeredPct: '28.6%',
+      dataEntry: 1,
+      dataEntryPct: '14.3%',
+      amendment: 1,
+      amendmentPct: '14.3%',
+      reported: 2,
+      reportedPct: '28.5%',
+      activeRate: '7 / 7 Projects Accounted (100%)',
     },
     pillarData: [
-      { name: 'Mitigation', percent: '42%', width: '42%', color: 'bg-[#004B87]', count: 5 },
-      { name: 'Adaptation', percent: '28%', width: '28%', color: 'bg-[#0284C7]', count: 3 },
-      { name: 'Economic Diversification', percent: '18%', width: '18%', color: 'bg-[#8B5CF6]', count: 2 },
-      { name: 'Cross Cutting', percent: '12%', width: '12%', color: 'bg-[#F59E0B]', count: 2 },
+      { name: 'Adaptation', percent: '42.9%', width: '42.9%', color: 'bg-[#0284C7]', count: 3 },
+      { name: 'Mitigation', percent: '28.6%', width: '28.6%', color: 'bg-[#004B87]', count: 2 },
+      { name: 'Economic Diversification', percent: '14.3%', width: '14.3%', color: 'bg-[#8B5CF6]', count: 1 },
+      { name: 'Cross Cutting', percent: '14.3%', width: '14.3%', color: 'bg-[#F59E0B]', count: 1 },
     ],
     projectsList: [
       {
@@ -174,7 +167,7 @@ const PERIOD_DATA: Record<
         sector: 'Energy',
         status: 'Approved',
         dataEntryStatus: 'Active',
-        targetGhgReduction: '2,400,000 tCO₂e / yr',
+        targetGhgReduction: '142,800 tCO₂e / yr',
         targetCapacity: '2,000 MW',
         targetView: 'data-entry',
         actionLabel: 'Open Data Entry',
@@ -188,7 +181,7 @@ const PERIOD_DATA: Record<
         sector: 'Industry & Manufacturing',
         status: 'Submitted',
         dataEntryStatus: 'Pending',
-        targetGhgReduction: '850,000 tCO₂e / yr',
+        targetGhgReduction: '850,000 tCO₂e / yr (2028 Target)',
         targetCapacity: '150 MW H₂',
         targetView: 'amendments',
         actionLabel: 'View Amendment',
@@ -199,27 +192,27 @@ const PERIOD_DATA: Record<
         code: 'CCRP-INIT-2026-0422',
         entity: 'Environment Agency – Abu Dhabi (EAD)',
         pillar: 'Adaptation',
-        sector: 'Coastal Ecosystems',
+        sector: 'Coastal & Marine Ecosystems',
         status: 'Approved',
         dataEntryStatus: 'Completed',
-        targetGhgReduction: '320,000 tCO₂e / yr',
+        targetGhgReduction: 'Blue Carbon Sequestration',
         targetCapacity: '12,000 Hectares',
-        targetView: 'registration',
-        actionLabel: 'View Details',
+        targetView: 'data-entry',
+        actionLabel: 'View Data Entry',
       },
       {
         id: 'fac-4',
         name: 'Electric Public Transit Fleet & EV Fast-Charging Network',
         code: 'CCRP-INIT-2026-0305',
-        entity: 'Department of Municipalities and Transport (DMT)',
+        entity: 'Integrated Transport Centre (ITC)',
         pillar: 'Mitigation',
         sector: 'Transport',
-        status: 'Registry Update Pending',
+        status: 'Under Review',
         dataEntryStatus: 'Active',
-        targetGhgReduction: '185,000 tCO₂e / yr',
+        targetGhgReduction: '24,000 tCO₂e / yr',
         targetCapacity: '160 EV Hubs',
-        targetView: 'amendments',
-        actionLabel: 'View Ticket',
+        targetView: 'registration',
+        actionLabel: 'View Details',
       },
       {
         id: 'fac-5',
@@ -228,12 +221,12 @@ const PERIOD_DATA: Record<
         entity: 'Abu Dhabi Waste Management Centre (Tadweer)',
         pillar: 'Cross Cutting',
         sector: 'Waste Management',
-        status: 'Under Review',
-        dataEntryStatus: 'Active',
-        targetGhgReduction: '410,000 tCO₂e / yr',
+        status: 'Approved',
+        dataEntryStatus: 'Completed',
+        targetGhgReduction: '38,500 tCO₂e / yr',
         targetCapacity: '35 MW Biogas',
-        targetView: 'data-entry',
-        actionLabel: 'Open Data Entry',
+        targetView: 'reports',
+        actionLabel: 'View Report',
       },
       {
         id: 'fac-6',
@@ -249,107 +242,113 @@ const PERIOD_DATA: Record<
         targetView: 'registration',
         actionLabel: 'Edit Project',
       },
+      {
+        id: 'fac-7',
+        name: 'Agricultural Water Efficiency & Smart Irrigation Program',
+        code: 'Draft Initiative',
+        entity: 'Abu Dhabi Agriculture and Food Safety Authority (ADAFSA)',
+        pillar: 'Adaptation',
+        sector: 'Agriculture, Forestry & Land Use (AFOLU)',
+        status: 'Draft',
+        dataEntryStatus: 'Pending',
+        targetGhgReduction: 'Water Desalination Savings',
+        targetCapacity: '1,200 Farms',
+        targetView: 'registration',
+        actionLabel: 'Edit Draft',
+      },
     ],
     recentActivities: [
       {
         time: '10:42 AM',
-        text: 'Al Dhafra Solar PV completed 2026 Q2 performance data entry',
+        text: 'Project Data Entry submitted for Al Dhafra Solar PV (H1 2026)',
         badge: 'Project Data Entry',
         badgeClass: 'bg-blue-50 text-blue-700 border-blue-200/60',
         dotColor: 'bg-blue-500',
       },
       {
         time: '09:15 AM',
-        text: 'Green Hydrogen Hub amendment request submitted by ADDED',
+        text: 'Amendment request submitted for Green Hydrogen Hub',
         badge: 'Amendments',
         badgeClass: 'bg-purple-50 text-purple-700 border-purple-200/60',
         dotColor: 'bg-purple-500',
       },
       {
         time: 'Yesterday',
-        text: 'Electric Public Transit Fleet raised registry update ticket TCK-2026-0305-AM',
+        text: 'Amendment approved for Electric Public Transit Fleet',
         badge: 'Amendments',
+        badgeClass: 'bg-purple-50 text-purple-700 border-purple-200/60',
+        dotColor: 'bg-purple-500',
+      },
+      {
+        time: '26 Sep 2026',
+        text: 'Project Registration approved: Mangrove & Blue Carbon Coastal Restoration',
+        badge: 'Project Registration',
+        badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
+        dotColor: 'bg-emerald-500',
+      },
+      {
+        time: '18 Sep 2026',
+        text: 'Correction requested for Climate Resilient Urban Infrastructure registration',
+        badge: 'Project Registration',
         badgeClass: 'bg-amber-50 text-amber-700 border-amber-200/60',
         dotColor: 'bg-amber-500',
       },
       {
-        time: '26 Sep 2026',
-        text: 'Mangrove & Blue Carbon initiative approved & published',
-        badge: 'Project Registration',
+        time: '22 Jan 2026',
+        text: 'Annual Performance Report submitted for Biogas Energy Recovery Program',
+        badge: 'Reports',
         badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
         dotColor: 'bg-emerald-500',
       },
     ],
     highlights: {
-      totalGhgTarget: '4.85M tCO₂e / yr',
-      totalCleanCap: '2,450 MW',
-      milestoneRate: '94.2%',
+      totalGhgTarget: '205.3K tCO₂e / yr',
+      totalCleanCap: '2,185 MW',
+      milestoneRate: '52.1%',
     },
   },
 
   'FY 2025–26': {
     kpis: {
-      totalProjects: { value: '9', sub: '+2 registered in FY 25' },
-      submittedProjects: { value: '7', total: '/ 9', sub: '78% submission rate', percent: '78%' },
-      draftProjects: { value: '1', sub: '11% pending submission' },
-      dataEntryProjects: { value: '5', total: '/ 9', sub: '55% monitoring active', percent: '55%' },
-      pendingAmendments: { value: '1', sub: 'Completed amendment' },
+      totalProjects: { value: '5', sub: 'Registered in FY 25' },
+      submittedProjects: { value: '4', total: '/ 5', sub: '80.0% submission rate', percent: '80.0%' },
+      draftProjects: { value: '1', sub: '20.0% in formulation' },
+      dataEntryProjects: { value: '3', total: '/ 5', sub: '60.0% monitoring active', percent: '60.0%' },
+      pendingAmendments: { value: '0', sub: 'All amendments processed' },
     },
     monthlyDataGhg: [
-      { name: 'Jan', current: 180, previous: 110 },
-      { name: 'Feb', current: 240, previous: 150 },
-      { name: 'Mar', current: 380, previous: 220 },
-      { name: 'Apr', current: 420, previous: 280 },
-      { name: 'May', current: 510, previous: 350 },
-      { name: 'Jun', current: 620, previous: 410 },
-      { name: 'Jul', current: 710, previous: 490 },
-      { name: 'Aug', current: 750, previous: 530 },
+      { name: 'Al Dhafra Solar', planned: 120.0, actual: 118.2 },
+      { name: 'Biogas Recovery', planned: 30.0, actual: 31.0 },
+      { name: 'Portfolio Total', planned: 150.0, actual: 149.2 },
     ],
     monthlyDataCleanEnergy: [
-      { name: 'Jan', current: 200, previous: 120 },
-      { name: 'Feb', current: 350, previous: 210 },
-      { name: 'Mar', current: 500, previous: 300 },
-      { name: 'Apr', current: 650, previous: 410 },
-      { name: 'May', current: 850, previous: 520 },
-      { name: 'Jun', current: 1100, previous: 680 },
-      { name: 'Jul', current: 1300, previous: 790 },
-      { name: 'Aug', current: 1400, previous: 850 },
+      { name: 'Al Dhafra Solar', planned: 1500, actual: 1500 },
+      { name: 'Biogas Energy', planned: 25, actual: 25 },
+      { name: 'Portfolio Total', planned: 1525, actual: 1525 },
     ],
     monthlyDataEfficiency: [
-      { name: 'Jan', current: 2.1, previous: 1.0 },
-      { name: 'Feb', current: 3.4, previous: 1.8 },
-      { name: 'Mar', current: 4.6, previous: 2.5 },
-      { name: 'Apr', current: 5.8, previous: 3.2 },
-      { name: 'May', current: 7.0, previous: 4.0 },
-      { name: 'Jun', current: 8.3, previous: 5.1 },
-      { name: 'Jul', current: 9.5, previous: 6.0 },
-      { name: 'Aug', current: 10.1, previous: 6.6 },
+      { name: 'Al Dhafra Solar', planned: 60, actual: 58 },
+      { name: 'Mangrove Restore', planned: 40, actual: 40 },
+      { name: 'Biogas Recovery', planned: 80, actual: 80 },
     ],
-    quarterlyData: [
-      { name: 'Q1', current: 800, previous: 480 },
-      { name: 'Q2', current: 1550, previous: 980 },
-      { name: 'Q3', current: 1980, previous: 1250 },
-      { name: 'Q4 (Est)', current: 3200, previous: 2100 },
-    ],
-    legend: { current: 'FY 2025–26', previous: 'FY 2024–25' },
+    legend: { planned: 'Planned Target', actual: 'Actual Performance' },
     workflow: {
       draft: 1,
-      draftPct: '11.1%',
-      registered: 7,
-      registeredPct: '77.8%',
-      dataEntry: 5,
-      dataEntryPct: '55.6%',
-      amendment: 1,
-      amendmentPct: '11.1%',
-      reported: 4,
-      reportedPct: '44.4%',
-      activeRate: '88.9% (8 / 9 Projects)',
+      draftPct: '20.0%',
+      registered: 1,
+      registeredPct: '20.0%',
+      dataEntry: 1,
+      dataEntryPct: '20.0%',
+      amendment: 0,
+      amendmentPct: '0.0%',
+      reported: 2,
+      reportedPct: '40.0%',
+      activeRate: '5 / 5 Projects Accounted (100%)',
     },
     pillarData: [
-      { name: 'Mitigation', percent: '44%', width: '44%', color: 'bg-[#004B87]', count: 4 },
-      { name: 'Adaptation', percent: '33%', width: '33%', color: 'bg-[#0284C7]', count: 3 },
-      { name: 'Economic Diversification', percent: '12%', width: '12%', color: 'bg-[#8B5CF6]', count: 1 },
-      { name: 'Cross Cutting', percent: '11%', width: '11%', color: 'bg-[#F59E0B]', count: 1 },
+      { name: 'Mitigation', percent: '40.0%', width: '40.0%', color: 'bg-[#004B87]', count: 2 },
+      { name: 'Adaptation', percent: '40.0%', width: '40.0%', color: 'bg-[#0284C7]', count: 2 },
+      { name: 'Cross Cutting', percent: '20.0%', width: '20.0%', color: 'bg-[#F59E0B]', count: 1 },
     ],
     projectsList: [
       {
@@ -361,8 +360,8 @@ const PERIOD_DATA: Record<
         sector: 'Energy',
         status: 'Approved',
         dataEntryStatus: 'Completed',
-        targetGhgReduction: '2,400,000 tCO₂e / yr',
-        targetCapacity: '2,000 MW',
+        targetGhgReduction: '120,000 tCO₂e / yr',
+        targetCapacity: '1,500 MW',
         targetView: 'data-entry',
         actionLabel: 'Open Data Entry',
       },
@@ -375,8 +374,8 @@ const PERIOD_DATA: Record<
         sector: 'Coastal Ecosystems',
         status: 'Approved',
         dataEntryStatus: 'Completed',
-        targetGhgReduction: '320,000 tCO₂e / yr',
-        targetCapacity: '12,000 Hectares',
+        targetGhgReduction: 'Blue Carbon Sinks',
+        targetCapacity: '8,000 Hectares',
         targetView: 'registration',
         actionLabel: 'View Details',
       },
@@ -391,15 +390,15 @@ const PERIOD_DATA: Record<
       },
     ],
     highlights: {
-      totalGhgTarget: '3.20M tCO₂e / yr',
-      totalCleanCap: '1,400 MW',
-      milestoneRate: '88.0%',
+      totalGhgTarget: '150.0K tCO₂e / yr',
+      totalCleanCap: '1,525 MW',
+      milestoneRate: '59.3%',
     },
   },
 };
 
 export const FacilityDashboardView: React.FC = () => {
-  const { setActiveView, currentRole } = useMRV();
+  const { setActiveView, currentRole, facilityRegistrations, facilityEmissions } = useMRV();
 
   // Period filter state
   const [selectedPeriod, setSelectedPeriod] = useState<string>('FY 2026–27');
@@ -407,9 +406,63 @@ export const FacilityDashboardView: React.FC = () => {
 
   // Metric Toggle for the chart
   const [activeChartMetric, setActiveChartMetric] = useState<'ghg' | 'cleanEnergy' | 'efficiency'>('ghg');
+  const [isMetricDropdownOpen, setIsMetricDropdownOpen] = useState(false);
+  const [activeDonutIndex, setActiveDonutIndex] = useState<number | null>(null);
+
+  // Pagination for Climate Change Initiatives table
+  const [currentTablePage, setCurrentTablePage] = useState(1);
+  const tableItemsPerPage = 6;
+
+  const METRIC_OPTIONS: { id: 'ghg' | 'cleanEnergy' | 'efficiency'; label: string }[] = [
+    { id: 'ghg', label: 'GHG (tCO₂e)' },
+    { id: 'cleanEnergy', label: 'Clean Energy (MW)' },
+    { id: 'efficiency', label: 'Efficiency (%)' },
+  ];
+
+  const currentMetricLabel =
+    METRIC_OPTIONS.find((m) => m.id === activeChartMetric)?.label || 'GHG (tCO₂e)';
 
   const periodData = PERIOD_DATA[selectedPeriod] || PERIOD_DATA['FY 2026–27'];
-  const { kpis, workflow, pillarData, projectsList, recentActivities, highlights } = periodData;
+  const { kpis, workflow, projectsList, recentActivities, highlights } = periodData;
+
+  // Dynamic Strategy Pillar Distribution derived from actual project data
+  const dynamicPillarData = React.useMemo(() => {
+    const pillarCounts: Record<string, number> = {};
+    projectsList.forEach((p) => {
+      pillarCounts[p.pillar] = (pillarCounts[p.pillar] || 0) + 1;
+    });
+
+    const total = projectsList.length || 1;
+    const pillarColors: Record<string, string> = {
+      Adaptation: 'bg-[#0284C7]',
+      Mitigation: 'bg-[#004B87]',
+      'Economic Diversification': 'bg-[#8B5CF6]',
+      'Cross Cutting': 'bg-[#F59E0B]',
+    };
+
+    return Object.entries(pillarCounts)
+      .map(([name, count]) => {
+        const pct = ((count / total) * 100).toFixed(1) + '%';
+        return {
+          name,
+          count,
+          percent: pct,
+          width: pct,
+          color: pillarColors[name] || 'bg-[#004B87]',
+        };
+      })
+      .sort((a, b) => b.count - a.count);
+  }, [projectsList]);
+
+  const statusDonutData = [
+    { name: 'Draft', count: workflow.draft, percent: workflow.draftPct, color: '#94A3B8' },
+    { name: 'Registered / Submitted', count: workflow.registered, percent: workflow.registeredPct, color: '#004B87' },
+    { name: 'Project Data Entry', count: workflow.dataEntry, percent: workflow.dataEntryPct, color: '#0284C7' },
+    { name: 'Amendment / Review', count: workflow.amendment, percent: workflow.amendmentPct, color: '#9333EA' },
+    { name: 'Reports Submitted', count: workflow.reported, percent: workflow.reportedPct, color: '#00875A' },
+  ];
+
+  const totalProjectsCount = statusDonutData.reduce((acc, curr) => acc + curr.count, 0);
 
   const chartData =
     activeChartMetric === 'ghg'
@@ -424,13 +477,6 @@ export const FacilityDashboardView: React.FC = () => {
       : activeChartMetric === 'cleanEnergy'
       ? 'MW'
       : '%';
-
-  const chartTitle =
-    activeChartMetric === 'ghg'
-      ? 'Cumulative GHG Reductions Target'
-      : activeChartMetric === 'cleanEnergy'
-      ? 'Clean Energy Installed Generation Capacity'
-      : 'Energy Efficiency Improvement Rate';
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -489,11 +535,11 @@ export const FacilityDashboardView: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-y-auto font-sans py-1 pr-1 custom-scrollbar space-y-4 animate-fade-in">
+    <div className="h-full flex flex-col overflow-hidden font-sans py-1 animate-fade-in">
       {/* =================================================================== */}
-      {/* 1. TOP HEADER & PERIOD SELECTOR */}
+      {/* 1. TOP HEADER & PERIOD SELECTOR (STICKY TITLE ROW) */}
       {/* =================================================================== */}
-      <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-3 pb-1">
+      <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-3 pb-3 pt-0.5 z-20">
         <div>
           <h1 className="text-[20px] font-bold font-display text-[#004B87] tracking-tight">
             Climate Change Projects Dashboard
@@ -547,562 +593,756 @@ export const FacilityDashboardView: React.FC = () => {
       </div>
 
       {/* =================================================================== */}
-      {/* 2. SUMMARY KPI NOTCH CARDS (5 PROJECT-LEVEL CARDS) */}
+      {/* SCROLLABLE DASHBOARD CONTENT */}
       {/* =================================================================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-        {/* Card 1: Total Projects */}
-        <NotchCard
-          icon={<FolderKanban className="w-4 h-4 text-white" />}
-          iconGradient="from-[#004B87] to-[#006BB8]"
-          iconShadow="shadow-[#004B87]/20"
-          className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => setActiveView('registration')}
-        >
-          <div className="flex flex-col justify-between h-full pt-1 pb-0.5">
-            <div>
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-                Total Projects
-              </span>
-              <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-2xl font-bold font-display text-navy-950">
-                  {kpis.totalProjects.value}
-                </span>
-              </div>
-              <span className="text-[11px] text-slate-500 block mt-0.5">
-                Registered Initiatives
-              </span>
-            </div>
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
-              <span className="text-slate-400">Cycle</span>
-              <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
-                {kpis.totalProjects.sub}
-              </span>
-            </div>
-          </div>
-        </NotchCard>
-
-        {/* Card 2: Submitted Projects */}
-        <NotchCard
-          icon={<Send className="w-4 h-4 text-white" />}
-          iconGradient="from-emerald-600 to-emerald-700"
-          iconShadow="shadow-emerald-600/20"
-          className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => setActiveView('registration')}
-        >
-          <div className="flex flex-col justify-between h-full pt-1 pb-0.5">
-            <div>
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-                Submitted Projects
-              </span>
-              <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-2xl font-bold font-display text-emerald-700">
-                  {kpis.submittedProjects.value}
-                </span>
-                <span className="text-xs font-semibold text-slate-400">
-                  {kpis.submittedProjects.total}
-                </span>
-              </div>
-              <span className="text-[11px] text-slate-500 block mt-0.5">
-                Approved & Under Review
-              </span>
-            </div>
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
-              <span className="text-slate-400">Rate</span>
-              <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
-                {kpis.submittedProjects.sub}
-              </span>
-            </div>
-          </div>
-        </NotchCard>
-
-        {/* Card 3: Projects in Draft */}
-        <NotchCard
-          icon={<Bookmark className="w-4 h-4 text-white fill-current" />}
-          iconGradient="from-amber-500 to-amber-600"
-          iconShadow="shadow-amber-500/20"
-          className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => setActiveView('registration')}
-        >
-          <div className="flex flex-col justify-between h-full pt-1 pb-0.5">
-            <div>
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-                Projects in Draft
-              </span>
-              <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-2xl font-bold font-display text-amber-700">
-                  {kpis.draftProjects.value}
-                </span>
-              </div>
-              <span className="text-[11px] text-slate-500 block mt-0.5">
-                Pending Registration
-              </span>
-            </div>
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
-              <span className="text-slate-400">Status</span>
-              <span className="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
-                {kpis.draftProjects.sub}
-              </span>
-            </div>
-          </div>
-        </NotchCard>
-
-        {/* Card 4: Projects with Data Entry */}
-        <NotchCard
-          icon={<Database className="w-4 h-4 text-white" />}
-          iconGradient="from-[#0284C7] to-[#0369A1]"
-          iconShadow="shadow-[#0284C7]/20"
-          className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => setActiveView('data-entry')}
-        >
-          <div className="flex flex-col justify-between h-full pt-1 pb-0.5">
-            <div>
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-                Projects Data Entry
-              </span>
-              <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-2xl font-bold font-display text-[#004B87]">
-                  {kpis.dataEntryProjects.value}
-                </span>
-                <span className="text-xs font-semibold text-slate-400">
-                  {kpis.dataEntryProjects.total}
-                </span>
-              </div>
-              <span className="text-[11px] text-slate-500 block mt-0.5">
-                Monitoring Plans Active
-              </span>
-            </div>
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
-              <span className="text-slate-400">Completion</span>
-              <span className="font-semibold text-[#004B87] bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">
-                {kpis.dataEntryProjects.sub}
-              </span>
-            </div>
-          </div>
-        </NotchCard>
-
-        {/* Card 5: Pending Amendments */}
-        <NotchCard
-          icon={<RotateCcw className="w-4 h-4 text-white" />}
-          iconGradient="from-purple-600 to-indigo-600"
-          iconShadow="shadow-purple-600/20"
-          className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => setActiveView('amendments')}
-        >
-          <div className="flex flex-col justify-between h-full pt-1 pb-0.5">
-            <div>
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-                Pending Amendments
-              </span>
-              <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-2xl font-bold font-display text-purple-700">
-                  {kpis.pendingAmendments.value}
-                </span>
-              </div>
-              <span className="text-[11px] text-slate-500 block mt-0.5">
-                In Review & Updates
-              </span>
-            </div>
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
-              <span className="text-slate-400">Review</span>
-              <span className="font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">
-                {kpis.pendingAmendments.sub}
-              </span>
-            </div>
-          </div>
-        </NotchCard>
-      </div>
-
-      {/* =================================================================== */}
-      {/* 3. MIDDLE SECTION: PROJECT DATA OVERVIEW + WORKFLOW STATUS PIPELINE */}
-      {/* =================================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
-        {/* Left: Project Data & Decarbonization Targets Chart (7 cols) */}
-        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col justify-between">
-          <div>
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1 custom-scrollbar">
+        {/* =================================================================== */}
+        {/* 2. SUMMARY KPI NOTCH CARDS (5 PROJECT-LEVEL CARDS) */}
+        {/* =================================================================== */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          {/* Card 1: Total Projects */}
+          <NotchCard
+            icon={<FolderKanban className="w-4 h-4 text-white" />}
+            iconGradient="from-[#004B87] to-[#006BB8]"
+            iconShadow="shadow-[#004B87]/20"
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setActiveView('registration')}
+          >
+            <div className="flex flex-col justify-between h-full pt-1 pb-0.5">
               <div>
-                <h3 className="text-sm font-bold text-navy-950 font-display">
-                  Project Data & Decarbonization Trajectory
-                </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Aggregated performance metrics across registered climate change initiatives
-                </p>
+                <span className="text-[13px] font-bold text-slate-800 block">
+                  Total Projects
+                </span>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span className="text-2xl font-bold font-display text-navy-950">
+                    {kpis.totalProjects.value}
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-500 block mt-0.5">
+                  Registered Initiatives
+                </span>
               </div>
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
+                <span className="text-slate-400">Cycle</span>
+                <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                  {kpis.totalProjects.sub}
+                </span>
+              </div>
+            </div>
+          </NotchCard>
 
-              {/* Metric Switcher Pills */}
-              <div className="inline-flex items-center gap-1 p-0.5 bg-slate-100/90 rounded-lg text-[11px] font-semibold">
-                <button
-                  onClick={() => setActiveChartMetric('ghg')}
-                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                    activeChartMetric === 'ghg'
-                      ? 'bg-white text-[#004B87] shadow-2xs font-bold'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  GHG (tCO₂e)
-                </button>
-                <button
-                  onClick={() => setActiveChartMetric('cleanEnergy')}
-                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                    activeChartMetric === 'cleanEnergy'
-                      ? 'bg-white text-[#004B87] shadow-2xs font-bold'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Clean Energy (MW)
-                </button>
-                <button
-                  onClick={() => setActiveChartMetric('efficiency')}
-                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                    activeChartMetric === 'efficiency'
-                      ? 'bg-white text-[#004B87] shadow-2xs font-bold'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Efficiency (%)
-                </button>
+          {/* Card 2: Submitted Projects */}
+          <NotchCard
+            icon={<Send className="w-4 h-4 text-white" />}
+            iconGradient="from-emerald-600 to-emerald-700"
+            iconShadow="shadow-emerald-600/20"
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setActiveView('registration')}
+          >
+            <div className="flex flex-col justify-between h-full pt-1 pb-0.5">
+              <div>
+                <span className="text-[13px] font-bold text-slate-800 block">
+                  Submitted Projects
+                </span>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span className="text-2xl font-bold font-display text-emerald-700">
+                    {kpis.submittedProjects.value}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-400">
+                    {kpis.submittedProjects.total}
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-500 block mt-0.5">
+                  Approved & Under Review
+                </span>
+              </div>
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
+                <span className="text-slate-400">Rate</span>
+                <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                  {kpis.submittedProjects.sub}
+                </span>
               </div>
             </div>
+          </NotchCard>
 
-            {/* Quick Metrics Summary Strip */}
-            <div className="grid grid-cols-3 gap-2 py-3 border-b border-slate-100 text-xs">
-              <div className="p-2 bg-sky-50/50 rounded-xl border border-sky-100">
-                <span className="text-[10.5px] font-semibold text-slate-500 block">Total Expected Reductions</span>
-                <span className="text-sm font-bold text-[#004B87] mt-0.5 block">{highlights.totalGhgTarget}</span>
+          {/* Card 3: Projects in Draft */}
+          <NotchCard
+            icon={<Bookmark className="w-4 h-4 text-white fill-current" />}
+            iconGradient="from-amber-500 to-amber-600"
+            iconShadow="shadow-amber-500/20"
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setActiveView('registration')}
+          >
+            <div className="flex flex-col justify-between h-full pt-1 pb-0.5">
+              <div>
+                <span className="text-[13px] font-bold text-slate-800 block">
+                  Projects in Draft
+                </span>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span className="text-2xl font-bold font-display text-amber-700">
+                    {kpis.draftProjects.value}
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-500 block mt-0.5">
+                  Pending Registration
+                </span>
               </div>
-              <div className="p-2 bg-emerald-50/50 rounded-xl border border-emerald-100">
-                <span className="text-[10.5px] font-semibold text-slate-500 block">Clean Power Generation</span>
-                <span className="text-sm font-bold text-emerald-700 mt-0.5 block">{highlights.totalCleanCap}</span>
-              </div>
-              <div className="p-2 bg-purple-50/50 rounded-xl border border-purple-100">
-                <span className="text-[10.5px] font-semibold text-slate-500 block">Milestone Rate</span>
-                <span className="text-sm font-bold text-purple-700 mt-0.5 block">{highlights.milestoneRate}</span>
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
+                <span className="text-slate-400">Status</span>
+                <span className="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
+                  {kpis.draftProjects.sub}
+                </span>
               </div>
             </div>
+          </NotchCard>
 
-            {/* Recharts Area Chart */}
-            <div className="h-[210px] w-full pt-3">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorCurrent" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#004B87" stopOpacity={0.35} />
-                      <stop offset="95%" stopColor="#004B87" stopOpacity={0.0} />
-                    </linearGradient>
-                    <linearGradient id="colorPrev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0284C7" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="#0284C7" stopOpacity={0.0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} axisLine={{ stroke: '#CBD5E1' }} />
-                  <YAxis tick={{ fontSize: 11, fill: '#64748B' }} axisLine={{ stroke: '#CBD5E1' }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#ffffff',
-                      borderRadius: '10px',
-                      border: '1px solid #E2E8F0',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                      fontSize: '11px',
-                    }}
-                    formatter={(value: any) => [`${value} ${chartUnit}`, '']}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="current"
-                    name={periodData.legend.current}
-                    stroke="#004B87"
-                    strokeWidth={2.5}
-                    fillOpacity={1}
-                    fill="url(#colorCurrent)"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="previous"
-                    name={periodData.legend.previous}
-                    stroke="#94A3B8"
-                    strokeWidth={1.5}
-                    strokeDasharray="4 4"
-                    fillOpacity={1}
-                    fill="url(#colorPrev)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+          {/* Card 4: Projects Data Entry */}
+          <NotchCard
+            icon={<Database className="w-4 h-4 text-white" />}
+            iconGradient="from-[#0284C7] to-[#0369A1]"
+            iconShadow="shadow-[#0284C7]/20"
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setActiveView('data-entry')}
+          >
+            <div className="flex flex-col justify-between h-full pt-1 pb-0.5">
+              <div>
+                <span className="text-[13px] font-bold text-slate-800 block">
+                  Projects Data Entry
+                </span>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span className="text-2xl font-bold font-display text-[#004B87]">
+                    {kpis.dataEntryProjects.value}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-400">
+                    {kpis.dataEntryProjects.total}
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-500 block mt-0.5">
+                  Monitoring Plans Active
+                </span>
+              </div>
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
+                <span className="text-slate-400">Completion</span>
+                <span className="font-semibold text-[#004B87] bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">
+                  {kpis.dataEntryProjects.sub}
+                </span>
+              </div>
             </div>
-          </div>
+          </NotchCard>
 
-          {/* Chart Legend */}
-          <div className="flex items-center justify-center gap-6 pt-2 border-t border-slate-100 text-[11px] font-medium text-slate-600">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[#004B87]" />
-              <span>{periodData.legend.current} (Active Cycle)</span>
+          {/* Card 5: Pending Amendments */}
+          <NotchCard
+            icon={<RotateCcw className="w-4 h-4 text-white" />}
+            iconGradient="from-purple-600 to-indigo-600"
+            iconShadow="shadow-purple-600/20"
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setActiveView('amendments')}
+          >
+            <div className="flex flex-col justify-between h-full pt-1 pb-0.5">
+              <div>
+                <span className="text-[13px] font-bold text-slate-800 block">
+                  Pending Amendments
+                </span>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span className="text-2xl font-bold font-display text-purple-700">
+                    {kpis.pendingAmendments.value}
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-500 block mt-0.5">
+                  In Review & Updates
+                </span>
+              </div>
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
+                <span className="text-slate-400">Review</span>
+                <span className="font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">
+                  {kpis.pendingAmendments.sub}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-0.5 border-b-2 border-dashed border-slate-400" />
-              <span>{periodData.legend.previous} (Baseline Cycle)</span>
-            </div>
-          </div>
+          </NotchCard>
         </div>
 
-        {/* Right: Project Status Overview (Workflow Pipeline) (5 cols) */}
-        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        {/* =================================================================== */}
+        {/* 3. MIDDLE SECTION: PROJECT DATA OVERVIEW + WORKFLOW STATUS PIPELINE */}
+        {/* =================================================================== */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 lg:h-[380px]">
+          {/* Left: Project Data & Decarbonization Targets Chart (8 cols) */}
+          <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200/90 shadow-sm px-4 py-[10px] flex flex-col justify-between h-full">
+            <div>
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-2">
+                <div>
+                  <h3 className="text-sm font-bold text-navy-950 font-display">
+                    Project Data & Decarbonization Trajectory
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Planned vs Actual performance across registered climate change initiatives
+                  </p>
+                </div>
+
+                {/* Metric Selector Dropdown in Title Row */}
+                <div className="relative">
+                  <button
+                    onClick={() => setIsMetricDropdownOpen(!isMetricDropdownOpen)}
+                    className="h-8 px-3 bg-white border border-slate-200/90 rounded-[8px] text-xs font-semibold text-slate-700 flex items-center gap-2 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
+                  >
+                    <BarChart3 className="w-3.5 h-3.5 text-[#004B87]" />
+                    <span>{currentMetricLabel}</span>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                  </button>
+
+                  {isMetricDropdownOpen && (
+                    <div className="absolute right-0 top-9.5 z-30 w-44 bg-white rounded-xl border border-slate-200 shadow-lg py-1 text-xs">
+                      {METRIC_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.id}
+                          onClick={() => {
+                            setActiveChartMetric(opt.id);
+                            setIsMetricDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-1.5 hover:bg-slate-50 font-medium cursor-pointer flex items-center justify-between ${
+                            activeChartMetric === opt.id ? 'text-[#004B87] font-bold bg-sky-50/50' : 'text-slate-700'
+                          }`}
+                        >
+                          <span>{opt.label}</span>
+                          {activeChartMetric === opt.id && (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#004B87]" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick Metrics Summary Strip */}
+              <div className="grid grid-cols-3 gap-2 py-2 border-b border-slate-100 text-xs">
+                <div className="p-2 bg-sky-50/50 rounded-xl border border-sky-100">
+                  <span className="text-[10.5px] font-semibold text-slate-500 block">Planned GHG Reduction</span>
+                  <span className="text-sm font-bold text-[#004B87] mt-0.5 block">{highlights.totalGhgTarget}</span>
+                </div>
+                <div className="p-2 bg-emerald-50/50 rounded-xl border border-emerald-100">
+                  <span className="text-[10.5px] font-semibold text-slate-500 block">Planned Clean Energy Capacity</span>
+                  <span className="text-sm font-bold text-emerald-700 mt-0.5 block">{highlights.totalCleanCap}</span>
+                </div>
+                <div className="p-2 bg-purple-50/50 rounded-xl border border-purple-100">
+                  <span className="text-[10.5px] font-semibold text-slate-500 block">Actual Progress</span>
+                  <span className="text-sm font-bold text-purple-700 mt-0.5 block">{highlights.milestoneRate}</span>
+                </div>
+              </div>
+
+              {/* Recharts Area Chart: Planned (Lined & Filled) vs Actual (Dotted Line) */}
+              <div className="h-[185px] w-full pt-1.5">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorPlanned" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#004B87" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="#004B87" stopOpacity={0.0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} axisLine={{ stroke: '#CBD5E1' }} />
+                    <YAxis tick={{ fontSize: 11, fill: '#64748B' }} axisLine={{ stroke: '#CBD5E1' }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: '10px',
+                        border: '1px solid #E2E8F0',
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                        fontSize: '11px',
+                      }}
+                      formatter={(value: any, name: string) => [
+                        `${value} ${chartUnit}`,
+                        name === 'Planned Target' || name === 'planned' ? 'Planned Target' : 'Actual Performance',
+                      ]}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="planned"
+                      name="Planned Target"
+                      stroke="#004B87"
+                      strokeWidth={2.5}
+                      fillOpacity={1}
+                      fill="url(#colorPlanned)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="actual"
+                      name="Actual Performance"
+                      stroke="#00875A"
+                      strokeWidth={2.5}
+                      strokeDasharray="5 5"
+                      fill="none"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Chart Legend */}
+            <div className="flex items-center justify-center gap-6 pt-1 border-t border-slate-100 text-[11px] font-medium text-slate-600">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-[#004B87]" />
+                <span>Planned Target</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-0.5 border-b-2 border-dashed border-[#00875A]" />
+                <span>Actual Performance</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Project Status Overview (Donut Chart) (4 cols) */}
+          <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/90 shadow-sm px-4 py-[10px] flex flex-col gap-[6px] h-full">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-0.5 shrink-0">
               <div>
                 <h3 className="text-sm font-bold text-navy-950 font-display">
                   Project Status Overview
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Lifecycle progression across Climate Change modules
+                  Lifecycle distribution across projects
                 </p>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                {workflow.activeRate}
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+                {totalProjectsCount} / {totalProjectsCount} (100%)
               </span>
             </div>
 
-            {/* Workflow Pipeline Progress Bars */}
-            <div className="space-y-3.5 pt-3">
-              {/* Step 1: Draft */}
-              <div>
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <div className="flex items-center gap-2 font-semibold text-slate-700">
-                    <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-600 text-[10.5px] font-bold flex items-center justify-center">
-                      1
-                    </span>
-                    <span>Draft</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-500 font-medium">
-                    <span className="font-bold text-slate-800">{workflow.draft}</span>
-                    <span className="text-[11px]">({workflow.draftPct})</span>
-                  </div>
-                </div>
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-slate-400 rounded-full transition-all duration-500" style={{ width: workflow.draftPct }} />
-                </div>
+            {/* Large Centered Donut Chart with Direct Slice Percentages & Hover Highlight */}
+            <div className="relative w-full flex-1 min-h-0 flex items-center justify-center">
+              {/* Center Text inside Donut: 7 Projects (placed BEFORE chart container with z-0 so Tooltip is ALWAYS on top) */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center z-0">
+                <span className="text-2xl font-bold font-display text-navy-950 leading-none">
+                  {totalProjectsCount}
+                </span>
+                <span className="text-[10px] font-semibold text-slate-500 mt-0.5 tracking-tight">
+                  Projects
+                </span>
               </div>
 
-              {/* Step 2: Registered / Submitted */}
-              <div>
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <div className="flex items-center gap-2 font-semibold text-slate-700">
-                    <span className="w-5 h-5 rounded-full bg-blue-100 text-[#004B87] text-[10.5px] font-bold flex items-center justify-center">
-                      2
-                    </span>
-                    <span>Registered / Submitted</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-500 font-medium">
-                    <span className="font-bold text-[#004B87]">{workflow.registered}</span>
-                    <span className="text-[11px]">({workflow.registeredPct})</span>
-                  </div>
-                </div>
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#004B87] rounded-full transition-all duration-500" style={{ width: workflow.registeredPct }} />
-                </div>
-              </div>
+              {/* Chart container with z-10 stacking context */}
+              <div className="relative z-10 w-full h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Tooltip
+                      isAnimationActive={false}
+                      wrapperStyle={{ zIndex: 1000, pointerEvents: 'none' }}
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-white/95 backdrop-blur-md px-3 py-2 rounded-xl border border-slate-200/90 shadow-2xl text-xs font-semibold text-slate-800 flex items-center gap-2 pointer-events-none">
+                              <span
+                                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: data.color }}
+                              />
+                              <div>
+                                <span className="font-bold text-slate-900 block">{data.name}</span>
+                                <span className="text-slate-500 font-medium text-[11px]">
+                                  {data.count} {data.count === 1 ? 'Project' : 'Projects'}{' '}
+                                  <span className="font-bold text-[#004B87]">({data.percent})</span>
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Pie
+                      isAnimationActive={false}
+                      activeIndex={activeDonutIndex ?? undefined}
+                      activeShape={(props: any) => {
+                        const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+                        return (
+                          <g className="cursor-pointer">
+                            <Sector
+                              cx={cx}
+                              cy={cy}
+                              innerRadius={innerRadius - 3}
+                              outerRadius={outerRadius + 7}
+                              startAngle={startAngle}
+                              endAngle={endAngle}
+                              fill={fill}
+                              stroke="#ffffff"
+                              strokeWidth={2.5}
+                              style={{
+                                filter: 'drop-shadow(0px 6px 12px rgba(0, 0, 0, 0.35))',
+                                cursor: 'pointer',
+                              }}
+                            />
+                          </g>
+                        );
+                      }}
+                      data={statusDonutData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={92}
+                      paddingAngle={0}
+                      dataKey="count"
+                      stroke="none"
+                      labelLine={false}
+                      onMouseEnter={(_, index) => setActiveDonutIndex(index)}
+                      onMouseLeave={() => setActiveDonutIndex(null)}
+                      label={({ cx, cy, midAngle, innerRadius, outerRadius, index }: any) => {
+                        const RADIAN = Math.PI / 180;
+                        const isActive = activeDonutIndex === index;
+                        const radius = innerRadius + (outerRadius - innerRadius) * 0.55;
+                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-              {/* Step 3: Data Entry */}
-              <div>
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <div className="flex items-center gap-2 font-semibold text-slate-700">
-                    <span className="w-5 h-5 rounded-full bg-sky-100 text-sky-700 text-[10.5px] font-bold flex items-center justify-center">
-                      3
-                    </span>
-                    <span>Project Data Entry</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-500 font-medium">
-                    <span className="font-bold text-sky-700">{workflow.dataEntry}</span>
-                    <span className="text-[11px]">({workflow.dataEntryPct})</span>
-                  </div>
-                </div>
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#0284C7] rounded-full transition-all duration-500" style={{ width: workflow.dataEntryPct }} />
-                </div>
-              </div>
+                        // Tangential rotation angle along the slice arc
+                        let rotation = -midAngle + 90;
+                        if (rotation > 90) rotation -= 180;
+                        if (rotation < -90) rotation += 180;
 
-              {/* Step 4: Amendment / Review */}
-              <div>
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <div className="flex items-center gap-2 font-semibold text-slate-700">
-                    <span className="w-5 h-5 rounded-full bg-purple-100 text-purple-700 text-[10.5px] font-bold flex items-center justify-center">
-                      4
-                    </span>
-                    <span>Amendment / Review</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-500 font-medium">
-                    <span className="font-bold text-purple-700">{workflow.amendment}</span>
-                    <span className="text-[11px]">({workflow.amendmentPct})</span>
-                  </div>
-                </div>
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-purple-600 rounded-full transition-all duration-500" style={{ width: workflow.amendmentPct }} />
-                </div>
-              </div>
+                        const pct = statusDonutData[index]?.percent || '';
 
-              {/* Step 5: Reported */}
-              <div>
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <div className="flex items-center gap-2 font-semibold text-slate-700">
-                    <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10.5px] font-bold flex items-center justify-center">
-                      5
-                    </span>
-                    <span>Reported & Published</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-500 font-medium">
-                    <span className="font-bold text-emerald-700">{workflow.reported}</span>
-                    <span className="text-[11px]">({workflow.reportedPct})</span>
-                  </div>
-                </div>
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-600 rounded-full transition-all duration-500" style={{ width: workflow.reportedPct }} />
-                </div>
+                        return (
+                          <text
+                            x={x}
+                            y={y}
+                            fill="#ffffff"
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            transform={`rotate(${rotation}, ${x}, ${y})`}
+                            style={{
+                              fontSize: isActive ? '11.5px' : '10.5px',
+                              fontWeight: 800,
+                              fill: '#ffffff',
+                              filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5))',
+                            }}
+                            className="select-none pointer-events-none font-bold"
+                          >
+                            {pct}
+                          </text>
+                        );
+                      }}
+                    >
+                      {statusDonutData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.color}
+                          className="cursor-pointer"
+                        />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
             </div>
-          </div>
 
-          {/* Workflow Stage Flow Connector */}
-          <div className="pt-3 mt-3 border-t border-slate-100">
-            <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              <span>Draft</span>
-              <ArrowRight className="w-3 h-3 text-slate-400" />
-              <span>Registered</span>
-              <ArrowRight className="w-3 h-3 text-slate-400" />
-              <span>Data Entry</span>
-              <ArrowRight className="w-3 h-3 text-slate-400" />
-              <span>Amendment</span>
-              <ArrowRight className="w-3 h-3 text-slate-400" />
-              <span>Reported</span>
+            {/* Legends Placed Below in a 2-per-row layout (Hoverable sync with uniform inter-item gap) */}
+            <div className="flex flex-col items-center gap-y-1 text-xs w-full shrink-0">
+              {/* Row 1: 2 items */}
+              <div className="flex items-center justify-center gap-x-3 w-full">
+                {[statusDonutData[0], statusDonutData[1]].map((stage, i) => {
+                  const idx = i;
+                  const isActive = activeDonutIndex === idx;
+                  return (
+                    <div
+                      key={stage.name}
+                      onMouseEnter={() => setActiveDonutIndex(idx)}
+                      onMouseLeave={() => setActiveDonutIndex(null)}
+                      className={`flex items-center gap-1.5 font-medium transition-all duration-150 cursor-pointer px-2 py-0.5 rounded-lg border whitespace-nowrap ${
+                        isActive
+                          ? 'bg-slate-100 border-slate-300 shadow-xs scale-[1.02] ring-1 ring-slate-300'
+                          : 'border-transparent text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full flex-shrink-0 transition-transform"
+                        style={{
+                          backgroundColor: stage.color,
+                          transform: isActive ? 'scale(1.25)' : 'scale(1)',
+                        }}
+                      />
+                      <span className="text-[10.5px] font-semibold text-slate-700">{stage.name}:</span>
+                      <span className="text-[10.5px] font-bold text-slate-900">{stage.count}</span>
+                      <span className="text-[10px] text-slate-400 font-medium">({stage.percent})</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Row 2: 2 items */}
+              <div className="flex items-center justify-center gap-x-3 w-full">
+                {[statusDonutData[2], statusDonutData[3]].map((stage, i) => {
+                  const idx = i + 2;
+                  const isActive = activeDonutIndex === idx;
+                  return (
+                    <div
+                      key={stage.name}
+                      onMouseEnter={() => setActiveDonutIndex(idx)}
+                      onMouseLeave={() => setActiveDonutIndex(null)}
+                      className={`flex items-center gap-1.5 font-medium transition-all duration-150 cursor-pointer px-2 py-0.5 rounded-lg border whitespace-nowrap ${
+                        isActive
+                          ? 'bg-slate-100 border-slate-300 shadow-xs scale-[1.02] ring-1 ring-slate-300'
+                          : 'border-transparent text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full flex-shrink-0 transition-transform"
+                        style={{
+                          backgroundColor: stage.color,
+                          transform: isActive ? 'scale(1.25)' : 'scale(1)',
+                        }}
+                      />
+                      <span className="text-[10.5px] font-semibold text-slate-700">{stage.name}:</span>
+                      <span className="text-[10.5px] font-bold text-slate-900">{stage.count}</span>
+                      <span className="text-[10px] text-slate-400 font-medium">({stage.percent})</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Row 3: 1 item */}
+              <div className="flex items-center justify-center w-full">
+                {(() => {
+                  const stage = statusDonutData[4];
+                  const idx = 4;
+                  const isActive = activeDonutIndex === idx;
+                  return (
+                    <div
+                      key={stage.name}
+                      onMouseEnter={() => setActiveDonutIndex(idx)}
+                      onMouseLeave={() => setActiveDonutIndex(null)}
+                      className={`flex items-center gap-1.5 font-medium transition-all duration-150 cursor-pointer px-2 py-0.5 rounded-lg border whitespace-nowrap ${
+                        isActive
+                          ? 'bg-slate-100 border-slate-300 shadow-xs scale-[1.02] ring-1 ring-slate-300'
+                          : 'border-transparent text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full flex-shrink-0 transition-transform"
+                        style={{
+                          backgroundColor: stage.color,
+                          transform: isActive ? 'scale(1.25)' : 'scale(1)',
+                        }}
+                      />
+                      <span className="text-[10.5px] font-semibold text-slate-700">{stage.name}:</span>
+                      <span className="text-[10.5px] font-bold text-slate-900">{stage.count}</span>
+                      <span className="text-[10px] text-slate-400 font-medium">({stage.percent})</span>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* =================================================================== */}
-      {/* 4. BOTTOM SECTION: ACTIVE CLIMATE PROJECTS & REPORTING STATUS */}
-      {/* =================================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 pb-2">
-        {/* Active Projects Table (8 cols) */}
-        <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <h3 className="text-sm font-bold text-navy-950 font-display">
-                  Active Climate Initiatives ({selectedPeriod})
-                </h3>
+        {/* =================================================================== */}
+        {/* 4. BOTTOM SECTION: STRATEGY & RECENT ACTIVITY (LEFT) + CLIMATE INITIATIVES (RIGHT) */}
+        {/* =================================================================== */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 pb-2">
+          {/* Left: Pillar Breakdown & Recent Activity (4 cols) */}
+          <div className="lg:col-span-4 space-y-3.5">
+            {/* Strategy Pillar Distribution */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4">
+              <h3 className="text-sm font-bold text-navy-950 font-display mb-1">
+                Strategy Pillar Distribution
+              </h3>
+              <p className="text-[11px] text-slate-500 mb-3.5">
+                Abu Dhabi Climate Change Strategy project allocation
+              </p>
+
+              <div className="space-y-3 text-xs">
+                {dynamicPillarData.map((item) => (
+                  <div key={item.name} className="space-y-1.5">
+                    <div className="flex justify-between items-center text-[11.5px]">
+                      <span className="font-semibold text-slate-700">{item.name}</span>
+                      <span className="font-bold text-slate-800">
+                        {item.count} {item.count === 1 ? 'project' : 'projects'} ({item.percent})
+                      </span>
+                    </div>
+                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${item.color} rounded-full transition-all duration-500`}
+                        style={{ width: item.width }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-              <button
-                onClick={() => setActiveView('registration')}
-                className="text-xs font-bold text-[#004B87] hover:text-[#003d6e] flex items-center gap-1 cursor-pointer"
-              >
-                <span>View All Projects</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
             </div>
 
-            {/* Table */}
-            <div className="overflow-x-auto pt-2">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-200 text-slate-500 font-semibold">
-                    <th className="py-2 px-2.5">Project Name & ID</th>
-                    <th className="py-2 px-2.5">Lead Entity</th>
-                    <th className="py-2 px-2.5">Pillar</th>
-                    <th className="py-2 px-2.5">Status</th>
-                    <th className="py-2 px-2.5 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {projectsList.map((project) => (
-                    <tr key={project.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-2.5 px-2.5 font-medium">
-                        <div className="text-slate-900 font-bold line-clamp-1">{project.name}</div>
-                        <div className="text-[10.5px] font-mono text-slate-400 mt-0.5">{project.code}</div>
-                      </td>
-                      <td className="py-2.5 px-2.5 text-slate-600 line-clamp-1 max-w-[160px] truncate">
-                        {project.entity}
-                      </td>
-                      <td className="py-2.5 px-2.5 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[10.5px] font-semibold border ${getPillarBadge(
-                            project.pillar
-                          )}`}
-                        >
-                          {project.pillar}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-2.5 whitespace-nowrap">
-                        {getStatusBadge(project.status)}
-                      </td>
-                      <td className="py-2.5 px-2.5 text-right whitespace-nowrap">
-                        <button
-                          onClick={() => setActiveView(project.targetView)}
-                          className="px-2.5 py-1 bg-white hover:bg-sky-50 border border-slate-200 text-[#004B87] hover:border-[#004B87] rounded-lg text-[11px] font-bold shadow-2xs transition-colors cursor-pointer inline-flex items-center gap-1"
-                        >
-                          <span>{project.actionLabel}</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+            {/* Recent Activity Stream */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm px-4 py-2.5">
+              <h3 className="text-sm font-bold text-navy-950 font-display mb-0.5">
+                Recent Activity Feed
+              </h3>
+              <p className="text-[11px] text-slate-500 mb-2">
+                Latest statutory submissions and amendment actions
+              </p>
 
-        {/* Pillar Breakdown & Recent Activity (4 cols) */}
-        <div className="lg:col-span-4 space-y-3.5">
-          {/* Strategy Pillar Distribution */}
-          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4">
-            <h3 className="text-sm font-bold text-navy-950 font-display mb-1">
-              Strategy Pillar Distribution
-            </h3>
-            <p className="text-[11px] text-slate-500 mb-3">
-              Abu Dhabi Climate Change Strategy project allocation
-            </p>
+              {/* Scrollable Feed List */}
+              <div className="max-h-[160px] overflow-y-auto pr-1 space-y-2 custom-scrollbar">
+                {recentActivities.map((act, i) => (
+                  <div
+                    key={i}
+                    className="px-2.5 py-1.5 bg-slate-50/80 hover:bg-[#EBF3FA]/70 rounded-xl border border-slate-200/80 transition-colors flex items-center justify-between gap-2.5 group"
+                  >
+                    {/* Left: Title (No dot) */}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-slate-800 font-medium text-[11px] leading-snug line-clamp-2 group-hover:text-[#004B87] transition-colors">
+                        {act.text}
+                      </p>
+                    </div>
 
-            <div className="space-y-2.5 text-xs">
-              {pillarData.map((item) => (
-                <div key={item.name}>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-semibold text-slate-700 text-[11.5px]">{item.name}</span>
-                    <span className="font-bold text-slate-800 text-[11.5px]">
-                      {item.count} projects ({item.percent})
-                    </span>
-                  </div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className={`h-full ${item.color} rounded-full`} style={{ width: item.width }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Recent Activity Stream */}
-          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4">
-            <h3 className="text-sm font-bold text-navy-950 font-display mb-1">
-              Recent Activity Feed
-            </h3>
-            <p className="text-[11px] text-slate-500 mb-3">
-              Latest statutory submissions and amendment actions
-            </p>
-
-            <div className="space-y-3">
-              {recentActivities.map((act, i) => (
-                <div key={i} className="flex items-start gap-2.5 text-xs">
-                  <span className={`w-2 h-2 rounded-full ${act.dotColor} shrink-0 mt-1.5`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-slate-800 font-medium leading-snug line-clamp-2">{act.text}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] text-slate-400">{act.time}</span>
-                      <span className={`px-1.5 py-0.2 rounded text-[10px] font-semibold border ${act.badgeClass}`}>
+                    {/* Right: Timestamp (top) + Category Chip (below time) */}
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">
+                        {act.time}
+                      </span>
+                      <span
+                        className={`px-1.5 py-0.2 rounded-full text-[9.5px] font-bold border whitespace-nowrap ${act.badgeClass}`}
+                      >
                         {act.badge}
                       </span>
                     </div>
                   </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Active Projects Table (8 cols) */}
+          <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col justify-between">
+            <div>
+              {/* Header with Title and Subtitle consistent with other cards */}
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div>
+                  <h3 className="text-sm font-bold text-navy-950 font-display">
+                    Climate Change Initiatives
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Overview of registered climate initiatives, lead entities, pillars and statuses
+                  </p>
                 </div>
-              ))}
+                <button
+                  onClick={() => setActiveView('registration')}
+                  className="text-xs font-bold text-[#004B87] hover:text-[#003d6e] flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <span>View All Projects</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Table styled matching Project Registration Overview */}
+              <div className="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-2xs mt-2">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-[#D6E3EF] select-none">
+                    <tr className="h-[34px] bg-[#D6E3EF] text-slate-800 font-bold text-xs border-b border-[#5B88B0]/30">
+                      <th className="px-3 py-1.5 text-left font-bold text-slate-800">Project Name & ID</th>
+                      <th className="px-3 py-1.5 text-left font-bold text-slate-800">Lead Entity</th>
+                      <th className="px-3 py-1.5 text-left font-bold text-slate-800">Pillar</th>
+                      <th className="px-3 py-1.5 text-left font-bold text-slate-800">Status</th>
+                      <th className="px-3 py-1.5 text-right font-bold text-slate-800">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-normal text-slate-700">
+                    {projectsList
+                      .slice(
+                        (currentTablePage - 1) * tableItemsPerPage,
+                        currentTablePage * tableItemsPerPage
+                      )
+                      .map((project, idx) => (
+                        <tr
+                          key={project.id}
+                          className={`h-[44px] ${
+                            idx % 2 === 1 ? 'bg-slate-50/80' : 'bg-white'
+                          } hover:bg-[#EBF3FA] transition-colors group cursor-default`}
+                        >
+                          {/* 1. Project Name & ID */}
+                          <td className="px-3 py-1.5 font-medium align-middle">
+                            <div
+                              className="text-slate-800 font-semibold line-clamp-1 hover:text-[#004B87] cursor-pointer transition-colors"
+                              onClick={() => setActiveView(project.targetView)}
+                              title={project.name}
+                            >
+                              {project.name}
+                            </div>
+                            <div className="text-[10.5px] font-mono font-bold text-[#004B87] mt-0.5">
+                              {project.code}
+                            </div>
+                          </td>
+
+                          {/* 2. Lead Entity */}
+                          <td className="px-3 py-1.5 text-slate-600 align-middle max-w-[170px]">
+                            <div className="line-clamp-1 truncate" title={project.entity}>
+                              {project.entity}
+                            </div>
+                          </td>
+
+                          {/* 3. Pillar */}
+                          <td className="px-3 py-1.5 whitespace-nowrap align-middle">
+                            <span
+                              className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold border ${getPillarBadge(
+                                project.pillar
+                              )}`}
+                            >
+                              {project.pillar}
+                            </span>
+                          </td>
+
+                          {/* 4. Status */}
+                          <td className="px-3 py-1.5 whitespace-nowrap align-middle">
+                            {getStatusBadge(project.status)}
+                          </td>
+
+                          {/* 5. Action (Icon only, no label) */}
+                          <td className="px-3 py-1.5 text-right whitespace-nowrap align-middle">
+                            <button
+                              onClick={() => setActiveView(project.targetView)}
+                              title={project.actionLabel}
+                              className="p-1.5 bg-white hover:bg-[#004B87]/10 hover:text-[#004B87] text-slate-600 border border-slate-200/90 rounded-lg text-xs font-bold shadow-2xs transition-all cursor-pointer inline-flex items-center justify-center hover:border-[#004B87]/30 hover:scale-105 active:scale-95"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Pagination Bar (pinned to bottom with reduced gap) */}
+            <div className="flex-shrink-0 pt-2 flex items-center justify-between text-xs text-slate-500 select-none border-t border-slate-100 mt-1.5">
+              <div>
+                Showing {projectsList.length === 0 ? 0 : (currentTablePage - 1) * tableItemsPerPage + 1} to{' '}
+                {Math.min(currentTablePage * tableItemsPerPage, projectsList.length)} of {projectsList.length} projects
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setCurrentTablePage((p) => Math.max(1, p - 1))}
+                  disabled={currentTablePage === 1}
+                  className="p-1 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none cursor-pointer transition-colors shadow-2xs"
+                  title="Previous Page"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                <span className="px-2 font-medium text-slate-700">
+                  Page {currentTablePage} of {Math.ceil(projectsList.length / tableItemsPerPage) || 1}
+                </span>
+                <button
+                  onClick={() =>
+                    setCurrentTablePage((p) =>
+                      Math.min(Math.ceil(projectsList.length / tableItemsPerPage) || 1, p + 1)
+                    )
+                  }
+                  disabled={
+                    currentTablePage === (Math.ceil(projectsList.length / tableItemsPerPage) || 1) ||
+                    projectsList.length === 0
+                  }
+                  className="p-1 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none cursor-pointer transition-colors shadow-2xs"
+                  title="Next Page"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>

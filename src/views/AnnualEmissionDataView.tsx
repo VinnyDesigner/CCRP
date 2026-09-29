@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   Plus,
   X,
@@ -46,6 +46,8 @@ import {
   CCRP_BUDGET_STATUSES,
   CCRP_PILLARS,
   CCRP_REPORTING_PERIODS_BY_PILLAR,
+  CCRP_REPORTING_PERIODS_BY_CADENCE,
+  getReportingPeriodsForCadence,
   CCRP_APPROVED_INITIATIVES,
   CCRPApprovedInitiative,
   INITIAL_FACILITY_EMISSIONS,
@@ -140,7 +142,7 @@ export const AnnualEmissionDataView: React.FC = () => {
   const [formPillar, setFormPillar] = useState<'Adaptation' | 'Mitigation' | 'Economic Diversification' | 'Cross Cutting'>(
     currentRecord.pillar || 'Mitigation'
   );
-  const [formCadence, setFormCadence] = useState<'Quarterly' | 'Semiannual'>(
+  const [formCadence, setFormCadence] = useState<string>(
     currentRecord.reportingCadence || 'Semiannual'
   );
   const [formProgressReportPeriod, setFormProgressReportPeriod] = useState<string>(
@@ -195,16 +197,15 @@ export const AnnualEmissionDataView: React.FC = () => {
   const handleInitiativeChange = (initiativeCode: string) => {
     const matched = CCRP_APPROVED_INITIATIVES.find((init) => init.initiativeCode === initiativeCode);
     if (matched) {
+      const reg = facilityRegistrations[matched.id] || {};
+      const cadence = reg.reportingCadence || reg.cadence || matched.cadence || 'Semiannual';
       setFormInitiativeId(matched.initiativeCode);
       setFormInitiativeName(matched.name);
       setFormEntity(matched.entity);
       setFormPillar(matched.pillar);
-      setFormCadence(matched.cadence);
-      const defaultPeriod =
-        matched.cadence === 'Quarterly'
-          ? 'Q1'
-          : CCRP_REPORTING_PERIODS_BY_PILLAR[matched.pillar]?.[0] || 'Semiannual 1 (H1)';
-      setFormProgressReportPeriod(defaultPeriod);
+      setFormCadence(cadence);
+      const validPeriods = getReportingPeriodsForCadence(cadence);
+      setFormProgressReportPeriod(validPeriods[0]);
     }
   };
 
@@ -212,13 +213,24 @@ export const AnnualEmissionDataView: React.FC = () => {
   const loadRecordData = (rec: any) => {
     const initCode = rec.initiativeId || rec.facilityId || CCRP_APPROVED_INITIATIVES[0].initiativeCode;
     const matched = CCRP_APPROVED_INITIATIVES.find((i) => i.initiativeCode === initCode);
+    const reg =
+      (selectedFacilityId && facilityRegistrations[selectedFacilityId]) ||
+      (matched && facilityRegistrations[matched.id]) ||
+      {};
+
+    const cadence = reg?.reportingCadence || reg?.cadence || rec.reportingCadence || matched?.cadence || 'Semiannual';
+    const validPeriods = getReportingPeriodsForCadence(cadence);
 
     setFormInitiativeId(initCode);
     setFormInitiativeName(rec.initiativeName || rec.facilityName || matched?.name || CCRP_APPROVED_INITIATIVES[0].name);
     setFormEntity(rec.entity || rec.operatorName || matched?.entity || CCRP_APPROVED_INITIATIVES[0].entity);
     setFormPillar(rec.pillar || matched?.pillar || 'Mitigation');
-    setFormCadence(rec.reportingCadence || matched?.cadence || 'Semiannual');
-    setFormProgressReportPeriod(rec.progressReportPeriod || (rec.reportingYear ? `Q1` : 'Semiannual 1 (H1)'));
+    setFormCadence(cadence);
+
+    const currentPeriod = rec.progressReportPeriod;
+    const resolvedPeriod = currentPeriod && validPeriods.includes(currentPeriod) ? currentPeriod : validPeriods[0];
+    setFormProgressReportPeriod(resolvedPeriod);
+
     setFormProjectPhase(rec.projectPhase || 'Implementation');
     setFormReportStatus(rec.status || 'In Progress');
     setFormPlannedProgress(rec.plannedProgress !== undefined ? rec.plannedProgress : 75);
@@ -621,10 +633,17 @@ export const AnnualEmissionDataView: React.FC = () => {
     }
   };
 
-  // Cadence-filtered period choices based on current pillar
+  // Cadence-filtered period choices dynamically controlled by project registration cadence
   const availablePeriods = useMemo(() => {
-    return CCRP_REPORTING_PERIODS_BY_PILLAR[formPillar] || ['Semiannual 1 (H1)', 'Semiannual 2 (H2)', 'Q1', 'Q2', 'Q3', 'Q4'];
-  }, [formPillar]);
+    return getReportingPeriodsForCadence(formCadence);
+  }, [formCadence]);
+
+  // Ensure selected reporting period stays strictly synchronized with available periods
+  useEffect(() => {
+    if (availablePeriods.length > 0 && !availablePeriods.includes(formProgressReportPeriod)) {
+      setFormProgressReportPeriod(availablePeriods[0]);
+    }
+  }, [availablePeriods, formProgressReportPeriod]);
 
   // Helper for pillar badge styling matching Amendments
   const getPillarBadgeColor = (pillar: string) => {

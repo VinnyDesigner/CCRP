@@ -91,6 +91,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     activeView === 'users' ||
     activeView === 'permissions' ||
     activeView === 'action-logs';
+  const isHelpActive = activeView === 'help' || activeView === 'help-guidance';
 
   const isEadDashboardActive =
     activeView === 'ead-dashboard' || (currentRole === 'EAD_REVIEWER' && activeView === 'dashboard');
@@ -119,7 +120,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <div
               className="flex items-center justify-center cursor-pointer"
-              onClick={() => setActiveView(currentRole === 'EAD_REVIEWER' ? 'ead-dashboard' : 'registration')}
+              onClick={() => setActiveView(currentRole === 'EAD_REVIEWER' ? 'ead-dashboard' : 'dashboard')}
               title="Climate Change Registry Portal (CCRP)"
             >
               <img
@@ -446,8 +447,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        {/* Bottom Section: Logout */}
-        <div className="px-2.5 pt-2.5 pb-[20px] border-t border-white/15 shrink-0">
+        {/* Bottom Section: Help & Guide and Logout */}
+        <div className="px-2.5 pt-2.5 pb-[20px] border-t border-white/15 shrink-0 space-y-2">
+          {/* Help & Guide Button */}
+          <button
+            type="button"
+            onClick={() => setActiveView('help')}
+            className={`flex items-center rounded-[6px] text-xs font-bold transition-all cursor-pointer ${
+              isCollapsed ? 'w-9 h-9 mx-auto justify-center px-0 py-0' : 'w-full gap-2.5 px-3 py-2'
+            } ${
+              isHelpActive
+                ? 'bg-white text-[#365785] shadow-sm font-bold'
+                : 'text-white/90 hover:text-white hover:bg-white/15'
+            }`}
+            title="Help & Guide"
+          >
+            <HelpCircle className={`w-4 h-4 shrink-0 ${isHelpActive ? 'text-[#365785]' : 'text-white/85'}`} />
+            {!isCollapsed && <span className="truncate">Help & Guide</span>}
+          </button>
+
           {/* Logout Button */}
           {onLogout && (
             <button
