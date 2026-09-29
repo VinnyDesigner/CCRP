@@ -12,6 +12,10 @@ import {
   Check,
   Building2,
   ExternalLink,
+  Target,
+  CheckCircle2,
+  AlertCircle,
+  Filter,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -37,7 +41,106 @@ import {
   CCRP_APPROVED_INITIATIVES,
   INITIAL_FACILITY_EMISSIONS,
   PerformanceReportData,
+  CCRPApprovedInitiative,
 } from '../data/facilityEmissionsData';
+import { INITIAL_FACILITY_REGISTRATIONS } from '../data/facilityRegistrationsData';
+
+// ---------------------------------------------------------------------------
+// ALL 7 APPROVED INITIATIVES WITH METADATA & CADENCE
+// ---------------------------------------------------------------------------
+export const ALL_CCRP_INITIATIVES: CCRPApprovedInitiative[] = [
+  {
+    id: 'fac-1',
+    initiativeCode: 'CCRP-INIT-2026-7073',
+    name: 'Al Dhafra Solar PV Decarbonization Program',
+    entity: 'Department of Energy (DoE)',
+    pillar: 'Mitigation',
+    cadence: 'Semiannual',
+    sector: 'Energy',
+    strategicObjective: 'Reduce GHG Emissions in Key Sectors',
+    startDate: '01-Jan-2024',
+    endDate: '31-Dec-2027',
+    status: 'Approved',
+  },
+  {
+    id: 'fac-2',
+    initiativeCode: 'CCRP-INIT-2026-0118',
+    name: 'Low-Carbon Industrial Transition & Green Hydrogen Hub',
+    entity: 'Abu Dhabi Department of Economic Development (ADDED)',
+    pillar: 'Economic Diversification',
+    cadence: 'Semiannual',
+    sector: 'Industry & Manufacturing',
+    strategicObjective: 'Drive a Low-Carbon Innovation and Economic Diversification Agenda',
+    startDate: '01-Feb-2024',
+    endDate: '30-Jun-2029',
+    status: 'Approved',
+  },
+  {
+    id: 'fac-3',
+    initiativeCode: 'CCRP-INIT-2026-0422',
+    name: 'Abu Dhabi Mangrove & Blue Carbon Coastal Restoration',
+    entity: 'Environment Agency – Abu Dhabi (EAD)',
+    pillar: 'Adaptation',
+    cadence: 'Quarterly',
+    sector: 'Coastal & Marine Ecosystems',
+    strategicObjective: 'Increase Removal of Greenhouse Gas (GHG) Emissions Through Carbon Sinks',
+    startDate: '15-Mar-2024',
+    endDate: '31-Dec-2028',
+    status: 'Approved',
+  },
+  {
+    id: 'fac-4',
+    initiativeCode: 'CCRP-INIT-2026-0305',
+    name: 'Electric Public Transit Fleet & EV Fast-Charging Network',
+    entity: 'Integrated Transport Centre (ITC)',
+    pillar: 'Mitigation',
+    cadence: 'Semiannual',
+    sector: 'Transport',
+    strategicObjective: 'Reduce GHG Emissions in Key Sectors',
+    startDate: '01-Apr-2024',
+    endDate: '31-Dec-2027',
+    status: 'Approved',
+  },
+  {
+    id: 'fac-5',
+    initiativeCode: 'CCRP-INIT-2026-0775',
+    name: 'Integrated Organic Waste & Biogas Energy Recovery Program',
+    entity: 'Abu Dhabi Waste Management Centre (Tadweer)',
+    pillar: 'Cross Cutting',
+    cadence: 'Semiannual',
+    sector: 'Waste Management',
+    strategicObjective: 'Reduce GHG Emissions in Key Sectors',
+    startDate: '01-Feb-2024',
+    endDate: '31-Jan-2028',
+    status: 'Approved',
+  },
+  {
+    id: 'fac-6',
+    initiativeCode: 'CCRP-INIT-2026-0619',
+    name: 'Climate Resilient Urban Infrastructure & Stormwater Drainage Upgrade',
+    entity: 'Department of Municipalities and Transport (DMT)',
+    pillar: 'Adaptation',
+    cadence: 'Quarterly',
+    sector: 'Infrastructure & Built Environment',
+    strategicObjective: 'Enhance Resilience of Vulnerable Sectors to Adapt to Climate Change Impacts',
+    startDate: '01-Mar-2024',
+    endDate: '28-Feb-2028',
+    status: 'Approved',
+  },
+  {
+    id: 'fac-7',
+    initiativeCode: 'CCRP-INIT-2026-0814',
+    name: 'Agricultural Water Efficiency & Smart Irrigation Program',
+    entity: 'Abu Dhabi Agriculture and Food Safety Authority (ADAFSA)',
+    pillar: 'Adaptation',
+    cadence: 'Quarterly',
+    sector: 'Agriculture, Forestry & Land Use (AFOLU)',
+    strategicObjective: 'Enhance Resilience of Vulnerable Sectors to Adapt to Climate Change Impacts',
+    startDate: '01-May-2024',
+    endDate: '31-Dec-2028',
+    status: 'Approved',
+  },
+];
 
 // ---------------------------------------------------------------------------
 // PROJECT PERFORMANCE DATABASE BY INITIATIVE AND FINANCIAL YEAR
@@ -579,29 +682,183 @@ const PROJECT_PERFORMANCE_DATABASE: Record<string, Record<string, PerformancePer
     ],
     'FY 2023–24': [],
   },
+
+  // 7. Agricultural Water Efficiency & Smart Irrigation Program (Adaptation - Quarterly)
+  'fac-7': {
+    'FY 2026–27': [
+      {
+        period: '2026 Q1',
+        plannedProgress: 25,
+        actualProgress: 20,
+        variance: -5,
+        status: 'In Progress',
+        plannedGhg: '—',
+        actualGhg: '—',
+        isCurrent: true,
+      },
+      {
+        period: '2026 Q2',
+        plannedProgress: 38,
+        actualProgress: 35,
+        variance: -3,
+        status: 'Draft',
+        plannedGhg: '—',
+        actualGhg: '—',
+        isCurrent: false,
+      },
+      {
+        period: '2026 Q3',
+        plannedProgress: 50,
+        actualProgress: 48,
+        variance: -2,
+        status: 'Draft',
+        plannedGhg: '—',
+        actualGhg: '—',
+        isCurrent: false,
+      },
+      {
+        period: '2026 Q4',
+        plannedProgress: 65,
+        actualProgress: 62,
+        variance: -3,
+        status: 'Draft',
+        plannedGhg: '—',
+        actualGhg: '—',
+        isCurrent: false,
+      },
+    ],
+    'FY 2025–26': [
+      {
+        period: '2025 Q1',
+        plannedProgress: 5,
+        actualProgress: 5,
+        variance: 0,
+        status: 'Completed',
+        plannedGhg: '—',
+        actualGhg: '—',
+        isCurrent: false,
+      },
+      {
+        period: '2025 Q2',
+        plannedProgress: 10,
+        actualProgress: 10,
+        variance: 0,
+        status: 'Completed',
+        plannedGhg: '—',
+        actualGhg: '—',
+        isCurrent: false,
+      },
+      {
+        period: '2025 Q3',
+        plannedProgress: 15,
+        actualProgress: 14,
+        variance: -1,
+        status: 'Completed',
+        plannedGhg: '—',
+        actualGhg: '—',
+        isCurrent: false,
+      },
+      {
+        period: '2025 Q4',
+        plannedProgress: 20,
+        actualProgress: 19,
+        variance: -1,
+        status: 'Completed',
+        plannedGhg: '—',
+        actualGhg: '—',
+        isCurrent: false,
+      },
+    ],
+    'FY 2024–25': [],
+    'FY 2023–24': [],
+  },
 };
 
 export const MRVReportsView: React.FC = () => {
-  const { openReadOnlyViewer, facilityEmissions } = useMRV();
+  const { openReadOnlyViewer, facilityEmissions, facilityRegistrations } = useMRV();
 
   // Active Tab State: 'performance-summary' | 'submission-status' | 'history' | 'version'
   const [activeTab, setActiveTab] = useState<'performance-summary' | 'submission-status' | 'history' | 'version'>('performance-summary');
 
-  // Shared Filter States - Controlled by top FY selector
+  // Multi-dimensional dynamic filter states
+  const [selectedEntity, setSelectedEntity] = useState<string>('All');
+  const [selectedPillar, setSelectedPillar] = useState<string>('All');
   const [selectedProjectId, setSelectedProjectId] = useState<string>('fac-1');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('FY 2026–27');
+  const [selectedReportingPeriod, setSelectedReportingPeriod] = useState<string>('All');
   const [exportNotice, setExportNotice] = useState<string | null>(null);
 
   // -------------------------------------------------------------------------
-  // 1. ACTIVE PROJECT METADATA & DATA EXTRACTION
+  // 1. FILTER COMBINATIONS & INITIATIVE SELECTION
   // -------------------------------------------------------------------------
+  const allEntities = useMemo(() => {
+    return Array.from(new Set(ALL_CCRP_INITIATIVES.map((i) => i.entity)));
+  }, []);
+
+  const allPillars = useMemo(() => {
+    return ['Mitigation', 'Adaptation', 'Economic Diversification', 'Cross Cutting'];
+  }, []);
+
+  const filteredInitiatives = useMemo(() => {
+    return ALL_CCRP_INITIATIVES.filter((init) => {
+      const matchEntity = selectedEntity === 'All' || init.entity === selectedEntity;
+      const matchPillar = selectedPillar === 'All' || init.pillar === selectedPillar;
+      return matchEntity && matchPillar;
+    });
+  }, [selectedEntity, selectedPillar]);
+
+  // Handle entity filter changes
+  const handleEntityChange = (entity: string) => {
+    setSelectedEntity(entity);
+    const matching = ALL_CCRP_INITIATIVES.filter((init) => {
+      const matchEntity = entity === 'All' || init.entity === entity;
+      const matchPillar = selectedPillar === 'All' || init.pillar === selectedPillar;
+      return matchEntity && matchPillar;
+    });
+    if (matching.length > 0 && !matching.some((i) => i.id === selectedProjectId)) {
+      setSelectedProjectId(matching[0].id);
+      setSelectedReportingPeriod('All');
+    }
+  };
+
+  // Handle pillar filter changes
+  const handlePillarChange = (pillar: string) => {
+    setSelectedPillar(pillar);
+    const matching = ALL_CCRP_INITIATIVES.filter((init) => {
+      const matchEntity = selectedEntity === 'All' || init.entity === selectedEntity;
+      const matchPillar = pillar === 'All' || init.pillar === pillar;
+      return matchEntity && matchPillar;
+    });
+    if (matching.length > 0 && !matching.some((i) => i.id === selectedProjectId)) {
+      setSelectedProjectId(matching[0].id);
+      setSelectedReportingPeriod('All');
+    }
+  };
+
+  // Handle project selection change
+  const handleProjectChange = (projectId: string) => {
+    setSelectedProjectId(projectId);
+    setSelectedReportingPeriod('All');
+  };
+
+  // Active initiative metadata
   const activeInitiativeMeta = useMemo(() => {
     return (
-      CCRP_APPROVED_INITIATIVES.find((i) => i.id === selectedProjectId) ||
-      CCRP_APPROVED_INITIATIVES[0]
+      ALL_CCRP_INITIATIVES.find((i) => i.id === selectedProjectId) ||
+      ALL_CCRP_INITIATIVES[0]
     );
   }, [selectedProjectId]);
 
+  // Available reporting periods for the active initiative and FY
+  const availableReportingPeriods = useMemo(() => {
+    const projectHistorical =
+      PROJECT_PERFORMANCE_DATABASE[selectedProjectId] ||
+      PROJECT_PERFORMANCE_DATABASE['fac-1'];
+    const rawRows = projectHistorical[selectedPeriod] || [];
+    return rawRows.map((r) => r.period);
+  }, [selectedProjectId, selectedPeriod]);
+
+  // Active report data
   const activeReportData: PerformanceReportData = useMemo(() => {
     const rawData =
       facilityEmissions[selectedProjectId] ||
@@ -628,7 +885,7 @@ export const MRVReportsView: React.FC = () => {
       : 'Submitted');
 
   // -------------------------------------------------------------------------
-  // 2. UNIFIED DATASET FOR SELECTED INITIATIVE & FINANCIAL YEAR
+  // 2. UNIFIED DATASET FOR SELECTED INITIATIVE, FINANCIAL YEAR & PERIOD
   // -------------------------------------------------------------------------
   const currentFYData = useMemo(() => {
     const projectHistorical =
@@ -637,8 +894,13 @@ export const MRVReportsView: React.FC = () => {
 
     const rawRows = projectHistorical[selectedPeriod] || [];
 
+    const filteredRows =
+      selectedReportingPeriod === 'All'
+        ? rawRows
+        : rawRows.filter((r) => r.period === selectedReportingPeriod);
+
     // Sync live form edits from facilityEmissions for the active record
-    return rawRows.map((r) => {
+    return filteredRows.map((r) => {
       if (r.isCurrent) {
         const livePlanned =
           activeReportData.plannedProgress !== undefined &&
@@ -673,9 +935,9 @@ export const MRVReportsView: React.FC = () => {
       }
       return r;
     });
-  }, [selectedProjectId, selectedPeriod, activeReportData]);
+  }, [selectedProjectId, selectedPeriod, selectedReportingPeriod, activeReportData]);
 
-  // Chart data strictly derived from the exact same dataset
+  // Chart data derived strictly from current dataset
   const performanceChartData = useMemo(() => {
     return currentFYData.map((row) => {
       const planned =
@@ -701,10 +963,237 @@ export const MRVReportsView: React.FC = () => {
   }, [currentFYData]);
 
   // -------------------------------------------------------------------------
-  // 3. TAB 2: SUBMISSION STATUS OVERVIEW DATA
+  // 3. REPORTING COMPLIANCE CALCULATION
+  // -------------------------------------------------------------------------
+  const complianceStats = useMemo(() => {
+    const projectHistorical =
+      PROJECT_PERFORMANCE_DATABASE[selectedProjectId] ||
+      PROJECT_PERFORMANCE_DATABASE['fac-1'];
+    const allFYPeriods = projectHistorical[selectedPeriod] || [];
+
+    const evaluatedPeriods =
+      selectedReportingPeriod === 'All'
+        ? allFYPeriods
+        : allFYPeriods.filter((p) => p.period === selectedReportingPeriod);
+
+    const expected = evaluatedPeriods.length;
+
+    const submitted = evaluatedPeriods.filter((p) => {
+      if (p.isCurrent) {
+        return (
+          (activeReportData.submittedDate !== null &&
+            activeReportData.workflowStatus !== 'Draft') ||
+          p.status === 'Submitted' ||
+          p.status === 'Completed' ||
+          p.status === 'Approved'
+        );
+      }
+      return (
+        p.status === 'Submitted' ||
+        p.status === 'Completed' ||
+        p.status === 'Approved' ||
+        p.status === 'Returned for Correction'
+      );
+    }).length;
+
+    const pending = Math.max(0, expected - submitted);
+    const complianceRate =
+      expected > 0 ? Math.round((submitted / expected) * 100) : 0;
+
+    return {
+      expected,
+      submitted,
+      pending,
+      complianceRate,
+      cadence: activeInitiativeMeta.cadence,
+    };
+  }, [
+    selectedProjectId,
+    selectedPeriod,
+    selectedReportingPeriod,
+    activeReportData,
+    activeInitiativeMeta,
+  ]);
+
+  // -------------------------------------------------------------------------
+  // 4. CONFIGURED KPI PERFORMANCE DYNAMIC EXTRACTION
+  // -------------------------------------------------------------------------
+  const kpiPerformanceList = useMemo(() => {
+    const currentPeriodRow =
+      currentFYData.find((r) => r.isCurrent) || currentFYData[0];
+
+    const plannedProg =
+      currentPeriodRow?.plannedProgress ?? activeReportData.plannedProgress ?? 75;
+    const actualProg =
+      currentPeriodRow?.actualProgress ?? activeReportData.actualProgress ?? 68;
+    const plannedGhg =
+      currentPeriodRow?.plannedGhg !== '—' && currentPeriodRow?.plannedGhg
+        ? currentPeriodRow.plannedGhg
+        : activeReportData.plannedGhgReduction || '';
+    const actualGhg =
+      currentPeriodRow?.actualGhg !== '—' && currentPeriodRow?.actualGhg
+        ? currentPeriodRow.actualGhg
+        : activeReportData.actualAnnualEmissionReduction || '';
+
+    switch (selectedProjectId) {
+      case 'fac-1':
+        return [
+          {
+            name: 'Annual GHG Emissions Reduction (Electricity Sector)',
+            target: plannedGhg ? `${plannedGhg} tCO₂e` : '142,800 tCO₂e',
+            actual: actualGhg ? `${actualGhg} tCO₂e` : '138,500 tCO₂e',
+            variance: '-4,300 tCO₂e (-3.0%)',
+            status: 'On Track',
+            statusVariant: 'success' as const,
+          },
+          {
+            name: 'Clean Solar PV Generation Installed Capacity',
+            target: '2,000 MW',
+            actual: '2,000 MW',
+            variance: '100% Target Met',
+            status: 'Achieved',
+            statusVariant: 'success' as const,
+          },
+          {
+            name: 'Project Milestone & Implementation Progress',
+            target: `${plannedProg}%`,
+            actual: `${actualProg}%`,
+            variance: `${actualProg - plannedProg}%`,
+            status: actualProg >= plannedProg ? 'On Track' : 'In Progress',
+            statusVariant: actualProg >= plannedProg ? ('success' as const) : ('info' as const),
+          },
+        ];
+      case 'fac-2':
+        return [
+          {
+            name: 'Pilot Clean Hydrogen Electrolyzer Deployment',
+            target: '150 MW',
+            actual: '50 MW',
+            variance: '-100 MW (33.3% capacity)',
+            status: 'Under Implementation',
+            statusVariant: 'warning' as const,
+          },
+          {
+            name: 'Front-End Engineering Design (FEED) Milestone',
+            target: `${plannedProg}%`,
+            actual: `${actualProg}%`,
+            variance: `${actualProg - plannedProg}%`,
+            status: 'In Progress',
+            statusVariant: 'info' as const,
+          },
+        ];
+      case 'fac-3':
+        return [
+          {
+            name: 'Coastal Mangrove Blue Carbon Habitat Sequestration',
+            target: '1,200,000 saplings',
+            actual: '1,200,000 (94% survival)',
+            variance: '100% Target Met',
+            status: 'Achieved',
+            statusVariant: 'success' as const,
+          },
+          {
+            name: 'Sector Climate Adaptation Plan Milestones',
+            target: `${plannedProg}%`,
+            actual: `${actualProg}%`,
+            variance: `${actualProg - plannedProg > 0 ? `+${actualProg - plannedProg}%` : `${actualProg - plannedProg}%`}`,
+            status: 'On Track',
+            statusVariant: 'success' as const,
+          },
+        ];
+      case 'fac-4':
+        return [
+          {
+            name: 'Transport Sector GHG Emissions Reduction',
+            target: plannedGhg ? `${plannedGhg} tCO₂e` : '24,000 tCO₂e',
+            actual: actualGhg ? `${actualGhg} tCO₂e` : '21,500 tCO₂e',
+            variance: '-2,500 tCO₂e (-10.4%)',
+            status: 'On Track',
+            statusVariant: 'success' as const,
+          },
+          {
+            name: 'Municipal Fleet Electrification & EV Charging Network',
+            target: `${plannedProg}%`,
+            actual: `${actualProg}%`,
+            variance: `${actualProg - plannedProg}%`,
+            status: 'In Progress',
+            statusVariant: 'info' as const,
+          },
+        ];
+      case 'fac-5':
+        return [
+          {
+            name: 'Waste Sector GHG Emissions Reduction',
+            target: plannedGhg ? `${plannedGhg} tCO₂e` : '38,500 tCO₂e',
+            actual: actualGhg ? `${actualGhg} tCO₂e` : '41,200 tCO₂e',
+            variance: '+2,700 tCO₂e (+7.0%)',
+            status: 'Target Exceeded',
+            statusVariant: 'success' as const,
+          },
+          {
+            name: 'Biogas Clean Energy Generation & Waste Diversion',
+            target: '35 MW / 45,000 tonnes',
+            actual: '35 MW / 45,000 tonnes',
+            variance: '100% Target Met',
+            status: 'Achieved',
+            statusVariant: 'success' as const,
+          },
+          {
+            name: 'Anaerobic Digestion Plant Operational Target',
+            target: `${plannedProg}%`,
+            actual: `${actualProg}%`,
+            variance: '0% (Completed)',
+            status: 'Completed',
+            statusVariant: 'success' as const,
+          },
+        ];
+      case 'fac-6':
+        return [
+          {
+            name: 'Urban Stormwater Drainage Climate Resilience Channel Upgrades',
+            target: `${plannedProg}%`,
+            actual: `${actualProg}%`,
+            variance: `${actualProg - plannedProg}%`,
+            status: 'Needs Attention',
+            statusVariant: 'warning' as const,
+          },
+          {
+            name: 'Infrastructure Sector Flood Risk Modelling Adaptation Plan',
+            target: '100% by 2024',
+            actual: '80%',
+            variance: '-20%',
+            status: 'In Progress',
+            statusVariant: 'info' as const,
+          },
+        ];
+      case 'fac-7':
+      default:
+        return [
+          {
+            name: 'Agricultural IoT Precision Smart Irrigation Farm Deployment',
+            target: `${plannedProg}%`,
+            actual: `${actualProg}%`,
+            variance: `${actualProg - plannedProg}%`,
+            status: 'In Progress',
+            statusVariant: 'info' as const,
+          },
+          {
+            name: 'AFOLU Sector Groundwater Conservation Adaptation Plan',
+            target: '100% by 2024',
+            actual: '75%',
+            variance: '-25%',
+            status: 'In Progress',
+            statusVariant: 'info' as const,
+          },
+        ];
+    }
+  }, [selectedProjectId, activeReportData, currentFYData]);
+
+  // -------------------------------------------------------------------------
+  // 5. TAB 2: SUBMISSION STATUS OVERVIEW DATA
   // -------------------------------------------------------------------------
   const submissionStatusOverview = [
-    { name: 'Approved / Published', count: 18, percentage: 48, color: '#16A34A' },
+    { name: 'Approved', count: 18, percentage: 48, color: '#16A34A' },
     { name: 'Under Review', count: 8, percentage: 22, color: '#0284C7' },
     { name: 'Submitted', count: 6, percentage: 16, color: '#38BDF8' },
     { name: 'Returned for Correction', count: 3, percentage: 8, color: '#F97316' },
@@ -719,7 +1208,7 @@ export const MRVReportsView: React.FC = () => {
   ];
 
   // -------------------------------------------------------------------------
-  // 4. TAB 3: PERIODIC REPORTS ARCHIVE DATA
+  // 6. TAB 3: PERIODIC REPORTS ARCHIVE DATA
   // -------------------------------------------------------------------------
   const periodicReportsList = useMemo(() => {
     const rawPeriod =
@@ -749,9 +1238,9 @@ export const MRVReportsView: React.FC = () => {
             ? `${activeReportData.actualAnnualEmissionReduction || '41,200'} tCO₂e`
             : 'N/A (Adaptation)',
         submittedDate: activeReportData.submittedDate || '14-Mar-2026',
-        status: workflowStatus,
+        status: workflowStatus === 'Approved / Published' ? 'Approved' : workflowStatus,
         statusVariant:
-          workflowStatus === 'Approved / Published' || workflowStatus === 'Approved'
+          workflowStatus === 'Approved'
             ? ('success' as const)
             : workflowStatus === 'Returned for Correction'
             ? ('warning' as const)
@@ -766,7 +1255,7 @@ export const MRVReportsView: React.FC = () => {
               progress: '100% Milestone Achieved',
               ghgReduction: 'N/A (Adaptation)',
               submittedDate: '20-Dec-2025',
-              status: 'Approved / Published',
+              status: 'Approved',
               statusVariant: 'success' as const,
             },
             {
@@ -776,7 +1265,7 @@ export const MRVReportsView: React.FC = () => {
               progress: '100% Milestone Achieved',
               ghgReduction: 'N/A (Adaptation)',
               submittedDate: '15-Sep-2025',
-              status: 'Approved / Published',
+              status: 'Approved',
               statusVariant: 'success' as const,
             },
           ]
@@ -793,7 +1282,7 @@ export const MRVReportsView: React.FC = () => {
                   ? '39,000 tCO₂e'
                   : 'N/A (Adaptation)',
               submittedDate: '18-Sep-2025',
-              status: 'Approved / Published',
+              status: 'Approved',
               statusVariant: 'success' as const,
             },
             {
@@ -808,7 +1297,7 @@ export const MRVReportsView: React.FC = () => {
                   ? '36,500 tCO₂e'
                   : 'N/A (Adaptation)',
               submittedDate: '15-Mar-2025',
-              status: 'Approved / Published',
+              status: 'Approved',
               statusVariant: 'success' as const,
             },
           ]),
@@ -816,7 +1305,7 @@ export const MRVReportsView: React.FC = () => {
   }, [activeInitiativeMeta, activeReportData, workflowStatus]);
 
   // -------------------------------------------------------------------------
-  // 5. TAB 4: STATUTORY AUDIT & REVIEW TRAIL
+  // 6. TAB 4: STATUTORY AUDIT & REVIEW TRAIL
   // -------------------------------------------------------------------------
   const projectAuditHistory = useMemo(() => {
     return [
@@ -937,7 +1426,7 @@ export const MRVReportsView: React.FC = () => {
   return (
     <div className="h-full flex flex-col overflow-hidden font-sans">
       {/* ------------------------------------------------------------------------- */}
-      {/* 1. TOP HEADER ROW (Title on Left, Project Selector & FY Selector on Right) */}
+      {/* 1. TOP HEADER ROW (Title on Left, Filters & Export CTA on Right)           */}
       {/* ------------------------------------------------------------------------- */}
       <div className="flex-shrink-0 pt-0.5 pb-[18px] flex flex-wrap items-center justify-between gap-3">
         {/* Left: View Title & Subtitle */}
@@ -958,17 +1447,51 @@ export const MRVReportsView: React.FC = () => {
           )}
         </div>
 
-        {/* Right: Project Selector, FY Dropdown & Export CTA Button */}
-        <div className="flex items-center gap-2.5 flex-wrap">
+        {/* Right: Filters (Entity, Pillar, Project, FY, Reporting Period) & Export CTA Button */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Entity Filter */}
+          <div className="relative">
+            <select
+              value={selectedEntity}
+              onChange={(e) => handleEntityChange(e.target.value)}
+              className="h-9 px-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 shadow-xs focus:outline-none focus:border-[#004B87] cursor-pointer max-w-[180px] truncate"
+              title="Filter by Lead Entity"
+            >
+              <option value="All">All Entities</option>
+              {allEntities.map((ent) => (
+                <option key={ent} value={ent}>
+                  {ent}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Pillar Filter */}
+          <div className="relative">
+            <select
+              value={selectedPillar}
+              onChange={(e) => handlePillarChange(e.target.value)}
+              className="h-9 px-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 shadow-xs focus:outline-none focus:border-[#004B87] cursor-pointer max-w-[150px] truncate"
+              title="Filter by Strategic Pillar"
+            >
+              <option value="All">All Pillars</option>
+              {allPillars.map((pil) => (
+                <option key={pil} value={pil}>
+                  {pil}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Project / Initiative Dropdown */}
           <div className="relative">
             <select
               value={selectedProjectId}
-              onChange={(e) => setSelectedProjectId(e.target.value)}
-              className="h-9 pl-3.5 pr-8 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 shadow-xs focus:outline-none focus:border-[#004B87] cursor-pointer max-w-[280px] truncate"
+              onChange={(e) => handleProjectChange(e.target.value)}
+              className="h-9 pl-3 pr-7 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 shadow-xs focus:outline-none focus:border-[#004B87] cursor-pointer max-w-[230px] truncate"
               title="Select Project / Initiative"
             >
-              {CCRP_APPROVED_INITIATIVES.map((init) => (
+              {filteredInitiatives.map((init) => (
                 <option key={init.id} value={init.id}>
                   {init.name} ({init.initiativeCode})
                 </option>
@@ -976,9 +1499,9 @@ export const MRVReportsView: React.FC = () => {
             </select>
           </div>
 
-          {/* Financial Year Dropdown (Controls Chart & Table) */}
+          {/* Financial Year Dropdown */}
           <div className="relative">
-            <div className="h-9 flex items-center bg-white border border-slate-200 rounded-xl shadow-xs px-3">
+            <div className="h-9 flex items-center bg-white border border-slate-200 rounded-xl shadow-xs px-2.5">
               <Calendar className="w-3.5 h-3.5 text-[#004B87] mr-1.5 shrink-0" />
               <select
                 value={selectedPeriod}
@@ -994,10 +1517,27 @@ export const MRVReportsView: React.FC = () => {
             </div>
           </div>
 
+          {/* Reporting Period Filter */}
+          <div className="relative">
+            <select
+              value={selectedReportingPeriod}
+              onChange={(e) => setSelectedReportingPeriod(e.target.value)}
+              className="h-9 px-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 shadow-xs focus:outline-none focus:border-[#004B87] cursor-pointer max-w-[130px] truncate"
+              title="Filter by Reporting Period"
+            >
+              <option value="All">All Periods</option>
+              {availableReportingPeriods.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Export Button */}
           <button
             onClick={() => handleExport(activeTab === 'performance-summary' ? 'Performance Summary' : 'Submission Status')}
-            className="h-9 px-4 bg-gradient-to-r from-[#004B87] to-[#006BB8] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
+            className="h-9 px-3.5 bg-gradient-to-r from-[#004B87] to-[#006BB8] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
           >
             <UploadCloud className="w-4 h-4" />
             <span>Export Report</span>
@@ -1147,85 +1687,299 @@ export const MRVReportsView: React.FC = () => {
                     <BarChart3 className="w-7 h-7 text-slate-300 mb-1.5" />
                     <p className="text-xs font-bold text-slate-700">No Report Data Available</p>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      No statutory periodic performance records exist for {selectedPeriod} for this initiative.
+                      No statutory periodic performance records exist for {selectedPeriod} {selectedReportingPeriod !== 'All' ? `(${selectedReportingPeriod})` : ''} for this initiative.
                     </p>
                   </div>
                 )}
               </div>
 
-              {/* 2. BOTTOM CARD: PERFORMANCE DETAILS TABLE (Styled identical to Overview Table) */}
+              {/* 2. PERFORMANCE DETAILS TABLE */}
               <div className="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-2xs">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead className="sticky top-0 z-10 bg-[#D6E3EF] shadow-xs select-none">
-                    <tr className="h-[38px] bg-[#D6E3EF] text-slate-800 font-bold text-xs border-b border-[#5B88B0]/30">
-                      <th className="h-[38px] px-3.5 align-middle bg-[#D6E3EF] font-bold text-slate-800">Reporting Period</th>
-                      <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Planned Progress (%)</th>
-                      <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Actual Progress (%)</th>
-                      <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Variance (%)</th>
-                      <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Project Status</th>
-                      <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Planned GHG Reduction (tCO₂e)</th>
-                      <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Actual GHG Reduction (tCO₂e)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 font-normal text-slate-700">
-                    {currentFYData.length > 0 ? (
-                      currentFYData.map((row, idx) => (
-                        <tr
-                          key={row.period}
-                          className={`h-[48px] ${
-                            idx % 2 === 1 ? 'bg-slate-50/80' : 'bg-white'
-                          } hover:bg-[#EBF3FA] transition-colors`}
-                        >
-                          <td className="h-[48px] px-3.5 align-middle text-slate-800 font-semibold">
-                            <div className="flex items-center gap-1.5">
-                              <Calendar className="w-3.5 h-3.5 text-[#004B87] shrink-0" />
-                              <span>{row.period}</span>
-                              {row.isCurrent && (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#EBF3FA] text-[#004B87] border border-[#004B87]/20">
-                                  Current
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="h-[48px] px-3.5 text-center align-middle font-semibold text-slate-700">
-                            {row.plannedProgress}%
-                          </td>
-                          <td className="h-[48px] px-3.5 text-center align-middle font-bold text-[#004B87]">
-                            {row.actualProgress}%
-                          </td>
-                          <td className="h-[48px] px-3.5 text-center align-middle">
-                            <span
-                              className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold inline-block min-w-[54px] text-center ${
-                                row.variance === 0
-                                  ? 'bg-slate-100 text-slate-700 border border-slate-200'
-                                  : row.variance > 0
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
-                                  : 'bg-amber-50 text-amber-700 border border-amber-200/60'
-                              }`}
-                            >
-                              {row.variance > 0 ? `+${row.variance}%` : `${row.variance}%`}
-                            </span>
-                          </td>
-                          <td className="h-[48px] px-3.5 text-center align-middle">
-                            {getProjectStatusBadge(row.status)}
-                          </td>
-                          <td className="h-[48px] px-3.5 text-center align-middle font-mono font-medium text-slate-800">
-                            {row.plannedGhg !== '—' ? `${row.plannedGhg} tCO₂e` : '—'}
-                          </td>
-                          <td className="h-[48px] px-3.5 text-center align-middle font-mono font-bold text-emerald-700">
-                            {row.actualGhg !== '—' ? `${row.actualGhg} tCO₂e` : '—'}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse min-w-[900px]">
+                    <thead className="sticky top-0 z-10 bg-[#D6E3EF] shadow-xs select-none">
+                      <tr className="h-[38px] bg-[#D6E3EF] text-slate-800 font-bold text-xs border-b border-[#5B88B0]/30">
+                        <th className="h-[38px] px-3.5 align-middle bg-[#D6E3EF] font-bold text-slate-800 min-w-[200px]">Initiative / Project</th>
+                        <th className="h-[38px] px-3.5 align-middle bg-[#D6E3EF] font-bold text-slate-800 min-w-[140px]">Entity</th>
+                        <th className="h-[38px] px-3.5 align-middle bg-[#D6E3EF] font-bold text-slate-800 min-w-[110px]">Pillar</th>
+                        <th className="h-[38px] px-3.5 align-middle bg-[#D6E3EF] font-bold text-slate-800 min-w-[120px]">Reporting Period</th>
+                        <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Planned Progress (%)</th>
+                        <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Actual Progress (%)</th>
+                        <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Variance (%)</th>
+                        <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Project / Initiative Status</th>
+                        <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Planned GHG (tCO₂e)</th>
+                        <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Actual GHG (tCO₂e)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-normal text-slate-700">
+                      {currentFYData.length > 0 ? (
+                        currentFYData.map((row, idx) => (
+                          <tr
+                            key={row.period}
+                            className={`h-[48px] ${
+                              idx % 2 === 1 ? 'bg-slate-50/80' : 'bg-white'
+                            } hover:bg-[#EBF3FA] transition-colors`}
+                          >
+                            <td className="h-[48px] px-3.5 align-middle text-slate-800 font-semibold max-w-[220px]">
+                              <span className="block truncate font-bold text-slate-800" title={activeInitiativeMeta.name}>
+                                {activeInitiativeMeta.name}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-mono block">
+                                {activeInitiativeMeta.initiativeCode}
+                              </span>
+                            </td>
+                            <td className="h-[48px] px-3.5 align-middle text-slate-600 text-[11px] max-w-[150px]">
+                              <span className="truncate block" title={activeInitiativeMeta.entity}>
+                                {activeInitiativeMeta.entity}
+                              </span>
+                            </td>
+                            <td className="h-[48px] px-3.5 align-middle">
+                              <span className="px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-sky-50 text-[#004B87] border border-sky-100 whitespace-nowrap">
+                                {activeInitiativeMeta.pillar}
+                              </span>
+                            </td>
+                            <td className="h-[48px] px-3.5 align-middle text-slate-800 font-semibold whitespace-nowrap">
+                              <div className="flex items-center gap-1.5">
+                                <Calendar className="w-3.5 h-3.5 text-[#004B87] shrink-0" />
+                                <span>{row.period}</span>
+                                {row.isCurrent && (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#EBF3FA] text-[#004B87] border border-[#004B87]/20">
+                                    Current
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="h-[48px] px-3.5 text-center align-middle font-semibold text-slate-700">
+                              {row.plannedProgress}%
+                            </td>
+                            <td className="h-[48px] px-3.5 text-center align-middle font-bold text-[#004B87]">
+                              {row.actualProgress}%
+                            </td>
+                            <td className="h-[48px] px-3.5 text-center align-middle">
+                              <span
+                                className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold inline-block min-w-[54px] text-center ${
+                                  row.variance === 0
+                                    ? 'bg-slate-100 text-slate-700 border border-slate-200'
+                                    : row.variance > 0
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
+                                    : 'bg-amber-50 text-amber-700 border border-amber-200/60'
+                                }`}
+                              >
+                                {row.variance > 0 ? `+${row.variance}%` : `${row.variance}%`}
+                              </span>
+                            </td>
+                            <td className="h-[48px] px-3.5 text-center align-middle">
+                              {getProjectStatusBadge(row.status)}
+                            </td>
+                            <td className="h-[48px] px-3.5 text-center align-middle font-mono font-medium text-slate-800">
+                              {row.plannedGhg !== '—' ? `${row.plannedGhg}` : '—'}
+                            </td>
+                            <td className="h-[48px] px-3.5 text-center align-middle font-mono font-bold text-emerald-700">
+                              {row.actualGhg !== '—' ? `${row.actualGhg}` : '—'}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={10} className="h-32 text-center text-slate-400 font-medium text-xs align-middle">
+                            No performance reporting records found for {selectedPeriod} {selectedReportingPeriod !== 'All' ? `(${selectedReportingPeriod})` : ''}.
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={7} className="h-32 text-center text-slate-400 font-medium text-xs align-middle">
-                          No performance reporting records found for {selectedPeriod}.
-                        </td>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* 3. REPORTING COMPLIANCE SECTION */}
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 sm:p-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#004B87]" />
+                    <h3 className="text-sm font-bold text-slate-900 tracking-tight">Reporting Compliance</h3>
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                    <span>Reporting Cadence:</span>
+                    <span className="font-bold text-[#004B87] bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">
+                      {complianceStats.cadence}
+                    </span>
+                    <span className="text-slate-300">•</span>
+                    <span>Reporting Scope:</span>
+                    <span className="font-semibold text-slate-700">
+                      {selectedReportingPeriod === 'All' ? selectedPeriod : `${selectedReportingPeriod} (${selectedPeriod})`}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Metric Cards Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {/* Expected */}
+                  <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-3 flex flex-col justify-between">
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 mb-1">
+                      <span>Reports Expected</span>
+                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                    </div>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-xl font-bold font-display text-slate-900">
+                        {complianceStats.expected}
+                      </span>
+                      <span className="text-[10.5px] text-slate-500 font-medium">reports</span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 mt-1 block">
+                      Based on {complianceStats.cadence.toLowerCase()} cadence
+                    </span>
+                  </div>
+
+                  {/* Submitted */}
+                  <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-3 flex flex-col justify-between">
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-emerald-800 mb-1">
+                      <span>Reports Submitted</span>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    </div>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-xl font-bold font-display text-emerald-700">
+                        {complianceStats.submitted}
+                      </span>
+                      <span className="text-[10.5px] text-emerald-600 font-medium">/ {complianceStats.expected} lodged</span>
+                    </div>
+                    <span className="text-[10px] text-emerald-600/80 mt-1 block">
+                      Submissions on official record
+                    </span>
+                  </div>
+
+                  {/* Pending */}
+                  <div className="bg-amber-50/40 border border-amber-100 rounded-xl p-3 flex flex-col justify-between">
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-amber-800 mb-1">
+                      <span>Reports Pending</span>
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                    </div>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-xl font-bold font-display text-amber-700">
+                        {complianceStats.pending}
+                      </span>
+                      <span className="text-[10.5px] text-amber-600 font-medium">awaiting</span>
+                    </div>
+                    <span className="text-[10px] text-amber-600/80 mt-1 block">
+                      {complianceStats.pending === 0 ? 'No overdue statutory reports' : 'Pending submission review'}
+                    </span>
+                  </div>
+
+                  {/* Compliance Rate */}
+                  <div className="bg-[#EBF3FA]/70 border border-[#004B87]/20 rounded-xl p-3 flex flex-col justify-between">
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-[#004B87] mb-1">
+                      <span>Compliance Rate</span>
+                      <TrendingUp className="w-3.5 h-3.5 text-[#004B87]" />
+                    </div>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className={`text-xl font-bold font-display ${
+                        complianceStats.complianceRate >= 100
+                          ? 'text-emerald-700'
+                          : complianceStats.complianceRate >= 50
+                          ? 'text-[#004B87]'
+                          : 'text-amber-700'
+                      }`}>
+                        {complianceStats.complianceRate}%
+                      </span>
+                      <span className="text-[10.5px] text-slate-500 font-medium">timeliness</span>
+                    </div>
+                    <div className="w-full bg-slate-200/80 rounded-full h-1.5 mt-1.5 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${
+                          complianceStats.complianceRate >= 100
+                            ? 'bg-emerald-600'
+                            : complianceStats.complianceRate >= 50
+                            ? 'bg-[#004B87]'
+                            : 'bg-amber-500'
+                        }`}
+                        style={{ width: `${Math.min(100, complianceStats.complianceRate)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. KPI PERFORMANCE SECTION */}
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 sm:p-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <Target className="w-4 h-4 text-[#004B87]" />
+                    <h3 className="text-sm font-bold text-slate-900 tracking-tight">KPI Performance</h3>
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                    <span>Configured Indicators for:</span>
+                    <span className="font-bold text-slate-700 truncate max-w-[240px]" title={activeInitiativeMeta.name}>
+                      {activeInitiativeMeta.name}
+                    </span>
+                    <span className="text-slate-300">•</span>
+                    <span className="font-semibold text-[#004B87] bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">
+                      {activeInitiativeMeta.pillar}
+                    </span>
+                  </div>
+                </div>
+
+                {/* KPI Table */}
+                <div className="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-2xs">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead className="sticky top-0 z-10 bg-[#D6E3EF] shadow-xs select-none">
+                      <tr className="h-[38px] bg-[#D6E3EF] text-slate-800 font-bold text-xs border-b border-[#5B88B0]/30">
+                        <th className="h-[38px] px-3.5 align-middle bg-[#D6E3EF]">KPI / Indicator Name</th>
+                        <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF]">Target</th>
+                        <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF]">Actual</th>
+                        <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF]">Achievement / Variance</th>
+                        <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF]">Status</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-normal text-slate-700">
+                      {kpiPerformanceList.length > 0 ? (
+                        kpiPerformanceList.map((kpi, idx) => (
+                          <tr
+                            key={idx}
+                            className={`h-[46px] ${
+                              idx % 2 === 1 ? 'bg-slate-50/80' : 'bg-white'
+                            } hover:bg-[#EBF3FA] transition-colors`}
+                          >
+                            <td className="h-[46px] px-3.5 align-middle text-slate-800 font-medium">
+                              <div className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#004B87] shrink-0" />
+                                <span>{kpi.name}</span>
+                              </div>
+                            </td>
+                            <td className="h-[46px] px-3.5 text-center align-middle font-mono font-semibold text-slate-700">
+                              {kpi.target}
+                            </td>
+                            <td className="h-[46px] px-3.5 text-center align-middle font-mono font-bold text-[#004B87]">
+                              {kpi.actual}
+                            </td>
+                            <td className="h-[46px] px-3.5 text-center align-middle font-medium">
+                              <span
+                                className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold inline-block min-w-[70px] text-center ${
+                                  kpi.variance.includes('+') || kpi.variance.includes('100%') || kpi.variance.includes('Met')
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
+                                    : kpi.variance.includes('-')
+                                    ? 'bg-amber-50 text-amber-700 border border-amber-200/60'
+                                    : 'bg-slate-100 text-slate-700 border border-slate-200'
+                                }`}
+                              >
+                                {kpi.variance}
+                              </span>
+                            </td>
+                            <td className="h-[46px] px-3.5 text-center align-middle">
+                              <Badge variant={kpi.statusVariant} size="sm">
+                                {kpi.status}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={5} className="h-24 text-center text-slate-400 font-medium text-xs align-middle">
+                            No specific indicators configured for this initiative.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -1391,19 +2145,19 @@ export const MRVReportsView: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-normal text-slate-700">
                       {periodicReportsList.map((row, idx) => (
-                        <tr key={idx} className={`h-[60px] ${idx % 2 === 1 ? 'bg-slate-50/80' : 'bg-white'} hover:bg-[#EBF3FA] transition-colors`}>
-                          <td className="h-[60px] px-3.5 font-bold text-[#004B87] text-sm align-middle">{row.reportingPeriod}</td>
-                          <td className="h-[60px] px-3.5 font-mono font-normal text-slate-800 align-middle">{row.reportId}</td>
-                          <td className="h-[60px] px-3.5 font-mono font-bold text-slate-600 align-middle">{row.version}</td>
-                          <td className="h-[60px] px-3.5 font-semibold text-slate-800 align-middle">{row.progress}</td>
-                          <td className="h-[60px] px-3.5 font-bold text-emerald-700 align-middle">{row.ghgReduction}</td>
-                          <td className="h-[60px] px-3.5 text-slate-500 font-normal align-middle">{row.submittedDate}</td>
-                          <td className="h-[60px] px-3.5 align-middle">
+                        <tr key={idx} className={`h-[48px] ${idx % 2 === 1 ? 'bg-slate-50/80' : 'bg-white'} hover:bg-[#EBF3FA] transition-colors`}>
+                          <td className="h-[48px] px-3.5 font-medium text-slate-800 text-xs align-middle">{row.reportingPeriod}</td>
+                          <td className="h-[48px] px-3.5 font-mono text-xs text-slate-700 align-middle">{row.reportId}</td>
+                          <td className="h-[48px] px-3.5 font-mono font-medium text-xs text-slate-600 align-middle">{row.version}</td>
+                          <td className="h-[48px] px-3.5 font-medium text-xs text-slate-800 align-middle">{row.progress}</td>
+                          <td className="h-[48px] px-3.5 font-bold text-xs text-emerald-700 align-middle">{row.ghgReduction}</td>
+                          <td className="h-[48px] px-3.5 text-slate-500 font-normal text-xs align-middle">{row.submittedDate}</td>
+                          <td className="h-[48px] px-3.5 align-middle">
                             <Badge variant={row.statusVariant} size="sm">
                               {row.status}
                             </Badge>
                           </td>
-                          <td className="h-[60px] px-4 text-center align-middle">
+                          <td className="h-[48px] px-4 text-center align-middle">
                             <div className="flex items-center justify-center gap-2">
                               <button
                                 onClick={() => openReadOnlyViewer({
@@ -1441,51 +2195,47 @@ export const MRVReportsView: React.FC = () => {
           {/* TAB 4: REVIEW & STATUTORY AUDIT HISTORY                                */}
           {/* ======================================================================= */}
           {activeTab === 'version' && (
-            <div className="space-y-[18px] animate-fade-in">
-              <GlassCard className="p-6 border-slate-200 shadow-sm space-y-[18px]">
-                <div className="border-b border-slate-100 pb-4">
-                  <h2 className="text-base font-bold text-navy-950 flex items-center gap-2">
-                    <History className="w-5 h-5 text-[#004B87]" />
-                    Review & Statutory Audit Trail — 2026
-                  </h2>
-                  <p className="text-slate-500 text-xs mt-1">
-                    Complete revision logs, EAD reviewer actions, and compliance determinations for statutory transparency.
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  {projectAuditHistory.map((ver, idx) => (
-                    <div key={idx} className="p-4 rounded-xl border border-slate-200 bg-white flex flex-wrap items-start justify-between gap-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-extrabold text-sm text-[#004B87]">
-                            Version {ver.version}
-                          </span>
-                          <span className="text-xs text-slate-400 font-semibold">• {ver.timestamp}</span>
-                        </div>
-                        <p className="text-xs text-slate-800 font-bold">{ver.action}</p>
-                        <p className="text-xs text-slate-600 font-normal">{ver.comments}</p>
-                        <div className="text-[11px] text-slate-500 font-medium">
-                          Author / Authority: <strong className="text-slate-700">{ver.user}</strong> ({ver.role})
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => openReadOnlyViewer({
-                          moduleType: 'full-dossier',
-                          recordId: activeInitiativeMeta.initiativeCode,
-                          version: 1,
-                          initialTab: 'comparison',
-                        })}
-                        className="px-3 py-1.5 rounded-lg bg-[#004B87]/10 hover:bg-[#004B87]/20 text-[#004B87] text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>View Version Record</span>
-                      </button>
+            <div className="space-y-3.5 animate-fade-in">
+              {projectAuditHistory.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="p-4 rounded-xl border border-slate-200/90 bg-white shadow-2xs flex flex-col justify-between gap-3 hover:border-slate-300 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <h3 className="text-xs sm:text-[13px] font-bold text-slate-900 tracking-tight">
+                        {item.action}
+                      </h3>
+                      <p className="text-xs text-slate-600 font-normal leading-relaxed">
+                        {item.comments}
+                      </p>
                     </div>
-                  ))}
+
+                    <button
+                      onClick={() => openReadOnlyViewer({
+                        moduleType: 'full-dossier',
+                        recordId: activeInitiativeMeta.initiativeCode,
+                        version: 1,
+                        initialTab: 'comparison',
+                      })}
+                      className="p-1.5 rounded-lg bg-[#004B87]/10 hover:bg-[#004B87]/20 text-[#004B87] transition-colors cursor-pointer shrink-0"
+                      title="View Audit Record"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Bottom Row: Author / Authority on Left, Date / Timestamp on Right */}
+                  <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                    <div className="text-slate-500 font-medium">
+                      Author / Authority: <strong className="text-slate-700">{item.user}</strong> ({item.role})
+                    </div>
+                    <div className="text-slate-400 font-medium">
+                      {item.timestamp}
+                    </div>
+                  </div>
                 </div>
-              </GlassCard>
+              ))}
             </div>
           )}
         </div>

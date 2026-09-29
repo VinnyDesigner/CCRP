@@ -105,18 +105,19 @@ export const VersionHistoryView: React.FC = () => {
         const scope = reg?.scope || 'Abu Dhabi Emirate';
         const strategicObjective =
           reg?.strategicObjective ||
-          'SO1: Reduce Greenhouse Gas Emissions Across Key Economic Sectors';
+          'Reduce GHG Emissions in Key Sectors';
         const strategicObjectiveOther = reg?.strategicObjectiveOther || '';
         const sector = reg?.projectSector || reg?.reportingSector || fac?.sector || 'Energy';
-        const initiativeType = reg?.typeOfInitiative || reg?.initiativeType || 'Infrastructure & Capital Projects';
+        const initiativeType = reg?.typeOfInitiative || reg?.initiativeType || 'Project';
         const initiativeTypeOther = reg?.initiativeTypeOther || '';
-        const initiativeSource = reg?.initiativeSource || 'Abu Dhabi Climate Change Strategy 2023–2027';
+        const initiativeSource = reg?.initiativeSource || 'Climate Change Strategy';
+        const initiativeSourceOther = (reg as any)?.initiativeSourceOther || '';
         const pillar = (reg?.pillar as string) || (fac as any)?.pillar || 'Mitigation';
         const cadence = (reg?.reportingCadence as string) || 'Semiannual';
         const description = reg?.description || reg?.facilityDescription || (fac as any)?.facilityDescription || 'Comprehensive climate decarbonization and sustainability program in Abu Dhabi.';
         const indicatorsAndTargets = Array.isArray(reg?.indicatorsAndTargets)
           ? reg.indicatorsAndTargets.join(', ')
-          : (reg?.indicatorsAndTargets || 'Total Annual GHG Emissions Reduction (tCO₂e / year), Renewable & Clean Energy Installed Generation Capacity (MW)');
+          : (reg?.indicatorsAndTargets || 'Percentage of total GHG emissions reduced from 2016 levels 22% by 2027, Percentage of GHG emissions reduced in the electricity and water sector from 2016 levels 43% by 2027');
         const projectManagerName = reg?.projectManagerName || 'Eng. Saeed Al-Mehairbi';
         const projectManagerContact = reg?.projectManagerContactDetails || reg?.projectManagerContact || '+971 2 694 4000 / saeed.mehairbi@doe.gov.ae';
         const startDate = reg?.startDate || '2023-01-01';
@@ -135,6 +136,7 @@ export const VersionHistoryView: React.FC = () => {
           initiativeType,
           initiativeTypeOther,
           initiativeSource,
+          initiativeSourceOther,
           pillar,
           cadence,
           status: 'Approved' as const,
@@ -196,10 +198,10 @@ export const VersionHistoryView: React.FC = () => {
             scope: currentInitiative.scope || 'Abu Dhabi Emirate',
             strategicObjective:
               currentInitiative.strategicObjective ||
-              'SO1: Reduce Greenhouse Gas Emissions Across Key Economic Sectors',
+              'Reduce GHG Emissions in Key Sectors',
             projectSector: currentInitiative.sector || 'Energy',
-            initiativeType: currentInitiative.initiativeType || 'Infrastructure & Capital Projects',
-            initiativeSource: currentInitiative.initiativeSource || 'Abu Dhabi Climate Change Strategy 2023–2027',
+            initiativeType: currentInitiative.initiativeType || 'Project',
+            initiativeSource: currentInitiative.initiativeSource || 'Climate Change Strategy',
             indicatorsAndTargets:
               currentInitiative.indicatorsAndTargets ||
               'Approved baseline targets and indicators.',
@@ -340,17 +342,22 @@ export const VersionHistoryView: React.FC = () => {
     entity: currentInitiative?.entity || 'Department of Energy (DoE)',
     supportingEntity: currentInitiative?.supportingEntity || 'TAQA (Abu Dhabi National Energy Company)',
     scope: currentInitiative?.scope || 'Abu Dhabi Emirate',
+    scopeOther: (currentInitiative as any)?.scopeOther || '',
     strategicObjective:
       currentInitiative?.strategicObjective ||
-      'SO1: Reduce Greenhouse Gas Emissions Across Key Economic Sectors',
-    strategicObjectiveOther: '',
+      'Reduce GHG Emissions in Key Sectors',
+    strategicObjectiveOther: currentInitiative?.strategicObjectiveOther || '',
     projectSector: currentInitiative?.sector || 'Energy',
-    initiativeType: currentInitiative?.initiativeType || 'Infrastructure & Capital Projects',
+    projectSectorOther: (currentInitiative as any)?.projectSectorOther || '',
+    initiativeType: currentInitiative?.initiativeType || 'Project',
     initiativeTypeOther: '',
-    initiativeSource: currentInitiative?.initiativeSource || 'Abu Dhabi Climate Change Strategy 2023–2027',
+    pillar: currentInitiative?.pillar || 'Mitigation',
+    pillarOther: (currentInitiative as any)?.pillarOther || '',
+    initiativeSource: currentInitiative?.initiativeSource || 'Climate Change Strategy',
+    initiativeSourceOther: (currentInitiative as any)?.initiativeSourceOther || '',
     indicatorsAndTargets:
       currentInitiative?.indicatorsAndTargets ||
-      'Total Annual GHG Emissions Reduction (tCO₂e / year), Renewable & Clean Energy Installed Generation Capacity (MW), Industrial & Grid Energy Efficiency Improvement (%)',
+      'Percentage of total GHG emissions reduced from 2016 levels 22% by 2027, Percentage of GHG emissions reduced in the electricity and water sector from 2016 levels 43% by 2027',
     projectManagerName: currentInitiative?.projectManagerName || currentUser?.name || 'Eng. Saeed Al-Mehairbi',
     projectManagerContact: currentInitiative?.projectManagerContact || '+971 2 694 4000 / saeed.mehairbi@doe.gov.ae',
     startDate: currentInitiative?.startDate || '2023-01-01',
@@ -381,20 +388,25 @@ export const VersionHistoryView: React.FC = () => {
       entity: latestItem?.entity || currentInitiative.entity,
       supportingEntity: latestItem?.supportingEntity || currentInitiative.supportingEntity || 'TAQA (Abu Dhabi National Energy Company)',
       scope: latestItem?.scope || currentInitiative.scope || 'Abu Dhabi Emirate',
+      scopeOther: latestItem?.scopeOther || (currentInitiative as any)?.scopeOther || '',
       strategicObjective:
         latestItem?.strategicObjective ||
         currentInitiative.strategicObjective ||
-        'SO1: Reduce Greenhouse Gas Emissions Across Key Economic Sectors',
+        'Reduce GHG Emissions in Key Sectors',
       strategicObjectiveOther: latestItem?.strategicObjectiveOther || currentInitiative.strategicObjectiveOther || '',
       projectSector: latestItem?.projectSector || currentInitiative.sector || 'Energy',
-      initiativeType: latestItem?.initiativeType || currentInitiative.initiativeType || 'Infrastructure & Capital Projects',
+      projectSectorOther: latestItem?.projectSectorOther || (currentInitiative as any)?.projectSectorOther || '',
+      initiativeType: latestItem?.initiativeType || currentInitiative.initiativeType || 'Project',
       initiativeTypeOther: latestItem?.initiativeTypeOther || currentInitiative.initiativeTypeOther || '',
+      pillar: (latestItem as any)?.pillar || currentInitiative.pillar || 'Mitigation',
+      pillarOther: (latestItem as any)?.pillarOther || (currentInitiative as any)?.pillarOther || '',
       initiativeSource:
-        latestItem?.initiativeSource || currentInitiative.initiativeSource || 'Abu Dhabi Climate Change Strategy 2023–2027',
+        latestItem?.initiativeSource || currentInitiative.initiativeSource || 'Climate Change Strategy',
+      initiativeSourceOther: latestItem?.initiativeSourceOther || (currentInitiative as any)?.initiativeSourceOther || '',
       indicatorsAndTargets:
         latestItem?.indicatorsAndTargets ||
         currentInitiative.indicatorsAndTargets ||
-        'Total Annual GHG Emissions Reduction (tCO₂e / year), Renewable & Clean Energy Installed Generation Capacity (MW), Industrial & Grid Energy Efficiency Improvement (%)',
+        'Percentage of total GHG emissions reduced from 2016 levels 22% by 2027, Percentage of GHG emissions reduced in the electricity and water sector from 2016 levels 43% by 2027',
       projectManagerName:
         latestItem?.projectManagerName || currentInitiative.projectManagerName || currentUser?.name || 'Eng. Saeed Al-Mehairbi',
       projectManagerContact:
@@ -422,12 +434,17 @@ export const VersionHistoryView: React.FC = () => {
       entity: formData.entity,
       supportingEntity: formData.supportingEntity,
       scope: formData.scope,
+      scopeOther: formData.scopeOther,
       strategicObjective: formData.strategicObjective,
       strategicObjectiveOther: formData.strategicObjectiveOther,
       projectSector: formData.projectSector,
+      projectSectorOther: formData.projectSectorOther,
       initiativeType: formData.initiativeType,
       initiativeTypeOther: formData.initiativeTypeOther,
+      pillar: formData.pillar,
+      pillarOther: formData.pillarOther,
       initiativeSource: formData.initiativeSource,
+      initiativeSourceOther: formData.initiativeSourceOther,
       indicatorsAndTargets: formData.indicatorsAndTargets,
       projectManagerName: formData.projectManagerName,
       projectManagerContact: formData.projectManagerContact,
@@ -466,12 +483,17 @@ export const VersionHistoryView: React.FC = () => {
       entity: formData.entity,
       supportingEntity: formData.supportingEntity,
       scope: formData.scope,
+      scopeOther: formData.scopeOther,
       strategicObjective: formData.strategicObjective,
       strategicObjectiveOther: formData.strategicObjectiveOther,
       projectSector: formData.projectSector,
+      projectSectorOther: formData.projectSectorOther,
       initiativeType: formData.initiativeType,
       initiativeTypeOther: formData.initiativeTypeOther,
+      pillar: formData.pillar,
+      pillarOther: formData.pillarOther,
       initiativeSource: formData.initiativeSource,
+      initiativeSourceOther: formData.initiativeSourceOther,
       indicatorsAndTargets: formData.indicatorsAndTargets,
       projectManagerName: formData.projectManagerName,
       projectManagerContact: formData.projectManagerContact,
@@ -558,11 +580,15 @@ export const VersionHistoryView: React.FC = () => {
             supportingEntity: amendment.supportingEntity,
             scope: amendment.scope,
             projectSector: amendment.projectSector,
+            projectSectorOther: amendment.projectSectorOther || '',
             strategicObjective: amendment.strategicObjective,
             strategicObjectiveOther: amendment.strategicObjectiveOther || '',
             typeOfInitiative: amendment.initiativeType,
             initiativeTypeOther: amendment.initiativeTypeOther || '',
+            pillar: (amendment as any).pillar || currentReg.pillar || 'Mitigation',
+            pillarOther: (amendment as any).pillarOther || '',
             initiativeSource: amendment.initiativeSource,
+            initiativeSourceOther: amendment.initiativeSourceOther || '',
             indicatorsAndTargets: amendment.indicatorsAndTargets
               ? amendment.indicatorsAndTargets.split(',').map((s) => s.trim()).filter(Boolean)
               : currentReg.indicatorsAndTargets,
@@ -1126,49 +1152,23 @@ export const VersionHistoryView: React.FC = () => {
             {activeFormTab === 'details' && (
               <div className="space-y-4 animate-fade-in">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                  <div className="col-span-1 sm:col-span-2 lg:col-span-4">
+                  <div className="col-span-1">
                     <label className="block text-slate-700 font-semibold mb-1">
                       Initiative Name *
                     </label>
-                    <FieldTooltip content="Select from your approved initiatives to request an amendment." example="Al Dhafra Solar PV Decarbonization Program">
-                      <select
+                    <FieldTooltip content="Official title of the climate change initiative." example="Al Dhafra Solar PV Decarbonization Program">
+                      <input
+                        type="text"
                         value={formData.initiativeName}
-                        onChange={(e) => {
-                          const sel = approvedInitiatives.find((i) => i.name === e.target.value);
-                          if (sel) {
-                            setFormData({
-                              ...formData,
-                              initiativeName: sel.name,
-                              entity: sel.entity,
-                              supportingEntity: sel.supportingEntity,
-                              scope: sel.scope,
-                              projectSector: sel.sector,
-                              strategicObjective: sel.strategicObjective,
-                              strategicObjectiveOther: sel.strategicObjectiveOther || '',
-                              initiativeType: sel.initiativeType,
-                              initiativeTypeOther: sel.initiativeTypeOther || '',
-                              initiativeSource: sel.initiativeSource,
-                              indicatorsAndTargets: sel.indicatorsAndTargets,
-                              projectManagerName: sel.projectManagerName,
-                              projectManagerContact: sel.projectManagerContact,
-                              startDate: sel.startDate,
-                              endDate: sel.endDate,
-                              description: sel.description,
-                            });
-                          } else {
-                            setFormData({ ...formData, initiativeName: e.target.value });
-                          }
-                        }}
+                        onChange={(e) => setFormData({ ...formData, initiativeName: e.target.value })}
+                        placeholder="e.g. Al Dhafra Solar PV Decarbonization Program"
                         className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-bold focus:outline-none focus:border-[#004B87] shadow-2xs text-xs"
-                      >
-                        {approvedInitiatives.map((init) => (
-                          <option key={init.initiativeCode} value={init.name}>
-                            {init.name} ({init.initiativeCode})
-                          </option>
-                        ))}
-                      </select>
+                      />
                     </FieldTooltip>
                   </div>
+                  <div className="hidden lg:block"></div>
+                  <div className="hidden lg:block"></div>
+                  <div className="hidden lg:block"></div>
 
                   <div className="col-span-1 sm:col-span-2 lg:col-span-4">
                     <label className="block text-slate-700 font-semibold mb-1">
@@ -1215,78 +1215,175 @@ export const VersionHistoryView: React.FC = () => {
                     </select>
                   </div>
 
+                  {/* Row 1: Entity, Supporting Entity, Scope (Pillar values), Project Sector */}
                   <div>
                     <label className="block text-slate-700 font-semibold mb-1">
                       Scope *
                     </label>
-                    <select
-                      value={formData.scope}
-                      onChange={(e) => setFormData({ ...formData, scope: e.target.value })}
-                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] text-xs"
-                    >
-                      {CCRP_SCOPES.map((sc) => (
-                        <option key={sc} value={sc}>{sc}</option>
-                      ))}
-                    </select>
+                    {formData.pillar === 'Others' || formData.pillar === 'Other' || (formData.pillarOther && !['Adaptation', 'Mitigation', 'Economic Diversification'].includes(formData.pillar)) ? (
+                      <div className="relative">
+                        <input
+                          type="text"
+                          autoFocus
+                          value={formData.pillarOther || (formData.pillar === 'Others' || formData.pillar === 'Other' ? '' : formData.pillar)}
+                          onChange={(e) => setFormData({ ...formData, pillar: 'Others', pillarOther: e.target.value })}
+                          placeholder="Specify custom scope..."
+                          className="w-full pl-3.5 pr-8 py-2 bg-white border border-[#004B87] rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] text-xs shadow-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, pillar: 'Mitigation', pillarOther: '' })}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+                          title="Switch back to dropdown"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <select
+                        value={formData.pillar || 'Mitigation'}
+                        onChange={(e) => {
+                          if (e.target.value === 'Others' || e.target.value === 'Other') {
+                            setFormData({ ...formData, pillar: 'Others', pillarOther: '' });
+                          } else {
+                            setFormData({ ...formData, pillar: e.target.value, pillarOther: '' });
+                          }
+                        }}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] truncate text-xs cursor-pointer"
+                      >
+                        <option value="Adaptation">Adaptation</option>
+                        <option value="Mitigation">Mitigation</option>
+                        <option value="Economic Diversification">Economic Diversification</option>
+                        <option value="Others">Others</option>
+                      </select>
+                    )}
                   </div>
 
                   <div>
                     <label className="block text-slate-700 font-semibold mb-1">
                       Project Sector *
                     </label>
-                    <select
-                      value={formData.projectSector}
-                      onChange={(e) => setFormData({ ...formData, projectSector: e.target.value })}
-                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] text-xs"
-                    >
-                      {CCRP_PROJECT_SECTORS.map((sec) => (
-                        <option key={sec} value={sec}>{sec}</option>
-                      ))}
-                    </select>
+                    {formData.projectSector === 'Other' || (formData.projectSectorOther && !CCRP_PROJECT_SECTORS.includes(formData.projectSector)) ? (
+                      <div className="relative">
+                        <input
+                          type="text"
+                          autoFocus
+                          value={formData.projectSectorOther || (formData.projectSector === 'Other' ? '' : formData.projectSector)}
+                          onChange={(e) => setFormData({ ...formData, projectSector: 'Other', projectSectorOther: e.target.value })}
+                          placeholder="Specify custom sector..."
+                          className="w-full pl-3.5 pr-8 py-2 bg-white border border-[#004B87] rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] text-xs shadow-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, projectSector: CCRP_PROJECT_SECTORS[0], projectSectorOther: '' })}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+                          title="Switch back to dropdown"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <select
+                        value={formData.projectSector}
+                        onChange={(e) => {
+                          if (e.target.value === 'Other') {
+                            setFormData({ ...formData, projectSector: 'Other', projectSectorOther: '' });
+                          } else {
+                            setFormData({ ...formData, projectSector: e.target.value, projectSectorOther: '' });
+                          }
+                        }}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] text-xs cursor-pointer"
+                      >
+                        {CCRP_PROJECT_SECTORS.map((sec) => (
+                          <option key={sec} value={sec}>{sec}</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
 
-                  {/* Row 2 of 4 fields */}
+                  {/* Row 2 of fields */}
                   <div>
                     <label className="block text-slate-700 font-semibold mb-1">
                       Strategic Objective *
                     </label>
-                    <select
-                      value={formData.strategicObjective}
-                      onChange={(e) => setFormData({ ...formData, strategicObjective: e.target.value })}
-                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] truncate text-xs"
-                    >
-                      {CCRP_STRATEGIC_OBJECTIVES.map((so) => (
-                        <option key={so} value={so}>{so}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-700 font-semibold mb-1">
-                      If Others, Please Specify
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.strategicObjectiveOther}
-                      onChange={(e) => setFormData({ ...formData, strategicObjectiveOther: e.target.value })}
-                      placeholder="Specify other objective if applicable"
-                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] text-xs"
-                    />
+                    {formData.strategicObjective === 'Other' || (formData.strategicObjectiveOther && !CCRP_STRATEGIC_OBJECTIVES.includes(formData.strategicObjective)) ? (
+                      <div className="relative">
+                        <input
+                          type="text"
+                          autoFocus
+                          value={formData.strategicObjectiveOther || (formData.strategicObjective === 'Other' ? '' : formData.strategicObjective)}
+                          onChange={(e) => setFormData({ ...formData, strategicObjective: 'Other', strategicObjectiveOther: e.target.value })}
+                          placeholder="Specify custom strategic objective..."
+                          className="w-full pl-3.5 pr-8 py-2 bg-white border border-[#004B87] rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] text-xs shadow-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, strategicObjective: CCRP_STRATEGIC_OBJECTIVES[0], strategicObjectiveOther: '' })}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+                          title="Switch back to dropdown"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <select
+                        value={formData.strategicObjective}
+                        onChange={(e) => {
+                          if (e.target.value === 'Other') {
+                            setFormData({ ...formData, strategicObjective: 'Other', strategicObjectiveOther: '' });
+                          } else {
+                            setFormData({ ...formData, strategicObjective: e.target.value, strategicObjectiveOther: '' });
+                          }
+                        }}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] truncate text-xs cursor-pointer"
+                      >
+                        {CCRP_STRATEGIC_OBJECTIVES.map((so) => (
+                          <option key={so} value={so}>{so}</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
 
                   <div>
                     <label className="block text-slate-700 font-semibold mb-1">
                       Type of Initiative *
                     </label>
-                    <select
-                      value={formData.initiativeType}
-                      onChange={(e) => setFormData({ ...formData, initiativeType: e.target.value })}
-                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] truncate text-xs"
-                    >
-                      {CCRP_INITIATIVE_TYPES.map((it) => (
-                        <option key={it} value={it}>{it}</option>
-                      ))}
-                    </select>
+                    {formData.initiativeType === 'Other' || (formData.initiativeTypeOther && !CCRP_INITIATIVE_TYPES.includes(formData.initiativeType)) ? (
+                      <div className="relative">
+                        <input
+                          type="text"
+                          autoFocus
+                          value={formData.initiativeTypeOther || (formData.initiativeType === 'Other' ? '' : formData.initiativeType)}
+                          onChange={(e) => setFormData({ ...formData, initiativeType: 'Other', initiativeTypeOther: e.target.value })}
+                          placeholder="Specify custom type of initiative..."
+                          className="w-full pl-3.5 pr-8 py-2 bg-white border border-[#004B87] rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] text-xs shadow-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, initiativeType: CCRP_INITIATIVE_TYPES[0], initiativeTypeOther: '' })}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+                          title="Switch back to dropdown"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <select
+                        value={formData.initiativeType}
+                        onChange={(e) => {
+                          if (e.target.value === 'Other') {
+                            setFormData({ ...formData, initiativeType: 'Other', initiativeTypeOther: '' });
+                          } else {
+                            setFormData({ ...formData, initiativeType: e.target.value, initiativeTypeOther: '' });
+                          }
+                        }}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] truncate text-xs cursor-pointer"
+                      >
+                        {CCRP_INITIATIVE_TYPES.map((it) => (
+                          <option key={it} value={it}>{it}</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
 
                   <div>
@@ -1294,15 +1391,19 @@ export const VersionHistoryView: React.FC = () => {
                       Initiative Source *
                     </label>
                     <select
-                      value={formData.initiativeSource}
-                      onChange={(e) => setFormData({ ...formData, initiativeSource: e.target.value })}
-                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] truncate text-xs"
+                      value={formData.initiativeSource || CCRP_INITIATIVE_SOURCES[0]}
+                      onChange={(e) => {
+                        setFormData({ ...formData, initiativeSource: e.target.value, initiativeSourceOther: '' });
+                      }}
+                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] truncate text-xs cursor-pointer"
                     >
                       {CCRP_INITIATIVE_SOURCES.map((is) => (
                         <option key={is} value={is}>{is}</option>
                       ))}
                     </select>
                   </div>
+
+                  <div className="hidden lg:block"></div>
 
                   <div className="col-span-1 sm:col-span-2 lg:col-span-4">
                     <label className="block text-slate-700 font-semibold mb-1">
@@ -1715,6 +1816,7 @@ export const VersionHistoryView: React.FC = () => {
                   />
                 </div>
 
+                {/* Row 1: Entity, Supporting Entity, Scope, Project Sector */}
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">
                     Scope
@@ -1723,8 +1825,16 @@ export const VersionHistoryView: React.FC = () => {
                     type="text"
                     readOnly
                     disabled
-                    value={viewingAmendment?.scope || currentInitiative?.scope || '—'}
-                    className="w-full px-3.5 py-2 bg-[#F8FAFC] border border-slate-200 rounded-lg text-slate-800 font-medium text-xs cursor-not-allowed select-none"
+                    value={
+                      (viewingAmendment?.pillar === 'Others' || viewingAmendment?.pillar === 'Other'
+                        ? viewingAmendment?.pillarOther || 'Others'
+                        : viewingAmendment?.pillar) ||
+                      (currentInitiative?.pillar === 'Others' || currentInitiative?.pillar === 'Other'
+                        ? (currentInitiative as any)?.pillarOther || 'Others'
+                        : currentInitiative?.pillar) ||
+                      '—'
+                    }
+                    className="w-full px-3.5 py-2 bg-[#F8FAFC] border border-slate-200 rounded-lg text-slate-800 font-medium text-xs truncate cursor-not-allowed select-none"
                   />
                 </div>
 
@@ -1736,12 +1846,20 @@ export const VersionHistoryView: React.FC = () => {
                     type="text"
                     readOnly
                     disabled
-                    value={viewingAmendment?.projectSector || currentInitiative?.sector || '—'}
+                    value={
+                      (viewingAmendment?.projectSector === 'Other'
+                        ? viewingAmendment?.projectSectorOther || 'Other'
+                        : viewingAmendment?.projectSector) ||
+                      (currentInitiative?.sector === 'Other'
+                        ? (currentInitiative as any)?.projectSectorOther || 'Other'
+                        : currentInitiative?.sector) ||
+                      '—'
+                    }
                     className="w-full px-3.5 py-2 bg-[#F8FAFC] border border-slate-200 rounded-lg text-slate-800 font-medium text-xs cursor-not-allowed select-none"
                   />
                 </div>
 
-                {/* Row 2 of 4 fields */}
+                {/* Row 2 of fields */}
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">
                     Strategic Objective
@@ -1750,21 +1868,16 @@ export const VersionHistoryView: React.FC = () => {
                     type="text"
                     readOnly
                     disabled
-                    value={viewingAmendment?.strategicObjective || currentInitiative?.strategicObjective || '—'}
+                    value={
+                      (viewingAmendment?.strategicObjective === 'Other'
+                        ? viewingAmendment?.strategicObjectiveOther || 'Other'
+                        : viewingAmendment?.strategicObjective) ||
+                      (currentInitiative?.strategicObjective === 'Other'
+                        ? currentInitiative?.strategicObjectiveOther || 'Other'
+                        : currentInitiative?.strategicObjective) ||
+                      '—'
+                    }
                     className="w-full px-3.5 py-2 bg-[#F8FAFC] border border-slate-200 rounded-lg text-slate-800 font-medium text-xs truncate cursor-not-allowed select-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-700 font-semibold mb-1">
-                    If Others, Please Specify
-                  </label>
-                  <input
-                    type="text"
-                    readOnly
-                    disabled
-                    value={viewingAmendment?.strategicObjectiveOther || currentInitiative?.strategicObjectiveOther || '—'}
-                    className="w-full px-3.5 py-2 bg-[#F8FAFC] border border-slate-200 rounded-lg text-slate-800 font-medium text-xs cursor-not-allowed select-none"
                   />
                 </div>
 
@@ -1776,7 +1889,15 @@ export const VersionHistoryView: React.FC = () => {
                     type="text"
                     readOnly
                     disabled
-                    value={viewingAmendment?.initiativeType || currentInitiative?.initiativeType || '—'}
+                    value={
+                      (viewingAmendment?.initiativeType === 'Other'
+                        ? viewingAmendment?.initiativeTypeOther || 'Other'
+                        : viewingAmendment?.initiativeType) ||
+                      (currentInitiative?.initiativeType === 'Other'
+                        ? currentInitiative?.initiativeTypeOther || 'Other'
+                        : currentInitiative?.initiativeType) ||
+                      '—'
+                    }
                     className="w-full px-3.5 py-2 bg-[#F8FAFC] border border-slate-200 rounded-lg text-slate-800 font-medium text-xs truncate cursor-not-allowed select-none"
                   />
                 </div>
@@ -1789,10 +1910,17 @@ export const VersionHistoryView: React.FC = () => {
                     type="text"
                     readOnly
                     disabled
-                    value={viewingAmendment?.initiativeSource || currentInitiative?.initiativeSource || '—'}
+                    value={
+                      (viewingAmendment?.initiativeSource === 'Other' || (!CCRP_INITIATIVE_SOURCES.includes(viewingAmendment?.initiativeSource || '') && viewingAmendment?.initiativeSourceOther)
+                        ? `Other: ${viewingAmendment?.initiativeSourceOther || '—'}`
+                        : (viewingAmendment?.initiativeSource || currentInitiative?.initiativeSource)) ||
+                      '—'
+                    }
                     className="w-full px-3.5 py-2 bg-[#F8FAFC] border border-slate-200 rounded-lg text-slate-800 font-medium text-xs truncate cursor-not-allowed select-none"
                   />
                 </div>
+
+                <div className="hidden lg:block"></div>
 
                 <div className="col-span-1 sm:col-span-2 lg:col-span-4">
                   <label className="block text-slate-700 font-semibold mb-1">

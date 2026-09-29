@@ -110,11 +110,11 @@ const PERIOD_DATA: Record<
 > = {
   'FY 2026–27': {
     kpis: {
-      totalProjects: { value: '7', sub: 'Registered Initiatives' },
-      submittedProjects: { value: '6', total: '/ 7', sub: '85.7% submitted & active', percent: '85.7%' },
-      draftProjects: { value: '1', sub: '14.3% in formulation' },
-      dataEntryProjects: { value: '4', total: '/ 7', sub: '57.1% monitoring active', percent: '57.1%' },
-      pendingAmendments: { value: '1', sub: 'Active amendment review' },
+      totalProjects: { value: '7', sub: 'Registered Projects' },
+      submittedProjects: { value: '2', total: '/ 7', sub: '28.6% submitted & active', percent: '28.6%' },
+      draftProjects: { value: '1', sub: '14.3% in draft' },
+      dataEntryProjects: { value: '1', total: '/ 7', sub: '14.3% data entry active', percent: '14.3%' },
+      pendingAmendments: { value: '1', sub: '14.3% under review' },
     },
     monthlyDataGhg: [
       { name: 'Al Dhafra Solar', planned: 142.8, actual: 138.5 },
@@ -310,10 +310,10 @@ const PERIOD_DATA: Record<
 
   'FY 2025–26': {
     kpis: {
-      totalProjects: { value: '5', sub: 'Registered in FY 25' },
-      submittedProjects: { value: '4', total: '/ 5', sub: '80.0% submission rate', percent: '80.0%' },
+      totalProjects: { value: '5', sub: 'Registered Climate Initiatives' },
+      submittedProjects: { value: '1', total: '/ 5', sub: '20.0% submitted & active', percent: '20.0%' },
       draftProjects: { value: '1', sub: '20.0% in formulation' },
-      dataEntryProjects: { value: '3', total: '/ 5', sub: '60.0% monitoring active', percent: '60.0%' },
+      dataEntryProjects: { value: '1', total: '/ 5', sub: '20.0% data entry active', percent: '20.0%' },
       pendingAmendments: { value: '0', sub: 'All amendments processed' },
     },
     monthlyDataGhg: [
@@ -619,11 +619,10 @@ export const FacilityDashboardView: React.FC = () => {
                   </span>
                 </div>
                 <span className="text-[11px] text-slate-500 block mt-0.5">
-                  Registered Initiatives
+                  Registered Projects
                 </span>
               </div>
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
-                <span className="text-slate-400">Cycle</span>
+              <div className="pt-2 border-t border-slate-100 flex items-center text-[10.5px]">
                 <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
                   {kpis.totalProjects.sub}
                 </span>
@@ -653,11 +652,10 @@ export const FacilityDashboardView: React.FC = () => {
                   </span>
                 </div>
                 <span className="text-[11px] text-slate-500 block mt-0.5">
-                  Approved & Under Review
+                  Registered / Submitted
                 </span>
               </div>
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
-                <span className="text-slate-400">Rate</span>
+              <div className="pt-2 border-t border-slate-100 flex items-center text-[10.5px]">
                 <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
                   {kpis.submittedProjects.sub}
                 </span>
@@ -684,11 +682,10 @@ export const FacilityDashboardView: React.FC = () => {
                   </span>
                 </div>
                 <span className="text-[11px] text-slate-500 block mt-0.5">
-                  Pending Registration
+                  Draft Projects
                 </span>
               </div>
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
-                <span className="text-slate-400">Status</span>
+              <div className="pt-2 border-t border-slate-100 flex items-center text-[10.5px]">
                 <span className="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
                   {kpis.draftProjects.sub}
                 </span>
@@ -696,7 +693,7 @@ export const FacilityDashboardView: React.FC = () => {
             </div>
           </NotchCard>
 
-          {/* Card 4: Projects Data Entry */}
+          {/* Card 4: Projects in Data Entry */}
           <NotchCard
             icon={<Database className="w-4 h-4 text-white" />}
             iconGradient="from-[#0284C7] to-[#0369A1]"
@@ -707,7 +704,7 @@ export const FacilityDashboardView: React.FC = () => {
             <div className="flex flex-col justify-between h-full pt-1 pb-0.5">
               <div>
                 <span className="text-[13px] font-bold text-slate-800 block">
-                  Projects Data Entry
+                  Projects in Data Entry
                 </span>
                 <div className="flex items-baseline gap-1 mt-1">
                   <span className="text-2xl font-bold font-display text-[#004B87]">
@@ -718,11 +715,10 @@ export const FacilityDashboardView: React.FC = () => {
                   </span>
                 </div>
                 <span className="text-[11px] text-slate-500 block mt-0.5">
-                  Monitoring Plans Active
+                  Project Data Entry
                 </span>
               </div>
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
-                <span className="text-slate-400">Completion</span>
+              <div className="pt-2 border-t border-slate-100 flex items-center text-[10.5px]">
                 <span className="font-semibold text-[#004B87] bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">
                   {kpis.dataEntryProjects.sub}
                 </span>
@@ -749,11 +745,10 @@ export const FacilityDashboardView: React.FC = () => {
                   </span>
                 </div>
                 <span className="text-[11px] text-slate-500 block mt-0.5">
-                  In Review & Updates
+                  Amendment / Review
                 </span>
               </div>
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
-                <span className="text-slate-400">Review</span>
+              <div className="pt-2 border-t border-slate-100 flex items-center text-[10.5px]">
                 <span className="font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">
                   {kpis.pendingAmendments.sub}
                 </span>

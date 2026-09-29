@@ -88,8 +88,7 @@ export const SubmissionListingTable: React.FC<SubmissionListingTableProps> = ({
         emData.updatedDate || emData.submittedDate || '18-Mar-2026';
 
       const reportingPeriod =
-        emData.progressReportPeriod ||
-        (init.cadence === 'Quarterly' ? 'Q1' : 'Semiannual 1 (H1)');
+        emData.progressReportPeriod || 'Q1';
 
       return {
         id: init.id,
@@ -209,8 +208,8 @@ export const SubmissionListingTable: React.FC<SubmissionListingTableProps> = ({
       case 'Approved / Published':
       case 'Approved':
         return (
-          <span className="px-3 py-1 rounded-full font-bold text-[11px] bg-[#E8F8F0] text-[#16A34A] border border-emerald-200/60 inline-block min-w-[125px] text-center">
-            Approved / Published
+          <span className="px-3 py-1 rounded-full font-bold text-[11px] bg-[#E8F8F0] text-[#16A34A] border border-emerald-200/60 inline-block min-w-[90px] text-center">
+            Approved
           </span>
         );
       case 'Under Review':

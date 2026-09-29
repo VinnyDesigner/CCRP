@@ -52,6 +52,7 @@ import {
   CCRPApprovedInitiative,
   INITIAL_FACILITY_EMISSIONS,
 } from '../data/facilityEmissionsData';
+import { CCRP_ENTITIES } from '../data/facilityRegistrationsData';
 
 const PERFORMANCE_REPORT_STEPS = [
   { id: 'report-details', stepNumber: 1, title: 'Report Details' },
@@ -115,8 +116,8 @@ export const AnnualEmissionDataView: React.FC = () => {
       plannedProgress: 75,
       actualProgress: 68,
       budget: 'AED 3,200,000,000',
-      budgetType: 'CAPEX',
-      budgetStatus: 'Allocated',
+      budgetType: 'Capex',
+      budgetStatus: 'Available',
       challenges: '',
       raiseToCommittee: 'No',
       activitiesOutcomesOutput: '',
@@ -146,7 +147,7 @@ export const AnnualEmissionDataView: React.FC = () => {
     currentRecord.reportingCadence || 'Semiannual'
   );
   const [formProgressReportPeriod, setFormProgressReportPeriod] = useState<string>(
-    currentRecord.progressReportPeriod || 'Semiannual 1 (H1)'
+    currentRecord.progressReportPeriod || 'Q1'
   );
   const [formProjectPhase, setFormProjectPhase] = useState<'Design' | 'Implementation' | 'Operation'>(
     currentRecord.projectPhase || 'Implementation'
@@ -164,10 +165,10 @@ export const AnnualEmissionDataView: React.FC = () => {
     currentRecord.budget !== undefined ? currentRecord.budget : ''
   );
   const [formBudgetType, setFormBudgetType] = useState<string>(
-    currentRecord.budgetType || 'CAPEX'
+    currentRecord.budgetType || 'Capex'
   );
   const [formBudgetStatus, setFormBudgetStatus] = useState<string>(
-    currentRecord.budgetStatus || 'Allocated'
+    currentRecord.budgetStatus || 'Available'
   );
   const [formChallenges, setFormChallenges] = useState<string>(
     currentRecord.challenges || ''
@@ -236,8 +237,8 @@ export const AnnualEmissionDataView: React.FC = () => {
     setFormPlannedProgress(rec.plannedProgress !== undefined ? rec.plannedProgress : 75);
     setFormActualProgress(rec.actualProgress !== undefined ? rec.actualProgress : 68);
     setFormBudget(rec.budget !== undefined ? rec.budget : '');
-    setFormBudgetType(rec.budgetType || 'CAPEX');
-    setFormBudgetStatus(rec.budgetStatus || 'Allocated');
+    setFormBudgetType(rec.budgetType || 'Capex');
+    setFormBudgetStatus(rec.budgetStatus || 'Available');
     setFormChallenges(rec.challenges || '');
     setFormRaiseToCommittee(rec.raiseToCommittee === 'Yes' || rec.raiseToCommittee === true ? 'Yes' : 'No');
     setFormActivitiesOutcomesOutput(rec.activitiesOutcomesOutput || '');
@@ -432,8 +433,8 @@ export const AnnualEmissionDataView: React.FC = () => {
       plannedProgress: 0,
       actualProgress: 0,
       budget: '',
-      budgetType: 'CAPEX',
-      budgetStatus: 'Allocated',
+      budgetType: 'Capex',
+      budgetStatus: 'Available',
       challenges: '',
       raiseToCommittee: 'No',
       activitiesOutcomesOutput: '',
@@ -1178,39 +1179,35 @@ export const AnnualEmissionDataView: React.FC = () => {
           </div>
         </div>
 
-        {/* Row 2: Initiative Name & Progress Report Period (4-column grid layout with chips in remaining space) */}
+        {/* Row 2: 3 Input Fields in a 4-column row (Initiative Name, Progress Report Period, Entity) with 4th column as empty space */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-0.5 items-end">
-          {/* Col 1: Initiative Name Select / Readonly */}
+          {/* Col 1: Initiative Name Text Box */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
               Initiative Name
             </label>
             <div className="relative">
-              <FieldTooltip content="Approved/published climate change initiative under CCRP.">
-                {isReadOnly ? (
-                  <input
-                    type="text"
-                    readOnly
-                    disabled
-                    value={formInitiativeName}
-                    className="w-full h-9 px-3.5 bg-slate-200/90 border border-slate-300 rounded-[8px] text-xs text-slate-800 font-bold cursor-not-allowed select-none truncate"
-                  />
-                ) : (
-                  <div className="relative">
-                    <select
-                      value={formInitiativeId}
-                      onChange={(e) => handleInitiativeChange(e.target.value)}
-                      className="w-full h-9 px-3.5 bg-white border border-slate-300 rounded-[8px] text-xs text-slate-800 font-bold focus:outline-none focus:border-[#004B87] shadow-2xs appearance-none pr-8 cursor-pointer truncate"
-                    >
-                      {CCRP_APPROVED_INITIATIVES.map((init) => (
-                        <option key={init.initiativeCode} value={init.initiativeCode}>
-                          {init.name} ({init.initiativeCode})
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  </div>
-                )}
+              <FieldTooltip content="Official title of the climate change initiative." example="Al Dhafra Solar PV Decarbonization Program">
+                <input
+                  type="text"
+                  readOnly={isReadOnly}
+                  disabled={isReadOnly}
+                  value={formInitiativeName}
+                  onChange={(e) => {
+                    setFormInitiativeName(e.target.value);
+                    updateCurrentRecord((prev) => ({
+                      ...prev,
+                      initiativeName: e.target.value,
+                      facilityName: e.target.value,
+                    }));
+                  }}
+                  placeholder="e.g. Al Dhafra Solar PV Decarbonization Program"
+                  className={`w-full h-9 px-3.5 border rounded-[8px] text-xs text-slate-800 font-bold shadow-2xs truncate ${
+                    isReadOnly
+                      ? 'bg-slate-200/90 border-slate-300 cursor-not-allowed select-none'
+                      : 'bg-white border-slate-300 focus:outline-none focus:border-[#004B87]'
+                  }`}
+                />
               </FieldTooltip>
             </div>
           </div>
@@ -1221,7 +1218,7 @@ export const AnnualEmissionDataView: React.FC = () => {
               Progress Report Period
             </label>
             <div className="relative">
-              <FieldTooltip content="Periodic reporting cycle based on initiative pillar cadence (Quarterly for Adaptation; Semiannual for Mitigation/Economic Diversification/Cross Cutting).">
+              <FieldTooltip content="Quarterly progress reporting cycle (Q1, Q2, Q3, Q4).">
                 {isReadOnly ? (
                   <input
                     type="text"
@@ -1234,7 +1231,13 @@ export const AnnualEmissionDataView: React.FC = () => {
                   <div className="relative">
                     <select
                       value={formProgressReportPeriod}
-                      onChange={(e) => setFormProgressReportPeriod(e.target.value)}
+                      onChange={(e) => {
+                        setFormProgressReportPeriod(e.target.value);
+                        updateCurrentRecord((prev) => ({
+                          ...prev,
+                          progressReportPeriod: e.target.value,
+                        }));
+                      }}
                       className="w-full h-9 px-3.5 bg-white border border-slate-300 rounded-[8px] text-xs text-slate-800 font-bold focus:outline-none focus:border-[#004B87] shadow-2xs appearance-none pr-8 cursor-pointer"
                     >
                       {availablePeriods.map((period) => (
@@ -1250,18 +1253,50 @@ export const AnnualEmissionDataView: React.FC = () => {
             </div>
           </div>
 
-          {/* Cols 3 & 4 (Remaining Area): Context Badges (Entity, Pillar, Cadence) */}
-          <div className="col-span-1 sm:col-span-2 lg:col-span-2 flex items-center gap-2 h-9 flex-wrap">
-            <span className="px-2.5 py-1.5 rounded-lg bg-sky-50 border border-sky-100 text-[11px] font-semibold text-sky-800 truncate" title={`Entity: ${formEntity}`}>
-              Entity: <span className="font-bold">{formEntity}</span>
-            </span>
-            <span className="px-2.5 py-1.5 rounded-lg bg-purple-50 border border-purple-100 text-[11px] font-semibold text-purple-800 shrink-0">
-              Pillar: <span className="font-bold">{formPillar}</span>
-            </span>
-            <span className="px-2.5 py-1.5 rounded-lg bg-emerald-50 border border-emerald-100 text-[11px] font-semibold text-emerald-800 shrink-0">
-              Cadence: <span className="font-bold">{formCadence}</span>
-            </span>
+          {/* Col 3: Entity Select */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Entity
+            </label>
+            <div className="relative">
+              <FieldTooltip content="Lead entity registered for this initiative." example="Department of Energy (DoE)">
+                {isReadOnly ? (
+                  <input
+                    type="text"
+                    readOnly
+                    disabled
+                    value={formEntity}
+                    className="w-full h-9 px-3.5 bg-slate-200/90 border border-slate-300 rounded-[8px] text-xs text-slate-800 font-bold cursor-not-allowed select-none truncate"
+                  />
+                ) : (
+                  <div className="relative">
+                    <select
+                      value={formEntity}
+                      onChange={(e) => {
+                        setFormEntity(e.target.value);
+                        updateCurrentRecord((prev) => ({
+                          ...prev,
+                          entity: e.target.value,
+                          operatorName: e.target.value,
+                        }));
+                      }}
+                      className="w-full h-9 px-3.5 bg-white border border-slate-300 rounded-[8px] text-xs text-slate-800 font-bold focus:outline-none focus:border-[#004B87] shadow-2xs appearance-none pr-8 cursor-pointer truncate"
+                    >
+                      {CCRP_ENTITIES.map((ent) => (
+                        <option key={ent} value={ent}>
+                          {ent}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                )}
+              </FieldTooltip>
+            </div>
           </div>
+
+          {/* Col 4: Empty Space for this row only */}
+          <div className="hidden lg:block"></div>
         </div>
       </div>
 
@@ -1372,7 +1407,7 @@ export const AnnualEmissionDataView: React.FC = () => {
                     <label className="block text-slate-700 font-semibold mb-1 text-xs">
                       Progress Report Period *
                     </label>
-                    <FieldTooltip content="Designated reporting period for this performance submission." example="Semiannual 1 (H1) / Q1">
+                    <FieldTooltip content="Designated reporting quarter for this performance submission." example="Q1 / Q2">
                       {isReadOnly ? (
                         <input
                           type="text"
@@ -1464,10 +1499,10 @@ export const AnnualEmissionDataView: React.FC = () => {
                 <h4 className="text-xs font-bold text-[#336D9F] mb-3">
                   Progress Percentage & Milestone Tracking
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {/* Planned Progress (%) */}
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                    <label className="block text-slate-700 font-semibold mb-1 text-xs whitespace-nowrap">
                       Planned Progress (%) *
                     </label>
                     <FieldTooltip content="Target planned percentage completion for this reporting period (0–100%)." example="75%">
@@ -1493,7 +1528,7 @@ export const AnnualEmissionDataView: React.FC = () => {
 
                   {/* Actual Progress (%) */}
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                    <label className="block text-slate-700 font-semibold mb-1 text-xs whitespace-nowrap">
                       Actual Progress (%) *
                     </label>
                     <FieldTooltip content="Realized actual percentage completion achieved up to this period (0–100%)." example="68%">
@@ -1614,7 +1649,7 @@ export const AnnualEmissionDataView: React.FC = () => {
                     <label className="block text-slate-700 font-semibold mb-1 text-xs">
                       Budget Type
                     </label>
-                    <FieldTooltip content="Funding classification / capital expenditure model for this initiative." example="CAPEX">
+                    <FieldTooltip content="Funding classification / capital expenditure model for this initiative." example="Capex">
                       {isReadOnly ? (
                         <input
                           type="text"
@@ -1644,7 +1679,7 @@ export const AnnualEmissionDataView: React.FC = () => {
                     <label className="block text-slate-700 font-semibold mb-1 text-xs">
                       Budget Status
                     </label>
-                    <FieldTooltip content="Current appropriation status of the financial budget." example="Allocated">
+                    <FieldTooltip content="Current appropriation status of the financial budget." example="Available">
                       {isReadOnly ? (
                         <input
                           type="text"
@@ -1811,10 +1846,10 @@ export const AnnualEmissionDataView: React.FC = () => {
                 <h4 className="text-xs font-bold text-[#336D9F] mb-3">
                   Greenhouse Gas Emission Reduction Metrics (Metric tonnes CO₂e)
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {/* Planned GHG Emissions Reduction */}
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                    <label className="block text-slate-700 font-semibold mb-1 text-xs whitespace-nowrap truncate">
                       Planned GHG Emissions Reduction (Metric tonnes) {isGhgMandatory ? '*' : '(If applicable)'}
                     </label>
                     <FieldTooltip content="Target planned annual greenhouse gas reduction in metric tonnes CO₂e from Climate Change Strategy baseline." example="142,800">
@@ -1832,7 +1867,7 @@ export const AnnualEmissionDataView: React.FC = () => {
 
                   {/* Actual Annual Emission Reduction */}
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                    <label className="block text-slate-700 font-semibold mb-1 text-xs whitespace-nowrap truncate">
                       Actual Annual Emission Reduction (Metric tonnes) {isGhgMandatory ? '*' : '(If applicable)'}
                     </label>
                     <FieldTooltip content="Realized annual emissions reduction achieved in metric tonnes CO₂e." example="138,500">

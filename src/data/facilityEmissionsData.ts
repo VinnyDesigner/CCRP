@@ -81,22 +81,13 @@ export const CCRP_REPORT_STATUSES = [
 ] as const;
 
 export const CCRP_BUDGET_TYPES = [
-  'CAPEX',
-  'OPEX',
-  'Government Budget',
-  'Grant',
-  'Self-Funded',
-  'Public-Private Partnership (PPP)',
-  'Other',
+  'Capex',
+  'Opex',
 ] as const;
 
 export const CCRP_BUDGET_STATUSES = [
-  'Approved',
-  'Allocated',
-  'Spent as Planned',
-  'Under Review',
-  'Pending Approval',
-  'Reallocated',
+  'Available',
+  'Not Available',
 ] as const;
 
 export const CCRP_PILLARS = [
@@ -106,29 +97,23 @@ export const CCRP_PILLARS = [
   'Cross Cutting',
 ] as const;
 
+export const CCRP_PROGRESS_REPORT_PERIODS = ['Q1', 'Q2', 'Q3', 'Q4'] as const;
+
 export const CCRP_REPORTING_PERIODS_BY_CADENCE: Record<string, string[]> = {
-  Semiannual: ['Semiannual 1 (H1)', 'Semiannual 2 (H2)'],
+  Semiannual: ['Q1', 'Q2', 'Q3', 'Q4'],
   Quarterly: ['Q1', 'Q2', 'Q3', 'Q4'],
-  Annual: ['Annual'],
+  Annual: ['Q1', 'Q2', 'Q3', 'Q4'],
 };
 
-export const getReportingPeriodsForCadence = (cadence?: string): string[] => {
-  if (!cadence) return ['Semiannual 1 (H1)', 'Semiannual 2 (H2)'];
-  const norm = String(cadence).trim().toLowerCase();
-  if (norm.includes('quarter')) {
-    return ['Q1', 'Q2', 'Q3', 'Q4'];
-  }
-  if (norm.includes('annu')) {
-    return ['Annual'];
-  }
-  return ['Semiannual 1 (H1)', 'Semiannual 2 (H2)'];
+export const getReportingPeriodsForCadence = (_cadence?: string): string[] => {
+  return ['Q1', 'Q2', 'Q3', 'Q4'];
 };
 
 export const CCRP_REPORTING_PERIODS_BY_PILLAR: Record<string, string[]> = {
   Adaptation: ['Q1', 'Q2', 'Q3', 'Q4'],
-  Mitigation: ['Semiannual 1 (H1)', 'Semiannual 2 (H2)'],
-  'Economic Diversification': ['Semiannual 1 (H1)', 'Semiannual 2 (H2)'],
-  'Cross Cutting': ['Semiannual 1 (H1)', 'Semiannual 2 (H2)'],
+  Mitigation: ['Q1', 'Q2', 'Q3', 'Q4'],
+  'Economic Diversification': ['Q1', 'Q2', 'Q3', 'Q4'],
+  'Cross Cutting': ['Q1', 'Q2', 'Q3', 'Q4'],
 };
 
 export interface CCRPApprovedInitiative {
@@ -142,7 +127,7 @@ export interface CCRPApprovedInitiative {
   strategicObjective: string;
   startDate: string;
   endDate: string;
-  status: 'Approved / Published';
+  status: 'Approved' | 'Approved / Published';
 }
 
 export const CCRP_APPROVED_INITIATIVES: CCRPApprovedInitiative[] = [
@@ -154,10 +139,10 @@ export const CCRP_APPROVED_INITIATIVES: CCRPApprovedInitiative[] = [
     pillar: 'Mitigation',
     cadence: 'Semiannual',
     sector: 'Energy',
-    strategicObjective: 'SO1: Reduce Greenhouse Gas Emissions Across Key Economic Sectors',
+    strategicObjective: 'Reduce GHG Emissions in Key Sectors',
     startDate: '01-Jan-2024',
     endDate: '31-Dec-2027',
-    status: 'Approved / Published',
+    status: 'Approved',
   },
   {
     id: 'fac-2',
@@ -167,10 +152,10 @@ export const CCRP_APPROVED_INITIATIVES: CCRPApprovedInitiative[] = [
     pillar: 'Economic Diversification',
     cadence: 'Semiannual',
     sector: 'Industry & Manufacturing',
-    strategicObjective: 'SO3: Accelerate Economic Diversification & Green Technology Transition',
+    strategicObjective: 'Drive a Low-Carbon Innovation and Economic Diversification Agenda',
     startDate: '01-Feb-2024',
     endDate: '30-Jun-2029',
-    status: 'Approved / Published',
+    status: 'Approved',
   },
   {
     id: 'fac-3',
@@ -180,10 +165,10 @@ export const CCRP_APPROVED_INITIATIVES: CCRPApprovedInitiative[] = [
     pillar: 'Adaptation',
     cadence: 'Quarterly',
     sector: 'Coastal & Marine Ecosystems',
-    strategicObjective: 'SO4: Protect and Restore Marine and Terrestrial Blue Carbon Ecosystems',
+    strategicObjective: 'Increase Removal of Greenhouse Gas (GHG) Emissions Through Carbon Sinks',
     startDate: '15-Mar-2024',
     endDate: '31-Dec-2028',
-    status: 'Approved / Published',
+    status: 'Approved',
   },
   {
     id: 'fac-4',
@@ -193,10 +178,10 @@ export const CCRP_APPROVED_INITIATIVES: CCRPApprovedInitiative[] = [
     pillar: 'Mitigation',
     cadence: 'Semiannual',
     sector: 'Transport',
-    strategicObjective: 'SO1: Reduce Greenhouse Gas Emissions Across Key Economic Sectors',
+    strategicObjective: 'Reduce GHG Emissions in Key Sectors',
     startDate: '01-Apr-2024',
     endDate: '31-Dec-2027',
-    status: 'Approved / Published',
+    status: 'Approved',
   },
   {
     id: 'fac-5',
@@ -206,10 +191,10 @@ export const CCRP_APPROVED_INITIATIVES: CCRPApprovedInitiative[] = [
     pillar: 'Cross Cutting',
     cadence: 'Semiannual',
     sector: 'Waste Management',
-    strategicObjective: 'SO1: Reduce Greenhouse Gas Emissions Across Key Economic Sectors',
+    strategicObjective: 'Reduce GHG Emissions in Key Sectors',
     startDate: '01-Feb-2024',
     endDate: '31-Jan-2028',
-    status: 'Approved / Published',
+    status: 'Approved',
   },
   {
     id: 'fac-6',
@@ -219,10 +204,10 @@ export const CCRP_APPROVED_INITIATIVES: CCRPApprovedInitiative[] = [
     pillar: 'Adaptation',
     cadence: 'Quarterly',
     sector: 'Infrastructure & Built Environment',
-    strategicObjective: 'SO2: Enhance Climate Resilience and Adaptive Capacity of Infrastructure',
+    strategicObjective: 'Enhance Resilience of Vulnerable Sectors to Adapt to Climate Change Impacts',
     startDate: '01-Mar-2024',
     endDate: '28-Feb-2028',
-    status: 'Approved / Published',
+    status: 'Approved',
   },
 ];
 
@@ -233,15 +218,15 @@ export const INITIAL_FACILITY_EMISSIONS: Record<string, PerformanceReportData> =
     entity: 'Department of Energy (DoE)',
     pillar: 'Mitigation',
     reportingCadence: 'Semiannual',
-    progressReportPeriod: 'Semiannual 1 (H1)',
+    progressReportPeriod: 'Q1',
     projectPhase: 'Implementation',
     status: 'In Progress',
     workflowStatus: 'Submitted',
     plannedProgress: 75,
     actualProgress: 68,
     budget: 'AED 3,200,000,000',
-    budgetType: 'CAPEX',
-    budgetStatus: 'Allocated',
+    budgetType: 'Capex',
+    budgetStatus: 'Available',
     challenges: 'Supply chain lead-time delays for specialized grid interconnection sub-station modules.',
     raiseToCommittee: 'No',
     activitiesOutcomesOutput: 'Successfully completed PV array installation for Block C (600MW). Telemetry links integrated with ADDC dispatch center.',
@@ -275,15 +260,15 @@ export const INITIAL_FACILITY_EMISSIONS: Record<string, PerformanceReportData> =
     entity: 'Abu Dhabi Department of Economic Development (ADDED)',
     pillar: 'Economic Diversification',
     reportingCadence: 'Semiannual',
-    progressReportPeriod: 'Semiannual 1 (H1)',
+    progressReportPeriod: 'Q1',
     projectPhase: 'Design',
     status: 'In Progress',
     workflowStatus: 'Draft',
     plannedProgress: 35,
     actualProgress: 30,
     budget: 'AED 540,000,000',
-    budgetType: 'CAPEX',
-    budgetStatus: 'Under Review',
+    budgetType: 'Capex',
+    budgetStatus: 'Available',
     challenges: 'International technology licensing negotiations for large-scale alkaline electrolyzer stacks.',
     raiseToCommittee: 'Yes',
     activitiesOutcomesOutput: 'Front-End Engineering Design (FEED) completed for 100MW pilot electrolyzer facility in Ruwais industrial zone.',
@@ -322,8 +307,8 @@ export const INITIAL_FACILITY_EMISSIONS: Record<string, PerformanceReportData> =
     plannedProgress: 50,
     actualProgress: 52,
     budget: 'AED 85,000,000',
-    budgetType: 'Government Budget',
-    budgetStatus: 'Spent as Planned',
+    budgetType: 'Capex',
+    budgetStatus: 'Available',
     challenges: 'High tidal surges in Marawah Marine Biosphere Reserve delayed access to remote planting sites.',
     raiseToCommittee: 'No',
     activitiesOutcomesOutput: 'Planted over 1.2 million mangrove saplings across coastal lagoons with 94% seedling survival rate.',
@@ -355,15 +340,15 @@ export const INITIAL_FACILITY_EMISSIONS: Record<string, PerformanceReportData> =
     entity: 'Integrated Transport Centre (ITC)',
     pillar: 'Mitigation',
     reportingCadence: 'Semiannual',
-    progressReportPeriod: 'Semiannual 1 (H1)',
+    progressReportPeriod: 'Q1',
     projectPhase: 'Implementation',
     status: 'In Progress',
     workflowStatus: 'Draft',
     plannedProgress: 60,
     actualProgress: 55,
     budget: 'AED 120,000,000',
-    budgetType: 'Public-Private Partnership (PPP)',
-    budgetStatus: 'Approved',
+    budgetType: 'Opex',
+    budgetStatus: 'Available',
     challenges: 'Power capacity upgrades required for high-density depot fast chargers in Mussafah.',
     raiseToCommittee: 'No',
     activitiesOutcomesOutput: 'Deployment of 120 fast EV charging hubs and commissioning of 45 electric buses in municipal fleet.',
@@ -393,15 +378,15 @@ export const INITIAL_FACILITY_EMISSIONS: Record<string, PerformanceReportData> =
     entity: 'Abu Dhabi Waste Management Centre (Tadweer)',
     pillar: 'Cross Cutting',
     reportingCadence: 'Semiannual',
-    progressReportPeriod: 'Semiannual 1 (H1)',
+    progressReportPeriod: 'Q1',
     projectPhase: 'Implementation',
     status: 'Completed',
-    workflowStatus: 'Approved / Published',
+    workflowStatus: 'Approved',
     plannedProgress: 100,
     actualProgress: 100,
     budget: 'AED 180,000,000',
-    budgetType: 'CAPEX',
-    budgetStatus: 'Spent as Planned',
+    budgetType: 'Capex',
+    budgetStatus: 'Available',
     challenges: 'None — Project successfully completed and commissioned.',
     raiseToCommittee: 'No',
     activitiesOutcomesOutput: 'Full anaerobic digestion train operational; diverted 45,000 tonnes of organic waste in H1.',
@@ -438,8 +423,8 @@ export const INITIAL_FACILITY_EMISSIONS: Record<string, PerformanceReportData> =
     plannedProgress: 45,
     actualProgress: 40,
     budget: 'AED 95,000,000',
-    budgetType: 'Government Budget',
-    budgetStatus: 'Allocated',
+    budgetType: 'Capex',
+    budgetStatus: 'Not Available',
     challenges: 'Hydrological modelling adjustments requested by EAD technical review committee.',
     raiseToCommittee: 'No',
     activitiesOutcomesOutput: 'Upgraded 12km of arterial stormwater channels in Mussafah and Shakhbout City.',
@@ -477,8 +462,8 @@ export const INITIAL_FACILITY_EMISSIONS: Record<string, PerformanceReportData> =
     plannedProgress: 25,
     actualProgress: 20,
     budget: 'AED 45,000,000',
-    budgetType: 'Government Budget',
-    budgetStatus: 'Allocated',
+    budgetType: 'Opex',
+    budgetStatus: 'Available',
     challenges: 'Smart IoT probe calibration tests in desert agricultural terrain.',
     raiseToCommittee: 'No',
     activitiesOutcomesOutput: 'Pilot setup across 80 farms in Al Ain region.',

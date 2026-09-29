@@ -8,12 +8,17 @@ export interface InitiativeAmendment {
   entity: string;
   supportingEntity: string;
   scope: string;
+  scopeOther?: string;
   strategicObjective: string;
   strategicObjectiveOther?: string;
   projectSector: string;
+  projectSectorOther?: string;
   initiativeType: string;
   initiativeTypeOther?: string;
+  pillar?: string;
+  pillarOther?: string;
   initiativeSource: string;
+  initiativeSourceOther?: string;
   indicatorsAndTargets: string;
   projectManagerName: string;
   projectManagerContact: string;
@@ -142,11 +147,11 @@ export const INITIAL_AMENDMENTS: Record<string, InitiativeAmendment[]> = {
       entity: 'Department of Energy (DoE)',
       supportingEntity: 'TAQA (Abu Dhabi National Energy Company)',
       scope: 'Abu Dhabi Emirate',
-      strategicObjective: 'SO1: Reduce Greenhouse Gas Emissions Across Key Economic Sectors',
+      strategicObjective: 'Reduce GHG Emissions in Key Sectors',
       projectSector: 'Energy',
       initiativeType: 'Infrastructure & Capital Projects',
-      initiativeSource: 'Abu Dhabi Climate Change Strategy 2023–2027',
-      indicatorsAndTargets: 'Total Annual GHG Emissions Reduction (tCO₂e / year), Renewable & Clean Energy Installed Generation Capacity (MW), Industrial & Grid Energy Efficiency Improvement (%)',
+      initiativeSource: 'Climate Change Strategy',
+      indicatorsAndTargets: 'Percentage of total GHG emissions reduced from 2016 levels 22% by 2027, Percentage of GHG emissions reduced in the electricity and water sector from 2016 levels 43% by 2027',
       projectManagerName: 'Eng. Saeed Al-Mehairbi',
       projectManagerContact: '+971 2 694 4000 / saeed.mehairbi@doe.gov.ae',
       startDate: '2023-01-01',
@@ -170,11 +175,11 @@ export const INITIAL_AMENDMENTS: Record<string, InitiativeAmendment[]> = {
       entity: 'Abu Dhabi Department of Economic Development (ADDED)',
       supportingEntity: 'Abu Dhabi National Oil Company (ADNOC)',
       scope: 'Sector-Wide',
-      strategicObjective: 'SO3: Accelerate Economic Diversification & Green Technology Transition',
+      strategicObjective: 'Drive a Low-Carbon Innovation and Economic Diversification Agenda',
       projectSector: 'Industry & Manufacturing',
       initiativeType: 'Technology & Innovation Pilot',
-      initiativeSource: 'Abu Dhabi Climate Change Strategy 2023–2027',
-      indicatorsAndTargets: 'Total Annual GHG Emissions Reduction (tCO₂e / year), Industrial & Grid Energy Efficiency Improvement (%), Capacity Building & Green Jobs Created',
+      initiativeSource: 'Climate Change Strategy',
+      indicatorsAndTargets: 'Percentage of GHG emissions reduced in the industrial sector from 2016 levels, Percentage of total GHG emissions reduced from 2016 levels 22% by 2027',
       projectManagerName: 'Dr. Fatima Al-Hosani',
       projectManagerContact: '+971 2 550 1100 / fatima.hosani@added.gov.ae',
       startDate: '2023-06-01',
@@ -198,11 +203,11 @@ export const INITIAL_AMENDMENTS: Record<string, InitiativeAmendment[]> = {
       entity: 'Environment Agency – Abu Dhabi (EAD)',
       supportingEntity: 'Department of Municipalities and Transport (DMT)',
       scope: 'Abu Dhabi Emirate',
-      strategicObjective: 'SO4: Protect and Restore Marine and Terrestrial Blue Carbon Ecosystems',
+      strategicObjective: 'Increase Removal of Greenhouse Gas (GHG) Emissions Through Carbon Sinks',
       projectSector: 'Coastal & Marine Ecosystems',
       initiativeType: 'Ecosystem Restoration & Nature-Based Solutions',
-      initiativeSource: 'Abu Dhabi Climate Change Adaptation Plan',
-      indicatorsAndTargets: 'Coastal Blue Carbon & Mangrove Ecosystem Area Protected/Restored (Hectares), Total Annual GHG Emissions Reduction (tCO₂e / year), Climate Resilience & Sustainable Infrastructure Standards Adoption (%)',
+      initiativeSource: 'Adaptation Plan',
+      indicatorsAndTargets: 'Percentage of emissions removed from total emissions through carbon sinks 3% by 2027, Percentage of adaptation plans developed for the four key sectors (health, energy, infrastructure, and environment) 100% by 2024',
       projectManagerName: 'Khalid Al-Marzooqi',
       projectManagerContact: '+971 2 607 0000 / khalid.marzooqi@ead.gov.ae',
       startDate: '2023-01-01',
@@ -226,11 +231,11 @@ export const INITIAL_AMENDMENTS: Record<string, InitiativeAmendment[]> = {
       entity: 'Department of Municipalities and Transport (DMT)',
       supportingEntity: 'Integrated Transport Centre (ITC)',
       scope: 'Abu Dhabi Emirate',
-      strategicObjective: 'SO1: Reduce Greenhouse Gas Emissions Across Key Economic Sectors',
+      strategicObjective: 'Reduce GHG Emissions in Key Sectors',
       projectSector: 'Transport',
       initiativeType: 'Infrastructure & Capital Projects',
-      initiativeSource: 'Abu Dhabi Climate Change Strategy 2023–2027',
-      indicatorsAndTargets: 'Deploy 160 EV fast-charging stations, 350 electric municipal transit buses, achieving 185,000 tCO₂e annual emission reductions by Q4 2027.',
+      initiativeSource: 'Climate Change Strategy',
+      indicatorsAndTargets: 'Percentage of GHG emissions reduced in the transport sector from 2016 levels 10% by 2027, Percentage of total GHG emissions reduced from 2016 levels 22% by 2027',
       projectManagerName: 'Abdul Rahman',
       projectManagerContact: 'abdul.rahman@dmt.gov.ae | +971 2 698 8820',
       startDate: '2024-01-01',
@@ -260,11 +265,11 @@ export const INITIAL_AMENDMENTS: Record<string, InitiativeAmendment[]> = {
       entity: 'Abu Dhabi Waste Management Centre (Tadweer)',
       supportingEntity: 'Abu Dhabi Agriculture and Food Safety Authority (ADAFSA)',
       scope: 'Abu Dhabi Emirate',
-      strategicObjective: 'SO1: Reduce Greenhouse Gas Emissions Across Key Economic Sectors',
+      strategicObjective: 'Reduce GHG Emissions in Key Sectors',
       projectSector: 'Waste Management',
       initiativeType: 'Infrastructure & Capital Projects',
-      initiativeSource: 'Abu Dhabi Climate Change Strategy 2023–2027',
-      indicatorsAndTargets: 'Municipal Solid Waste Diversion Rate from Landfills (%), Total Annual GHG Emissions Reduction (tCO₂e / year), Renewable & Clean Energy Installed Generation Capacity (MW)',
+      initiativeSource: 'Climate Change Strategy',
+      indicatorsAndTargets: 'Percentage of GHG emissions reduced in the waste sector from 2016 levels 41% by 2027, Percentage of total GHG emissions reduced from 2016 levels 22% by 2027',
       projectManagerName: 'Maryam Al-Dhaheri',
       projectManagerContact: '+971 3 711 2000 / maryam.dhaheri@tadweer.ae',
       startDate: '2024-02-01',
@@ -288,10 +293,10 @@ export const INITIAL_AMENDMENTS: Record<string, InitiativeAmendment[]> = {
       entity: 'Department of Municipalities and Transport (DMT)',
       supportingEntity: 'Environment Agency – Abu Dhabi (EAD)',
       scope: 'Abu Dhabi Emirate',
-      strategicObjective: 'SO2: Enhance Climate Resilience and Adaptive Capacity of Infrastructure',
+      strategicObjective: 'Enhance Resilience of Vulnerable Sectors to Adapt to Climate Change Impacts',
       projectSector: 'Infrastructure & Built Environment',
       initiativeType: 'Infrastructure & Capital Projects',
-      initiativeSource: 'Abu Dhabi Climate Change Adaptation Plan',
+      initiativeSource: 'Adaptation Plan',
       indicatorsAndTargets: 'Climate Resilience & Sustainable Infrastructure Standards Adoption (%), Green Building & Pearl Estidama Rating Compliance (%)',
       projectManagerName: 'Nasser Al-Hajri',
       projectManagerContact: '+971 2 554 9900 / nasser.hajri@dmt.gov.ae',

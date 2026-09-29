@@ -23,12 +23,15 @@ export interface CCRPProjectRegistration {
   // Step 2: Project Classification & Timeline
   // Section: Project Classification
   projectSector: string;
+  projectSectorOther?: string;
   typeOfInitiative: string;
   initiativeTypeOther?: string;
   initiativeSource: string;
+  initiativeSourceOther?: string;
   strategicObjective: string;
   strategicObjectiveOther?: string;
   pillar: string;
+  pillarOther?: string;
 
   // Section: Indicators and targets 2023-2027
   indicatorsAndTargets: string[];
@@ -74,14 +77,13 @@ export const BLANK_FACILITY_REGISTRATION: CCRPProjectRegistration = {
   projectSector: 'Energy',
   typeOfInitiative: 'Infrastructure & Capital Projects',
   initiativeTypeOther: '',
-  initiativeSource: 'Abu Dhabi Climate Change Strategy 2023–2027',
-  strategicObjective: 'SO1: Reduce Greenhouse Gas Emissions Across Key Economic Sectors',
+  initiativeSource: 'Climate Change Strategy',
+  strategicObjective: 'Reduce GHG Emissions in Key Sectors',
   strategicObjectiveOther: '',
   pillar: 'Mitigation',
   indicatorsAndTargets: [
-    'Total Annual GHG Emissions Reduction (tCO₂e / year)',
-    'Renewable & Clean Energy Installed Generation Capacity (MW)',
-    'Industrial & Grid Energy Efficiency Improvement (%)',
+    'Percentage of total GHG emissions reduced from 2016 levels 22% by 2027',
+    'Percentage of GHG emissions reduced in the electricity and water sector from 2016 levels 43% by 2027',
   ],
   indicatorsAndTargetsOther: '',
   projectManagerName: 'Eng. Saeed Al-Mehairbi',
@@ -117,14 +119,13 @@ export const SAMPLE_DEMO_FACILITY_REGISTRATION: CCRPProjectRegistration = {
   projectSector: 'Energy',
   typeOfInitiative: 'Infrastructure & Capital Projects',
   initiativeTypeOther: '',
-  initiativeSource: 'Abu Dhabi Climate Change Strategy 2023–2027',
-  strategicObjective: 'SO1: Reduce Greenhouse Gas Emissions Across Key Economic Sectors',
+  initiativeSource: 'Climate Change Strategy',
+  strategicObjective: 'Reduce GHG Emissions in Key Sectors',
   strategicObjectiveOther: '',
   pillar: 'Mitigation',
   indicatorsAndTargets: [
-    'Total Annual GHG Emissions Reduction (tCO₂e / year)',
-    'Renewable & Clean Energy Installed Generation Capacity (MW)',
-    'Industrial & Grid Energy Efficiency Improvement (%)',
+    'Percentage of total GHG emissions reduced from 2016 levels 22% by 2027',
+    'Percentage of GHG emissions reduced in the electricity and water sector from 2016 levels 43% by 2027',
   ],
   indicatorsAndTargetsOther: '',
   projectManagerName: 'Eng. Saeed Al-Mehairbi',
@@ -159,14 +160,13 @@ export const INITIAL_FACILITY_REGISTRATIONS: Record<string, CCRPProjectRegistrat
     projectSector: 'Energy',
     typeOfInitiative: 'Infrastructure & Capital Projects',
     initiativeTypeOther: '',
-    initiativeSource: 'Abu Dhabi Climate Change Strategy 2023–2027',
-    strategicObjective: 'SO1: Reduce Greenhouse Gas Emissions Across Key Economic Sectors',
+    initiativeSource: 'Climate Change Strategy',
+    strategicObjective: 'Reduce GHG Emissions in Key Sectors',
     strategicObjectiveOther: '',
     pillar: 'Mitigation',
     indicatorsAndTargets: [
-      'Total Annual GHG Emissions Reduction (tCO₂e / year)',
-      'Renewable & Clean Energy Installed Generation Capacity (MW)',
-      'Industrial & Grid Energy Efficiency Improvement (%)',
+      'Percentage of total GHG emissions reduced from 2016 levels 22% by 2027',
+      'Percentage of GHG emissions reduced in the electricity and water sector from 2016 levels 43% by 2027',
     ],
     indicatorsAndTargetsOther: '',
     projectManagerName: 'Eng. Saeed Al-Mehairbi',
@@ -177,7 +177,7 @@ export const INITIAL_FACILITY_REGISTRATIONS: Record<string, CCRPProjectRegistrat
     updatedDate: '18 Jan 2026',
     reviewedDate: '18 Jan 2026',
     version: 'v1.0',
-    status: 'Approved / Published',
+    status: 'Approved',
     correctionDeadlineDate: null,
     facilityName: 'Al Dhafra Solar PV Decarbonization Program',
     facilityId: 'CCRP-INIT-2026-7073',
@@ -196,14 +196,13 @@ export const INITIAL_FACILITY_REGISTRATIONS: Record<string, CCRPProjectRegistrat
     projectSector: 'Industry & Manufacturing',
     typeOfInitiative: 'Technology & Innovation Pilot',
     initiativeTypeOther: '',
-    initiativeSource: 'Abu Dhabi Climate Change Strategy 2023–2027',
-    strategicObjective: 'SO3: Accelerate Economic Diversification & Green Technology Transition',
+    initiativeSource: 'Climate Change Strategy',
+    strategicObjective: 'Drive a Low-Carbon Innovation and Economic Diversification Agenda',
     strategicObjectiveOther: '',
     pillar: 'Economic Diversification',
     indicatorsAndTargets: [
-      'Total Annual GHG Emissions Reduction (tCO₂e / year)',
-      'Industrial & Grid Energy Efficiency Improvement (%)',
-      'Capacity Building & Green Jobs Created',
+      'Percentage of GHG emissions reduced in the industrial sector from 2016 levels',
+      'Percentage of total GHG emissions reduced from 2016 levels 22% by 2027',
     ],
     indicatorsAndTargetsOther: '',
     projectManagerName: 'Dr. Fatima Al-Hosani',
@@ -214,7 +213,7 @@ export const INITIAL_FACILITY_REGISTRATIONS: Record<string, CCRPProjectRegistrat
     updatedDate: '20 Feb 2026',
     reviewedDate: '20 Feb 2026',
     version: 'v3.0',
-    status: 'Approved / Published',
+    status: 'Approved',
     correctionDeadlineDate: null,
     facilityName: 'Low-Carbon Industrial Transition & Green Hydrogen Hub',
     facilityId: 'CCRP-INIT-2026-0118',
@@ -233,14 +232,13 @@ export const INITIAL_FACILITY_REGISTRATIONS: Record<string, CCRPProjectRegistrat
     projectSector: 'Coastal & Marine Ecosystems',
     typeOfInitiative: 'Ecosystem Restoration & Nature-Based Solutions',
     initiativeTypeOther: '',
-    initiativeSource: 'Abu Dhabi Climate Change Adaptation Plan',
-    strategicObjective: 'SO4: Protect and Restore Marine and Terrestrial Blue Carbon Ecosystems',
+    initiativeSource: 'Adaptation Plan',
+    strategicObjective: 'Increase Removal of Greenhouse Gas (GHG) Emissions Through Carbon Sinks',
     strategicObjectiveOther: '',
     pillar: 'Adaptation',
     indicatorsAndTargets: [
-      'Coastal Blue Carbon & Mangrove Ecosystem Area Protected/Restored (Hectares)',
-      'Total Annual GHG Emissions Reduction (tCO₂e / year)',
-      'Climate Resilience & Sustainable Infrastructure Standards Adoption (%)',
+      'Percentage of emissions removed from total emissions through carbon sinks 3% by 2027',
+      'Percentage of adaptation plans developed for the four key sectors (health, energy, infrastructure, and environment) 100% by 2024',
     ],
     indicatorsAndTargetsOther: '',
     projectManagerName: 'Khalid Al-Marzooqi',
@@ -251,7 +249,7 @@ export const INITIAL_FACILITY_REGISTRATIONS: Record<string, CCRPProjectRegistrat
     updatedDate: '11 Mar 2026',
     reviewedDate: '11 Mar 2026',
     version: 'v1.2',
-    status: 'Approved / Published',
+    status: 'Approved',
     correctionDeadlineDate: null,
     facilityName: 'Abu Dhabi Mangrove & Blue Carbon Coastal Restoration',
     facilityId: 'CCRP-INIT-2026-0422',
@@ -270,14 +268,13 @@ export const INITIAL_FACILITY_REGISTRATIONS: Record<string, CCRPProjectRegistrat
     projectSector: 'Transport',
     typeOfInitiative: 'Infrastructure & Capital Projects',
     initiativeTypeOther: '',
-    initiativeSource: 'Abu Dhabi Climate Change Strategy 2023–2027',
-    strategicObjective: 'SO1: Reduce Greenhouse Gas Emissions Across Key Economic Sectors',
+    initiativeSource: 'Climate Change Strategy',
+    strategicObjective: 'Reduce GHG Emissions in Key Sectors',
     strategicObjectiveOther: '',
     pillar: 'Mitigation',
     indicatorsAndTargets: [
-      'Zero-Emission Municipal Transit & EV Fast-Charging Infrastructure Deployment',
-      'Total Annual GHG Emissions Reduction (tCO₂e / year)',
-      'Industrial & Grid Energy Efficiency Improvement (%)',
+      'Percentage of GHG emissions reduced in the transport sector from 2016 levels 10% by 2027',
+      'Percentage of total GHG emissions reduced from 2016 levels 22% by 2027',
     ],
     indicatorsAndTargetsOther: '',
     projectManagerName: 'Eng. Rashid Al-Kindi',
@@ -306,14 +303,13 @@ export const INITIAL_FACILITY_REGISTRATIONS: Record<string, CCRPProjectRegistrat
     projectSector: 'Waste Management',
     typeOfInitiative: 'Infrastructure & Capital Projects',
     initiativeTypeOther: '',
-    initiativeSource: 'Abu Dhabi Climate Change Strategy 2023–2027',
-    strategicObjective: 'SO1: Reduce Greenhouse Gas Emissions Across Key Economic Sectors',
+    initiativeSource: 'Climate Change Strategy',
+    strategicObjective: 'Reduce GHG Emissions in Key Sectors',
     strategicObjectiveOther: '',
     pillar: 'Cross Cutting',
     indicatorsAndTargets: [
-      'Municipal Solid Waste Diversion Rate from Landfills (%)',
-      'Total Annual GHG Emissions Reduction (tCO₂e / year)',
-      'Renewable & Clean Energy Installed Generation Capacity (MW)',
+      'Percentage of GHG emissions reduced in the waste sector from 2016 levels 41% by 2027',
+      'Percentage of total GHG emissions reduced from 2016 levels 22% by 2027',
     ],
     indicatorsAndTargetsOther: '',
     projectManagerName: 'Maryam Al-Dhaheri',
@@ -324,7 +320,7 @@ export const INITIAL_FACILITY_REGISTRATIONS: Record<string, CCRPProjectRegistrat
     updatedDate: '28 Jan 2026',
     reviewedDate: '28 Jan 2026',
     version: 'v1.1',
-    status: 'Approved / Published',
+    status: 'Approved',
     correctionDeadlineDate: null,
     facilityName: 'Integrated Organic Waste & Biogas Energy Recovery Program',
     facilityId: 'CCRP-INIT-2026-0775',
@@ -343,13 +339,12 @@ export const INITIAL_FACILITY_REGISTRATIONS: Record<string, CCRPProjectRegistrat
     projectSector: 'Infrastructure & Built Environment',
     typeOfInitiative: 'Infrastructure & Capital Projects',
     initiativeTypeOther: '',
-    initiativeSource: 'Abu Dhabi Climate Change Adaptation Plan',
-    strategicObjective: 'SO2: Enhance Climate Resilience and Adaptive Capacity of Infrastructure',
+    initiativeSource: 'Adaptation Plan',
+    strategicObjective: 'Enhance Resilience of Vulnerable Sectors to Adapt to Climate Change Impacts',
     strategicObjectiveOther: '',
     pillar: 'Adaptation',
     indicatorsAndTargets: [
-      'Climate Resilience & Sustainable Infrastructure Standards Adoption (%)',
-      'Green Building & Pearl Estidama Rating Compliance (%)',
+      'Percentage of adaptation plans developed for the four key sectors (health, energy, infrastructure, and environment) 100% by 2024',
     ],
     indicatorsAndTargetsOther: '',
     projectManagerName: 'Nasser Al-Hajri',
@@ -379,13 +374,12 @@ export const INITIAL_FACILITY_REGISTRATIONS: Record<string, CCRPProjectRegistrat
     projectSector: 'Agriculture, Forestry & Land Use (AFOLU)',
     typeOfInitiative: 'Operational Efficiency & Optimization',
     initiativeTypeOther: '',
-    initiativeSource: 'Abu Dhabi Climate Change Strategy 2023–2027',
-    strategicObjective: 'SO2: Enhance Climate Resilience and Adaptive Capacity of Infrastructure',
+    initiativeSource: 'Climate Change Strategy',
+    strategicObjective: 'Enhance Resilience of Vulnerable Sectors to Adapt to Climate Change Impacts',
     strategicObjectiveOther: '',
     pillar: 'Adaptation',
     indicatorsAndTargets: [
-      'Water Consumption Reduction & Desalination Efficiency (MIGD)',
-      'Industrial & Grid Energy Efficiency Improvement (%)',
+      'Percentage of GHG emissions reduced in the agricultural sector from 2016 levels 20% by 2027',
     ],
     indicatorsAndTargetsOther: '',
     projectManagerName: 'Saeed Al-Ketbi',
@@ -407,7 +401,7 @@ export const INITIAL_FACILITY_REGISTRATION_HISTORY: Record<string, FacilityRegis
   'fac-1': [
     {
       version: 'v2.1',
-      status: 'Approved / Published',
+      status: 'Approved',
       updatedDate: '18 Jan 2026',
       submittedDate: '10 Jan 2026',
       isCurrent: true,
@@ -429,7 +423,7 @@ export const INITIAL_FACILITY_REGISTRATION_HISTORY: Record<string, FacilityRegis
   'fac-2': [
     {
       version: 'v3.0',
-      status: 'Approved / Published',
+      status: 'Approved',
       updatedDate: '20 Feb 2026',
       submittedDate: '14 Feb 2026',
       isCurrent: true,
@@ -439,7 +433,7 @@ export const INITIAL_FACILITY_REGISTRATION_HISTORY: Record<string, FacilityRegis
   'fac-3': [
     {
       version: 'v1.2',
-      status: 'Approved / Published',
+      status: 'Approved',
       updatedDate: '11 Mar 2026',
       submittedDate: '02 Mar 2026',
       isCurrent: true,
@@ -459,7 +453,7 @@ export const INITIAL_FACILITY_REGISTRATION_HISTORY: Record<string, FacilityRegis
   'fac-5': [
     {
       version: 'v1.1',
-      status: 'Approved / Published',
+      status: 'Approved',
       updatedDate: '28 Jan 2026',
       submittedDate: '22 Jan 2026',
       isCurrent: true,
@@ -563,46 +557,31 @@ export const CCRP_SUB_ENTITIES: Record<string, string[]> = {
 };
 
 export const CCRP_STRATEGIC_OBJECTIVES = [
-  'SO1: Reduce Greenhouse Gas Emissions Across Key Economic Sectors',
-  'SO2: Enhance Climate Resilience and Adaptive Capacity of Infrastructure',
-  'SO3: Accelerate Economic Diversification & Green Technology Transition',
-  'SO4: Protect and Restore Marine and Terrestrial Blue Carbon Ecosystems',
-  'SO5: Strengthen Climate Governance, Monitoring, Reporting and Verification',
+  'Reduce GHG Emissions in Key Sectors',
+  'Enhance Resilience of Vulnerable Sectors to Adapt to Climate Change Impacts',
+  'Increase Removal of Greenhouse Gas (GHG) Emissions Through Carbon Sinks',
+  'Drive a Low-Carbon Innovation and Economic Diversification Agenda',
   'Other',
 ];
 
 export const CCRP_PROJECT_SECTORS = [
   'Energy',
+  'Environment',
+  'Health',
   'Transport',
-  'Industry & Manufacturing',
-  'Waste Management',
-  'Agriculture, Forestry & Land Use (AFOLU)',
-  'Water & Wastewater',
-  'Infrastructure & Built Environment',
-  'Coastal & Marine Ecosystems',
-  'Cross-Sectoral / Governance',
+  'Industry',
   'Other',
 ];
 
 export const CCRP_INITIATIVE_TYPES = [
-  'Policy, Regulation & Standards',
-  'Infrastructure & Capital Projects',
-  'Technology & Innovation Pilot',
-  'Capacity Building & Awareness',
-  'Operational Efficiency & Optimization',
-  'Monitoring, Reporting & Data Systems',
-  'Ecosystem Restoration & Nature-Based Solutions',
-  'Other',
+  'Project',
+  'Operational Project',
+  'Program',
 ];
 
 export const CCRP_INITIATIVE_SOURCES = [
-  'Abu Dhabi Climate Change Strategy 2023–2027',
-  'Abu Dhabi Climate Change Adaptation Plan',
-  'UAE Net Zero 2050 Strategic Initiative',
-  'National Energy Strategy 2050',
-  'Abu Dhabi Economic Vision 2030',
-  'Entity-Specific Strategic Initiative',
-  'Other',
+  'Climate Change Strategy',
+  'Adaptation Plan',
 ];
 
 export const CCRP_SCOPES = [
@@ -618,55 +597,27 @@ export const CCRP_PILLARS = [
   'Mitigation',
   'Economic Diversification',
   'Cross Cutting',
+  'Others',
 ];
 
 export const CCRP_INDICATORS_TARGETS_CHECKLIST = [
-  'Total Annual GHG Emissions Reduction (tCO₂e / year)',
-  'Renewable & Clean Energy Installed Generation Capacity (MW)',
-  'Industrial & Grid Energy Efficiency Improvement (%)',
-  'Water Consumption Reduction & Desalination Efficiency (MIGD)',
-  'Zero-Emission Municipal Transit & EV Fast-Charging Infrastructure Deployment',
-  'Municipal Solid Waste Diversion Rate from Landfills (%)',
-  'Coastal Blue Carbon & Mangrove Ecosystem Area Protected/Restored (Hectares)',
-  'Climate Resilience & Sustainable Infrastructure Standards Adoption (%)',
-  'Green Building & Pearl Estidama Rating Compliance (%)',
-  'Institutional Climate Capacity Building & Specialized Technical Training',
-  'Other',
+  'Percentage of adaptation plans developed for the four key sectors (health, energy, infrastructure, and environment) 100% by 2024',
+  'Percentage of emissions removed from total emissions through carbon sinks 3% by 2027',
+  'Percentage of total GHG emissions reduced from 2016 levels 22% by 2027',
+  'Percentage of GHG emissions reduced in the electricity and water sector from 2016 levels 43% by 2027',
+  'Percentage of GHG emissions reduced in the transport sector from 2016 levels 10% by 2027',
+  'Percentage of GHG emissions reduced in the agricultural sector from 2016 levels 20% by 2027',
+  'Percentage of GHG emissions reduced in the industrial sector from 2016 levels',
+  'Percentage of GHG emissions reduced in the waste sector from 2016 levels 41% by 2027',
+  'Percentage of GHG emissions reduced in the oil and gas sector from 2016 levels',
+  'Percentage of Abu Dhabi’s investments in ESG compliant companies committed to climate action',
 ];
 
 export const CCRP_INDICATORS_BY_PILLAR: Record<string, string[]> = {
-  Mitigation: [
-    'Total Annual GHG Emissions Reduction (tCO₂e / year)',
-    'Renewable & Clean Energy Installed Generation Capacity (MW)',
-    'Industrial & Grid Energy Efficiency Improvement (%)',
-    'Zero-Emission Municipal Transit & EV Fast-Charging Infrastructure Deployment',
-    'Green Building & Pearl Estidama Rating Compliance (%)',
-    'Water Consumption Reduction & Desalination Efficiency (MIGD)',
-    'Other',
-  ],
-  Adaptation: [
-    'Coastal Blue Carbon & Mangrove Ecosystem Area Protected/Restored (Hectares)',
-    'Climate Resilience & Sustainable Infrastructure Standards Adoption (%)',
-    'Water Consumption Reduction & Desalination Efficiency (MIGD)',
-    'Institutional Climate Capacity Building & Specialized Technical Training',
-    'Total Annual GHG Emissions Reduction (tCO₂e / year)',
-    'Other',
-  ],
-  'Economic Diversification': [
-    'Total Annual GHG Emissions Reduction (tCO₂e / year)',
-    'Industrial & Grid Energy Efficiency Improvement (%)',
-    'Renewable & Clean Energy Installed Generation Capacity (MW)',
-    'Institutional Climate Capacity Building & Specialized Technical Training',
-    'Other',
-  ],
-  'Cross Cutting': [
-    'Total Annual GHG Emissions Reduction (tCO₂e / year)',
-    'Municipal Solid Waste Diversion Rate from Landfills (%)',
-    'Renewable & Clean Energy Installed Generation Capacity (MW)',
-    'Climate Resilience & Sustainable Infrastructure Standards Adoption (%)',
-    'Green Building & Pearl Estidama Rating Compliance (%)',
-    'Institutional Climate Capacity Building & Specialized Technical Training',
-    'Other',
-  ],
+  Mitigation: CCRP_INDICATORS_TARGETS_CHECKLIST,
+  Adaptation: CCRP_INDICATORS_TARGETS_CHECKLIST,
+  'Economic Diversification': CCRP_INDICATORS_TARGETS_CHECKLIST,
+  'Cross Cutting': CCRP_INDICATORS_TARGETS_CHECKLIST,
+  Others: CCRP_INDICATORS_TARGETS_CHECKLIST,
 };
 

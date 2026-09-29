@@ -95,8 +95,13 @@ export const FacilityRegistrationView: React.FC = () => {
   const [formActiveTab, setFormActiveTab] = useState<StepTabId>('project-details');
   const [viewActiveTab, setViewActiveTab] = useState<StepTabId>('project-details');
 
-  // Track if scope is in inline-custom text mode
+  // Track if fields are in inline-custom text mode
   const [isCustomScopeInput, setIsCustomScopeInput] = useState<boolean>(false);
+  const [isCustomSectorInput, setIsCustomSectorInput] = useState<boolean>(false);
+  const [isCustomObjectiveInput, setIsCustomObjectiveInput] = useState<boolean>(false);
+  const [isCustomInitiativeTypeInput, setIsCustomInitiativeTypeInput] = useState<boolean>(false);
+  const [isCustomPillarInput, setIsCustomPillarInput] = useState<boolean>(false);
+  const [isCustomSourceInput, setIsCustomSourceInput] = useState<boolean>(false);
 
   // Current active form data (synced with selected initiative)
   const [formData, setFormData] = useState<CCRPProjectRegistration>(() => {
@@ -290,6 +295,7 @@ export const FacilityRegistrationView: React.FC = () => {
       });
       setSelectedVersion(existing.version || 'V1');
       setIsCustomScopeInput(existing.scope === 'Other' || Boolean(existing.scopeOther));
+      setIsCustomSourceInput(existing.initiativeSource === 'Other' || Boolean(existing.initiativeSourceOther));
     } else {
       const fac = facilities.find((f) => f.id === facilityId);
       setFormData({
@@ -300,6 +306,7 @@ export const FacilityRegistrationView: React.FC = () => {
       });
       setSelectedVersion('V1');
       setIsCustomScopeInput(false);
+      setIsCustomSourceInput(false);
     }
     setIsVersionDropdownOpen(false);
     setFormActiveTab('project-details');
@@ -317,10 +324,12 @@ export const FacilityRegistrationView: React.FC = () => {
       setSelectedVersion(existing.version || 'V1');
       setReviewerComments(existing.reviewerComments || '');
       setIsCustomScopeInput(existing.scope === 'Other' || Boolean(existing.scopeOther));
+      setIsCustomSourceInput(existing.initiativeSource === 'Other' || Boolean(existing.initiativeSourceOther));
     } else {
       setSelectedVersion('V1');
       setReviewerComments('');
       setIsCustomScopeInput(false);
+      setIsCustomSourceInput(false);
     }
     setIsVersionDropdownOpen(false);
     setViewActiveTab('project-details');
@@ -339,6 +348,7 @@ export const FacilityRegistrationView: React.FC = () => {
     });
     setHasCreatedFirstFacility(true);
     setIsCustomScopeInput(false);
+    setIsCustomSourceInput(false);
 
     setFormActiveTab('project-details');
     setFormValidationErrors([]);
@@ -540,7 +550,7 @@ export const FacilityRegistrationView: React.FC = () => {
       ...formData,
       initiativeId: generatedId,
       facilityId: generatedId,
-      status: 'Approved / Published',
+      status: 'Approved',
       reviewedDate: todayStr,
       updatedDate: todayStr,
       reviewerComments: reviewerComments || 'Initiative verified and approved under CCRP statutory framework.',
@@ -555,7 +565,7 @@ export const FacilityRegistrationView: React.FC = () => {
       const facilityHist = prev[selectedFacilityId] || [];
       const updatedHist = facilityHist.map((v) => {
         if (v.version.toLowerCase() === (updated.version || 'v1.0').toLowerCase()) {
-          return { ...v, status: 'Approved / Published', updatedDate: updated.updatedDate, data: updated };
+          return { ...v, status: 'Approved', updatedDate: updated.updatedDate, data: updated };
         }
         return v;
       });
@@ -568,13 +578,13 @@ export const FacilityRegistrationView: React.FC = () => {
       id: selectedFacilityId,
       name: updated.initiativeName,
       facilityCode: generatedId,
-      status: 'Approved / Published',
+      status: 'Approved',
       operatorName: updated.entity,
       pillar: updated.pillar || 'Mitigation',
     } as any);
 
     setIsSavedNotice(true);
-    setNoticeMessage('Project Registration Approved & Published!');
+    setNoticeMessage('Project Registration Approved!');
     setTimeout(() => setIsSavedNotice(false), 3000);
     setViewMode('table');
   };
@@ -1157,19 +1167,24 @@ export const FacilityRegistrationView: React.FC = () => {
                 <div>
                   <h4 className="text-xs font-bold text-[#336D9F] mb-2.5">Project Information</h4>
                   <div className="space-y-3">
-                    <div>
-                      <label className="block text-slate-700 font-semibold mb-1">
-                        Initiative Name *
-                      </label>
-                      <FieldTooltip content="Official title of the climate change mitigation, adaptation, or economic diversification initiative." example="Al Dhafra Solar PV Decarbonization Program">
-                        <input
-                          type="text"
-                          value={formData.initiativeName}
-                          onChange={(e) => handleInputChange('initiativeName', e.target.value)}
-                          placeholder="e.g. Al Dhafra Solar PV Decarbonization Program"
-                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-navy-900 placeholder-slate-400 focus:outline-none focus:border-[#336D9F] shadow-xs font-medium text-xs"
-                        />
-                      </FieldTooltip>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                      <div className="col-span-1">
+                        <label className="block text-slate-700 font-semibold mb-1">
+                          Initiative Name *
+                        </label>
+                        <FieldTooltip content="Official title of the climate change mitigation, adaptation, or economic diversification initiative." example="Al Dhafra Solar PV Decarbonization Program">
+                          <input
+                            type="text"
+                            value={formData.initiativeName}
+                            onChange={(e) => handleInputChange('initiativeName', e.target.value)}
+                            placeholder="e.g. Al Dhafra Solar PV Decarbonization Program"
+                            className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-navy-900 placeholder-slate-400 focus:outline-none focus:border-[#336D9F] shadow-xs font-medium text-xs"
+                          />
+                        </FieldTooltip>
+                      </div>
+                      <div className="hidden lg:block"></div>
+                      <div className="hidden lg:block"></div>
+                      <div className="hidden lg:block"></div>
                     </div>
 
                     <div>
@@ -1260,61 +1275,8 @@ export const FacilityRegistrationView: React.FC = () => {
                       </FieldTooltip>
                     </div>
 
-                    {/* Field 4: Scope (Directly converts in-place to input text box when 'Other' is chosen!) */}
-                    <div>
-                      <label className="block text-slate-700 font-semibold mb-1">
-                        Scope
-                      </label>
-                      {isCustomScopeInput || formData.scope === 'Other' ? (
-                        <FieldTooltip content="Custom geographic or jurisdictional boundary of the initiative." example="e.g. Western Region Municipal Zone">
-                          <div className="relative">
-                            <input
-                              type="text"
-                              autoFocus
-                              value={formData.scopeOther !== undefined && formData.scopeOther !== '' ? formData.scopeOther : (formData.scope === 'Other' ? '' : formData.scope)}
-                              onChange={(e) => {
-                                handleInputChange('scope', 'Other');
-                                handleInputChange('scopeOther', e.target.value);
-                              }}
-                              placeholder="Specify custom scope..."
-                              className="w-full pl-3.5 pr-8 py-2 bg-white border border-[#336D9F] rounded-lg text-navy-900 placeholder-slate-400 focus:outline-none focus:border-[#336D9F] shadow-xs font-medium text-xs"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIsCustomScopeInput(false);
-                                handleInputChange('scope', 'Abu Dhabi Emirate');
-                                handleInputChange('scopeOther', '');
-                              }}
-                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
-                              title="Switch back to dropdown selection"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </FieldTooltip>
-                      ) : (
-                        <FieldTooltip content="Geographic or jurisdictional boundary of initiative implementation." example="Abu Dhabi Emirate">
-                          <select
-                            value={formData.scope || 'Abu Dhabi Emirate'}
-                            onChange={(e) => {
-                              if (e.target.value === 'Other') {
-                                setIsCustomScopeInput(true);
-                                handleInputChange('scope', 'Other');
-                              } else {
-                                handleInputChange('scope', e.target.value);
-                                handleInputChange('scopeOther', '');
-                              }
-                            }}
-                            className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#336D9F] shadow-xs cursor-pointer text-xs text-navy-900 font-medium"
-                          >
-                            {CCRP_SCOPES.map((sc) => (
-                              <option key={sc} value={sc} className="text-navy-900">{sc}</option>
-                            ))}
-                          </select>
-                        </FieldTooltip>
-                      )}
-                    </div>
+                    {/* Column 4 empty */}
+                    <div className="hidden lg:block"></div>
                   </div>
                 </div>
               </div>
@@ -1332,44 +1294,123 @@ export const FacilityRegistrationView: React.FC = () => {
                       <label className="block text-slate-700 font-semibold mb-1">
                         Project Sector
                       </label>
-                      <FieldTooltip content="Economic or municipal sector governing the initiative." example="Energy">
-                        <select
-                          value={formData.projectSector || ''}
-                          onChange={(e) => handleInputChange('projectSector', e.target.value)}
-                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#336D9F] shadow-xs cursor-pointer text-xs text-navy-900 font-medium"
-                        >
-                          {CCRP_PROJECT_SECTORS.map((sec) => (
-                            <option key={sec} value={sec} className="text-navy-900">{sec}</option>
-                          ))}
-                        </select>
-                      </FieldTooltip>
+                      {isCustomSectorInput || formData.projectSector === 'Other' ? (
+                        <FieldTooltip content="Custom economic or municipal sector governing the initiative." example="e.g. Circular Clean Tech">
+                          <div className="relative">
+                            <input
+                              type="text"
+                              autoFocus
+                              value={formData.projectSectorOther !== undefined && formData.projectSectorOther !== '' ? formData.projectSectorOther : (formData.projectSector === 'Other' ? '' : formData.projectSector)}
+                              onChange={(e) => {
+                                handleInputChange('projectSector', 'Other');
+                                handleInputChange('projectSectorOther', e.target.value);
+                              }}
+                              placeholder="Specify custom sector..."
+                              className="w-full pl-3.5 pr-8 py-2 bg-white border border-[#336D9F] rounded-lg text-navy-900 placeholder-slate-400 focus:outline-none focus:border-[#336D9F] shadow-xs font-medium text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsCustomSectorInput(false);
+                                handleInputChange('projectSector', CCRP_PROJECT_SECTORS[0]);
+                                handleInputChange('projectSectorOther', '');
+                              }}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+                              title="Switch back to dropdown selection"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </FieldTooltip>
+                      ) : (
+                        <FieldTooltip content="Economic or municipal sector governing the initiative." example="Energy">
+                          <select
+                            value={formData.projectSector || 'Energy'}
+                            onChange={(e) => {
+                              if (e.target.value === 'Other') {
+                                setIsCustomSectorInput(true);
+                                handleInputChange('projectSector', 'Other');
+                              } else {
+                                handleInputChange('projectSector', e.target.value);
+                                handleInputChange('projectSectorOther', '');
+                              }
+                            }}
+                            className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#336D9F] shadow-xs cursor-pointer text-xs text-navy-900 font-medium"
+                          >
+                            {CCRP_PROJECT_SECTORS.map((sec) => (
+                              <option key={sec} value={sec} className="text-navy-900">{sec}</option>
+                            ))}
+                          </select>
+                        </FieldTooltip>
+                      )}
                     </div>
 
                     <div>
                       <label className="block text-slate-700 font-semibold mb-1">
                         Type of Initiative
                       </label>
-                      <FieldTooltip content="Structural type of intervention (Policy, Infrastructure, Pilot, etc.)." example="Infrastructure & Capital Projects">
-                        <select
-                          value={formData.typeOfInitiative || ''}
-                          onChange={(e) => handleInputChange('typeOfInitiative', e.target.value)}
-                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#336D9F] shadow-xs cursor-pointer text-xs text-navy-900 font-medium"
-                        >
-                          {CCRP_INITIATIVE_TYPES.map((t) => (
-                            <option key={t} value={t} className="text-navy-900">{t}</option>
-                          ))}
-                        </select>
-                      </FieldTooltip>
+                      {isCustomInitiativeTypeInput || formData.typeOfInitiative === 'Other' ? (
+                        <FieldTooltip content="Custom structural type of intervention." example="e.g. Public-Private Clean Innovation Hub">
+                          <div className="relative">
+                            <input
+                              type="text"
+                              autoFocus
+                              value={formData.initiativeTypeOther !== undefined && formData.initiativeTypeOther !== '' ? formData.initiativeTypeOther : (formData.typeOfInitiative === 'Other' ? '' : formData.typeOfInitiative)}
+                              onChange={(e) => {
+                                handleInputChange('typeOfInitiative', 'Other');
+                                handleInputChange('initiativeTypeOther', e.target.value);
+                              }}
+                              placeholder="Specify custom type of initiative..."
+                              className="w-full pl-3.5 pr-8 py-2 bg-white border border-[#336D9F] rounded-lg text-navy-900 placeholder-slate-400 focus:outline-none focus:border-[#336D9F] shadow-xs font-medium text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsCustomInitiativeTypeInput(false);
+                                handleInputChange('typeOfInitiative', CCRP_INITIATIVE_TYPES[0]);
+                                handleInputChange('initiativeTypeOther', '');
+                              }}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+                              title="Switch back to dropdown selection"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </FieldTooltip>
+                      ) : (
+                        <FieldTooltip content="Structural type of intervention (Policy, Infrastructure, Pilot, etc.)." example="Infrastructure & Capital Projects">
+                          <select
+                            value={formData.typeOfInitiative || ''}
+                            onChange={(e) => {
+                              if (e.target.value === 'Other') {
+                                setIsCustomInitiativeTypeInput(true);
+                                handleInputChange('typeOfInitiative', 'Other');
+                              } else {
+                                handleInputChange('typeOfInitiative', e.target.value);
+                                handleInputChange('initiativeTypeOther', '');
+                              }
+                            }}
+                            className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#336D9F] shadow-xs cursor-pointer text-xs text-navy-900 font-medium"
+                          >
+                            {CCRP_INITIATIVE_TYPES.map((t) => (
+                              <option key={t} value={t} className="text-navy-900">{t}</option>
+                            ))}
+                          </select>
+                        </FieldTooltip>
+                      )}
                     </div>
 
                     <div>
                       <label className="block text-slate-700 font-semibold mb-1">
                         Initiative Source
                       </label>
-                      <FieldTooltip content="Official policy document or strategy mandate originating the project." example="Abu Dhabi Climate Change Strategy 2023–2027">
+                      <FieldTooltip content="Official policy document or strategy mandate originating the project." example="Climate Change Strategy">
                         <select
-                          value={formData.initiativeSource || ''}
-                          onChange={(e) => handleInputChange('initiativeSource', e.target.value)}
+                          value={formData.initiativeSource || CCRP_INITIATIVE_SOURCES[0]}
+                          onChange={(e) => {
+                            handleInputChange('initiativeSource', e.target.value);
+                            handleInputChange('initiativeSourceOther', '');
+                          }}
                           className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#336D9F] shadow-xs cursor-pointer text-xs text-navy-900 font-medium"
                         >
                           {CCRP_INITIATIVE_SOURCES.map((src) => (
@@ -1383,17 +1424,56 @@ export const FacilityRegistrationView: React.FC = () => {
                       <label className="block text-slate-700 font-semibold mb-1">
                         Pillar
                       </label>
-                      <FieldTooltip content="Governing CCRP pillar determining reporting frequency and performance tracking." example="Mitigation">
-                        <select
-                          value={formData.pillar || 'Mitigation'}
-                          onChange={(e) => handleInputChange('pillar', e.target.value)}
-                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#336D9F] shadow-xs cursor-pointer text-xs text-navy-900 font-medium"
-                        >
-                          {CCRP_PILLARS.map((pil) => (
-                            <option key={pil} value={pil} className="text-navy-900">{pil}</option>
-                          ))}
-                        </select>
-                      </FieldTooltip>
+                      {isCustomPillarInput || formData.pillar === 'Others' || formData.pillar === 'Other' ? (
+                        <FieldTooltip content="Custom strategic pillar determining reporting frequency and tracking." example="e.g. Circular Bioeconomy & Innovation">
+                          <div className="relative">
+                            <input
+                              type="text"
+                              autoFocus
+                              value={formData.pillarOther !== undefined && formData.pillarOther !== '' ? formData.pillarOther : (formData.pillar === 'Others' || formData.pillar === 'Other' ? '' : formData.pillar)}
+                              onChange={(e) => {
+                                handleInputChange('pillar', 'Others');
+                                handleInputChange('pillarOther', e.target.value);
+                              }}
+                              placeholder="Specify custom pillar..."
+                              className="w-full pl-3.5 pr-8 py-2 bg-white border border-[#336D9F] rounded-lg text-navy-900 placeholder-slate-400 focus:outline-none focus:border-[#336D9F] shadow-xs font-medium text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsCustomPillarInput(false);
+                                handleInputChange('pillar', 'Mitigation');
+                                handleInputChange('pillarOther', '');
+                              }}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+                              title="Switch back to dropdown selection"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </FieldTooltip>
+                      ) : (
+                        <FieldTooltip content="Governing CCRP pillar determining reporting frequency and performance tracking." example="Mitigation">
+                          <select
+                            value={formData.pillar || 'Mitigation'}
+                            onChange={(e) => {
+                              if (e.target.value === 'Others' || e.target.value === 'Other') {
+                                setIsCustomPillarInput(true);
+                                handleInputChange('pillar', 'Others');
+                              } else {
+                                handleInputChange('pillar', e.target.value);
+                                handleInputChange('pillarOther', '');
+                              }
+                            }}
+                            className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#336D9F] shadow-xs cursor-pointer text-xs text-navy-900 font-medium"
+                          >
+                            <option value="Adaptation" className="text-navy-900">Adaptation</option>
+                            <option value="Mitigation" className="text-navy-900">Mitigation</option>
+                            <option value="Economic Diversification" className="text-navy-900">Economic Diversification</option>
+                            <option value="Others" className="text-navy-900">Others</option>
+                          </select>
+                        </FieldTooltip>
+                      )}
                     </div>
                   </div>
 
@@ -1403,17 +1483,55 @@ export const FacilityRegistrationView: React.FC = () => {
                       <label className="block text-slate-700 font-semibold mb-1">
                         Strategic Objective
                       </label>
-                      <FieldTooltip content="Alignment with official Abu Dhabi Climate Change Strategic Objectives." example="SO1: Reduce Greenhouse Gas Emissions Across Key Economic Sectors">
-                        <select
-                          value={formData.strategicObjective || ''}
-                          onChange={(e) => handleInputChange('strategicObjective', e.target.value)}
-                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#336D9F] shadow-xs cursor-pointer text-xs text-navy-900 font-medium truncate"
-                        >
-                          {CCRP_STRATEGIC_OBJECTIVES.map((obj) => (
-                            <option key={obj} value={obj} className="text-navy-900">{obj}</option>
-                          ))}
-                        </select>
-                      </FieldTooltip>
+                      {isCustomObjectiveInput || formData.strategicObjective === 'Other' ? (
+                        <FieldTooltip content="Custom strategic objective aligned with climate change policy." example="e.g. Expand Carbon Capture in Manufacturing Sector">
+                          <div className="relative">
+                            <input
+                              type="text"
+                              autoFocus
+                              value={formData.strategicObjectiveOther !== undefined && formData.strategicObjectiveOther !== '' ? formData.strategicObjectiveOther : (formData.strategicObjective === 'Other' ? '' : formData.strategicObjective)}
+                              onChange={(e) => {
+                                handleInputChange('strategicObjective', 'Other');
+                                handleInputChange('strategicObjectiveOther', e.target.value);
+                              }}
+                              placeholder="Specify custom strategic objective..."
+                              className="w-full pl-3.5 pr-8 py-2 bg-white border border-[#336D9F] rounded-lg text-navy-900 placeholder-slate-400 focus:outline-none focus:border-[#336D9F] shadow-xs font-medium text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsCustomObjectiveInput(false);
+                                handleInputChange('strategicObjective', CCRP_STRATEGIC_OBJECTIVES[0]);
+                                handleInputChange('strategicObjectiveOther', '');
+                              }}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+                              title="Switch back to dropdown selection"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </FieldTooltip>
+                      ) : (
+                        <FieldTooltip content="Alignment with official Abu Dhabi Climate Change Strategic Objectives." example="Reduce GHG Emissions in Key Sectors">
+                          <select
+                            value={formData.strategicObjective || ''}
+                            onChange={(e) => {
+                              if (e.target.value === 'Other') {
+                                setIsCustomObjectiveInput(true);
+                                handleInputChange('strategicObjective', 'Other');
+                              } else {
+                                handleInputChange('strategicObjective', e.target.value);
+                                handleInputChange('strategicObjectiveOther', '');
+                              }
+                            }}
+                            className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#336D9F] shadow-xs cursor-pointer text-xs text-navy-900 font-medium truncate"
+                          >
+                            {CCRP_STRATEGIC_OBJECTIVES.map((obj) => (
+                              <option key={obj} value={obj} className="text-navy-900">{obj}</option>
+                            ))}
+                          </select>
+                        </FieldTooltip>
+                      )}
                     </div>
                     {/* Remaining 3 columns in the 4-column row stay empty */}
                     <div className="hidden lg:block"></div>
@@ -1500,7 +1618,7 @@ export const FacilityRegistrationView: React.FC = () => {
                 </h4>
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
                   <p className="text-[11px] text-slate-500 font-medium mb-1.5">
-                    Select all applicable performance indicators configured for this climate initiative (filtered by selected <span className="font-bold text-[#004B87]">{formData.pillar || 'Mitigation'}</span> pillar):
+                    Select all applicable performance indicators and targets configured for this climate initiative (2023–2027):
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {applicableIndicators.map((item) => {
@@ -1535,21 +1653,6 @@ export const FacilityRegistrationView: React.FC = () => {
                       );
                     })}
                   </div>
-
-                  {(formData.indicatorsAndTargets || []).includes('Other') && (
-                    <div className="mt-2.5 pt-2 border-t border-slate-200">
-                      <label className="block text-slate-700 font-semibold mb-1">
-                        Other Indicators — Please specify *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.indicatorsAndTargetsOther || ''}
-                        onChange={(e) => handleInputChange('indicatorsAndTargetsOther', e.target.value)}
-                        placeholder="Describe additional performance indicators or KPIs..."
-                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-navy-900 placeholder-slate-400 focus:outline-none focus:border-[#336D9F] shadow-xs font-medium text-xs"
-                      />
-                    </div>
-                  )}
                 </div>
               </div>
             )}
@@ -1752,17 +1855,22 @@ export const FacilityRegistrationView: React.FC = () => {
               <div>
                 <h4 className="text-xs font-bold text-[#336D9F] mb-2.5">Project Information</h4>
                 <div className="space-y-3">
-                  <div>
-                    <label className="block text-slate-700 font-semibold mb-1">
-                      Initiative Name
-                    </label>
-                    <input
-                      type="text"
-                      readOnly
-                      disabled
-                      value={viewingData.initiativeName || viewingData.facilityName || '—'}
-                      className="w-full px-3.5 py-2 bg-[#F8FAFC] border border-slate-200 rounded-lg text-slate-800 font-semibold text-xs shadow-2xs cursor-not-allowed select-none"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                    <div className="col-span-1">
+                      <label className="block text-slate-700 font-semibold mb-1">
+                        Initiative Name
+                      </label>
+                      <input
+                        type="text"
+                        readOnly
+                        disabled
+                        value={viewingData.initiativeName || viewingData.facilityName || '—'}
+                        className="w-full px-3.5 py-2 bg-[#F8FAFC] border border-slate-200 rounded-lg text-slate-800 font-semibold text-xs shadow-2xs cursor-not-allowed select-none"
+                      />
+                    </div>
+                    <div className="hidden lg:block"></div>
+                    <div className="hidden lg:block"></div>
+                    <div className="hidden lg:block"></div>
                   </div>
                   <div>
                     <label className="block text-slate-700 font-semibold mb-1">
@@ -1819,18 +1927,7 @@ export const FacilityRegistrationView: React.FC = () => {
                       className="w-full px-3.5 py-2 bg-[#F8FAFC] border border-slate-200 rounded-lg text-slate-800 font-medium text-xs shadow-2xs cursor-not-allowed select-none"
                     />
                   </div>
-                  <div>
-                    <label className="block text-slate-700 font-semibold mb-1">
-                      Scope
-                    </label>
-                    <input
-                      type="text"
-                      readOnly
-                      disabled
-                      value={viewingData.scope === 'Other' ? (viewingData.scopeOther || 'Other') : (viewingData.scope || 'Abu Dhabi Emirate')}
-                      className="w-full px-3.5 py-2 bg-[#F8FAFC] border border-slate-200 rounded-lg text-slate-800 font-medium text-xs shadow-2xs cursor-not-allowed select-none"
-                    />
-                  </div>
+                  <div className="hidden lg:block"></div>
                 </div>
               </div>
             </div>
