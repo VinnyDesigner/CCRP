@@ -991,35 +991,23 @@ export const VersionHistoryView: React.FC = () => {
                               <Eye className="w-[18px] h-[18px] stroke-[1.75]" />
                             </button>
 
-                            {/* Operator Actions: Edit for in-progress/submitted/correction amendments, Create for approved */}
+                            {/* Operator Actions: Edit Amendment */}
                             {isFacilityOperator && (
-                              <>
-                                {(rawStatus === 'Approved' || rawStatus === 'Approved / Published') && latestAm?.ticketStatus !== 'Ticket Raised' ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setSelectedInitiativeCode(init.initiativeCode);
-                                      handleOpenCreateForm();
-                                    }}
-                                    title="Create Amendment"
-                                    className="text-emerald-700 hover:text-emerald-900 transition-colors cursor-pointer p-1 rounded-md hover:bg-emerald-50"
-                                  >
-                                    <Plus className="w-[18px] h-[18px] stroke-[2.25]" />
-                                  </button>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setSelectedInitiativeCode(init.initiativeCode);
-                                      handleOpenCreateForm(latestAm || undefined);
-                                    }}
-                                    title="Edit Amendment"
-                                    className="text-[#004B87] hover:text-[#003d6e] transition-colors cursor-pointer p-1 rounded-md hover:bg-[#004B87]/10"
-                                  >
-                                    <Edit className="w-[18px] h-[18px] stroke-[1.75]" />
-                                  </button>
-                                )}
-                              </>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedInitiativeCode(init.initiativeCode);
+                                  handleOpenCreateForm(
+                                    (rawStatus === 'Approved' || rawStatus === 'Approved / Published') && latestAm?.ticketStatus !== 'Ticket Raised'
+                                      ? undefined
+                                      : latestAm || undefined
+                                  );
+                                }}
+                                title="Edit Amendment"
+                                className="text-[#004B87] hover:text-[#003d6e] transition-colors cursor-pointer p-1 rounded-md hover:bg-[#004B87]/10"
+                              >
+                                <Edit className="w-[18px] h-[18px] stroke-[1.75]" />
+                              </button>
                             )}
                           </div>
                         </td>
