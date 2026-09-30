@@ -231,41 +231,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       {/* Blue Overlay with 20% Opacity */}
       <div className="absolute inset-0 bg-[#06182B]/20 pointer-events-none z-0" />
 
-      {/* Top-Right Language Switcher Toggle */}
-      <div className="absolute top-5 right-5 sm:top-7 sm:right-8 z-30">
-        <div
-          role="group"
-          aria-label="Language Selector"
-          className="inline-flex items-center p-[3px] rounded-full bg-[#CBE7F9]/90 backdrop-blur-md border-[2.5px] border-white shadow-[0_4px_16px_rgba(0,30,60,0.18)] select-none"
-        >
-          {/* EN Button */}
-          <button
-            type="button"
-            onClick={() => setLanguage('en')}
-            className={`px-3.5 py-1 text-xs font-bold rounded-full transition-all duration-200 cursor-pointer ${
-              language === 'en'
-                ? 'bg-[#004B87] text-white shadow-sm'
-                : 'text-[#043358] hover:text-[#021f36]'
-            }`}
-          >
-            EN
-          </button>
-
-          {/* AR Button */}
-          <button
-            type="button"
-            onClick={() => setLanguage('ar')}
-            className={`px-3.5 py-1 text-xs font-bold rounded-full transition-all duration-200 cursor-pointer ${
-              language === 'ar'
-                ? 'bg-[#004B87] text-white shadow-sm'
-                : 'text-[#043358] hover:text-[#021f36]'
-            }`}
-            style={{ fontFamily: 'sans-serif' }}
-          >
-            عربي
-          </button>
-        </div>
-      </div>
 
       {/* LEFT SIDE: Visual Hero Area (58% width on desktop) */}
       <div className="relative lg:w-[56%] xl:w-[58%] flex flex-col justify-between p-8 sm:p-12 lg:p-16 z-10">
