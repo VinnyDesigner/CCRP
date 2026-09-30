@@ -47,7 +47,7 @@ import {
 } from 'recharts';
 import { useMRV } from '../context/MRVContext';
 import { NotchCard } from '../components/ui/NotchCard';
-import { INITIAL_FACILITY_REGISTRATIONS } from '../data/facilityRegistrationsData';
+import { INITIAL_FACILITY_REGISTRATIONS, getSectorKpiInfo } from '../data/facilityRegistrationsData';
 import { INITIAL_FACILITY_EMISSIONS } from '../data/facilityEmissionsData';
 import { INITIAL_AMENDMENTS } from '../data/amendmentsData';
 
@@ -404,6 +404,10 @@ export const FacilityDashboardView: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<string>('FY 2026–27');
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
 
+  // Selected Initiative for Sector KPI and project tracking
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('fac-1');
+  const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
+
   // Metric Toggle for the chart
   const [activeChartMetric, setActiveChartMetric] = useState<'ghg' | 'cleanEnergy' | 'efficiency'>('ghg');
   const [isMetricDropdownOpen, setIsMetricDropdownOpen] = useState(false);
@@ -424,6 +428,50 @@ export const FacilityDashboardView: React.FC = () => {
 
   const periodData = PERIOD_DATA[selectedPeriod] || PERIOD_DATA['FY 2026–27'];
   const { kpis, workflow, projectsList, recentActivities, highlights } = periodData;
+
+  const activeProjectReg = React.useMemo(() => {
+    return (
+      facilityRegistrations[selectedProjectId] ||
+      INITIAL_FACILITY_REGISTRATIONS[selectedProjectId] ||
+      facilityRegistrations['fac-1'] ||
+      INITIAL_FACILITY_REGISTRATIONS['fac-1']
+    );
+  }, [facilityRegistrations, selectedProjectId]);
+
+  const activeProjectEmission = React.useMemo(() => {
+    return (
+      facilityEmissions[selectedProjectId] ||
+      INITIAL_FACILITY_EMISSIONS[selectedProjectId] ||
+      facilityEmissions[activeProjectReg?.id || ''] ||
+      facilityEmissions['fac-1'] ||
+      INITIAL_FACILITY_EMISSIONS['fac-1']
+    );
+  }, [facilityEmissions, selectedProjectId, activeProjectReg]);
+
+  const currentSectorKpi = React.useMemo(() => {
+    const sectorInfo = getSectorKpiInfo(
+      activeProjectReg?.projectSector,
+      activeProjectReg?.sectorKpiName,
+      activeProjectReg?.sectorKpiUnit
+    );
+
+    const name = activeProjectReg?.sectorKpiName || activeProjectEmission?.sectorKpiName || sectorInfo.kpiName;
+    const unit = activeProjectReg?.sectorKpiUnit || activeProjectEmission?.sectorKpiUnit || sectorInfo.unit;
+    const target = activeProjectReg?.sectorKpiTarget ?? activeProjectEmission?.sectorKpiTarget ?? sectorInfo.defaultTarget ?? 0;
+    const actual = activeProjectEmission?.sectorKpiActual ?? (Number(target) > 0 ? Number((Number(target) * 0.95).toFixed(1)) : 0);
+    const achievementPct = activeProjectEmission?.sectorKpiAchievement !== undefined
+      ? activeProjectEmission.sectorKpiAchievement
+      : (Number(target) > 0 ? Number(((Number(actual) / Number(target)) * 100).toFixed(1)) : 0);
+
+    return {
+      name,
+      unit,
+      target,
+      actual,
+      achievementPct,
+      sector: activeProjectReg?.projectSector || 'Energy',
+    };
+  }, [activeProjectReg, activeProjectEmission]);
 
   // Dynamic Strategy Pillar Distribution derived from actual project data
   const dynamicPillarData = React.useMemo(() => {
@@ -774,53 +822,51 @@ export const FacilityDashboardView: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Metric Selector Dropdown in Title Row */}
-                <div className="relative">
-                  <button
-                    onClick={() => setIsMetricDropdownOpen(!isMetricDropdownOpen)}
-                    className="h-8 px-3 bg-white border border-slate-200/90 rounded-[8px] text-xs font-semibold text-slate-700 flex items-center gap-2 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
-                  >
-                    <BarChart3 className="w-3.5 h-3.5 text-[#004B87]" />
-                    <span>{currentMetricLabel}</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                  </button>
+                <div className="flex items-center gap-2">
+                  {/* Metric Selector Dropdown in Title Row */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsMetricDropdownOpen(!isMetricDropdownOpen)}
+                      className="h-8 px-3 bg-white border border-slate-200/90 rounded-[8px] text-xs font-semibold text-slate-700 flex items-center gap-2 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
+                    >
+                      <BarChart3 className="w-3.5 h-3.5 text-[#004B87]" />
+                      <span>{currentMetricLabel}</span>
+                      <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                    </button>
 
-                  {isMetricDropdownOpen && (
-                    <div className="absolute right-0 top-9.5 z-30 w-44 bg-white rounded-xl border border-slate-200 shadow-lg py-1 text-xs">
-                      {METRIC_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.id}
-                          onClick={() => {
-                            setActiveChartMetric(opt.id);
-                            setIsMetricDropdownOpen(false);
-                          }}
-                          className={`w-full text-left px-3 py-1.5 hover:bg-slate-50 font-medium cursor-pointer flex items-center justify-between ${
-                            activeChartMetric === opt.id ? 'text-[#004B87] font-bold bg-sky-50/50' : 'text-slate-700'
-                          }`}
-                        >
-                          <span>{opt.label}</span>
-                          {activeChartMetric === opt.id && (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#004B87]" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                    {isMetricDropdownOpen && (
+                      <div className="absolute right-0 top-9.5 z-30 w-44 bg-white rounded-xl border border-slate-200 shadow-lg py-1 text-xs">
+                        {METRIC_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.id}
+                            onClick={() => {
+                              setActiveChartMetric(opt.id);
+                              setIsMetricDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-3 py-1.5 hover:bg-slate-50 font-medium cursor-pointer flex items-center justify-between ${
+                              activeChartMetric === opt.id ? 'text-[#004B87] font-bold bg-sky-50/50' : 'text-slate-700'
+                            }`}
+                          >
+                            <span>{opt.label}</span>
+                            {activeChartMetric === opt.id && (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[#004B87]" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Quick Metrics Summary Strip */}
-              <div className="grid grid-cols-3 gap-2 py-2 border-b border-slate-100 text-xs">
-                <div className="p-2 bg-sky-50/50 rounded-xl border border-sky-100">
-                  <span className="text-[10.5px] font-semibold text-slate-500 block">Planned GHG Reduction</span>
+              {/* Quick Metrics Summary Strip (3-column grid for standard card width and ready for 3rd KPI) */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 py-2 border-b border-slate-100 text-xs">
+                <div className="p-2.5 bg-sky-50/50 rounded-xl border border-sky-100">
+                  <span className="text-[10.5px] font-semibold text-slate-500 block">Total Expected Reductions</span>
                   <span className="text-sm font-bold text-[#004B87] mt-0.5 block">{highlights.totalGhgTarget}</span>
                 </div>
-                <div className="p-2 bg-emerald-50/50 rounded-xl border border-emerald-100">
-                  <span className="text-[10.5px] font-semibold text-slate-500 block">Planned Clean Energy Capacity</span>
-                  <span className="text-sm font-bold text-emerald-700 mt-0.5 block">{highlights.totalCleanCap}</span>
-                </div>
-                <div className="p-2 bg-purple-50/50 rounded-xl border border-purple-100">
-                  <span className="text-[10.5px] font-semibold text-slate-500 block">Actual Progress</span>
+                <div className="p-2.5 bg-purple-50/50 rounded-xl border border-purple-100">
+                  <span className="text-[10.5px] font-semibold text-slate-500 block">Milestone Rate</span>
                   <span className="text-sm font-bold text-purple-700 mt-0.5 block">{highlights.milestoneRate}</span>
                 </div>
               </div>
@@ -828,7 +874,7 @@ export const FacilityDashboardView: React.FC = () => {
               {/* Recharts Area Chart: Planned (Lined & Filled) vs Actual (Dotted Line) */}
               <div className="h-[185px] w-full pt-1.5">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 15, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorPlanned" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#004B87" stopOpacity={0.25} />
@@ -837,7 +883,22 @@ export const FacilityDashboardView: React.FC = () => {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                     <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} axisLine={{ stroke: '#CBD5E1' }} />
-                    <YAxis tick={{ fontSize: 11, fill: '#64748B' }} axisLine={{ stroke: '#CBD5E1' }} />
+                    <YAxis
+                      tick={{ fontSize: 10, fill: '#64748B' }}
+                      axisLine={{ stroke: '#CBD5E1' }}
+                      label={{
+                        value: 'GHG Emission Reductions (ktCO₂e)',
+                        angle: -90,
+                        position: 'insideLeft',
+                        offset: 0,
+                        style: {
+                          fontSize: '10px',
+                          fill: '#64748B',
+                          fontWeight: 600,
+                          textAnchor: 'middle',
+                        },
+                      }}
+                    />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#ffffff',
@@ -1246,9 +1307,14 @@ export const FacilityDashboardView: React.FC = () => {
                       .map((project, idx) => (
                         <tr
                           key={project.id}
+                          onClick={() => setSelectedProjectId(project.id)}
                           className={`h-[44px] ${
-                            idx % 2 === 1 ? 'bg-slate-50/80' : 'bg-white'
-                          } hover:bg-[#EBF3FA] transition-colors group cursor-default`}
+                            selectedProjectId === project.id
+                              ? 'bg-sky-50/80 border-l-2 border-l-[#004B87]'
+                              : idx % 2 === 1
+                              ? 'bg-slate-50/80'
+                              : 'bg-white'
+                          } hover:bg-[#EBF3FA] transition-colors group cursor-pointer`}
                         >
                           {/* 1. Project Name & ID */}
                           <td className="px-3 py-1.5 font-medium align-middle">

@@ -19,13 +19,15 @@ import {
   Check,
   ShieldCheck,
   ChevronDown,
+  Leaf,
+  Users,
+  Globe,
 } from 'lucide-react';
 import { useMRV } from '../context/MRVContext';
 import { UserRole } from '../types/mrv';
 import { FieldTooltip } from '../components/ui/FieldTooltip';
 import eadLogo from '../assets/logo.svg';
 import loginBg from '../assets/login-bg.png';
-import loginRightRibbedBg from '../assets/login-right-ribbed-bg.png';
 
 interface LoginViewProps {
   onLoginSuccess: () => void;
@@ -53,6 +55,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
   // Mode State: login | register_details | register_otp | register_success
   const [authMode, setAuthMode] = useState<AuthMode>('login');
+
+  // Language State: 'en' | 'ar'
+  const [language, setLanguage] = useState<'en' | 'ar'>('en');
 
   // Login Form State
   const [loginEmail, setLoginEmail] = useState('ahmed.zaabi@alnoor-energy.ae');
@@ -217,20 +222,53 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col lg:flex-row bg-[#06182B] text-white overflow-hidden select-none">
-      {/* LEFT SIDE: Visual Hero Area with Attached Background Image (58% width on desktop) */}
-      <div
-        className="relative lg:w-[56%] xl:w-[58%] flex flex-col justify-between p-8 sm:p-12 lg:p-16 z-10 bg-cover bg-center bg-no-repeat overflow-hidden"
-        style={{
-          backgroundImage: `url(${loginBg})`,
-        }}
-      >
-        {/* Seamless Rightward Feathering Gradient (Desktop) */}
-        <div className="hidden lg:block absolute inset-y-0 right-0 w-48 sm:w-64 lg:w-80 bg-gradient-to-r from-transparent via-[#06182B]/60 to-[#041221] z-10 pointer-events-none" />
+    <div
+      className="relative min-h-screen w-full flex flex-col lg:flex-row text-white overflow-x-hidden overflow-y-auto select-none bg-cover bg-center bg-no-repeat"
+      style={{
+        backgroundImage: `url(${loginBg})`,
+      }}
+    >
+      {/* Blue Overlay with 20% Opacity */}
+      <div className="absolute inset-0 bg-[#06182B]/20 pointer-events-none z-0" />
 
-        {/* Seamless Bottom Feathering Gradient (Mobile / Tablet) */}
-        <div className="lg:hidden absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent via-[#041221]/80 to-[#041221] z-10 pointer-events-none" />
+      {/* Top-Right Language Switcher Toggle */}
+      <div className="absolute top-5 right-5 sm:top-7 sm:right-8 z-30">
+        <div
+          role="group"
+          aria-label="Language Selector"
+          className="inline-flex items-center p-[3px] rounded-full bg-[#CBE7F9]/90 backdrop-blur-md border-[2.5px] border-white shadow-[0_4px_16px_rgba(0,30,60,0.18)] select-none"
+        >
+          {/* EN Button */}
+          <button
+            type="button"
+            onClick={() => setLanguage('en')}
+            className={`px-3.5 py-1 text-xs font-bold rounded-full transition-all duration-200 cursor-pointer ${
+              language === 'en'
+                ? 'bg-[#004B87] text-white shadow-sm'
+                : 'text-[#043358] hover:text-[#021f36]'
+            }`}
+          >
+            EN
+          </button>
 
+          {/* AR Button */}
+          <button
+            type="button"
+            onClick={() => setLanguage('ar')}
+            className={`px-3.5 py-1 text-xs font-bold rounded-full transition-all duration-200 cursor-pointer ${
+              language === 'ar'
+                ? 'bg-[#004B87] text-white shadow-sm'
+                : 'text-[#043358] hover:text-[#021f36]'
+            }`}
+            style={{ fontFamily: 'sans-serif' }}
+          >
+            عربي
+          </button>
+        </div>
+      </div>
+
+      {/* LEFT SIDE: Visual Hero Area (58% width on desktop) */}
+      <div className="relative lg:w-[56%] xl:w-[58%] flex flex-col justify-between p-8 sm:p-12 lg:p-16 z-10">
         {/* Top Logo */}
         <div className="flex items-center z-10">
           <img
@@ -243,7 +281,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         {/* Center Hero Copy */}
         <div className="my-10 lg:my-auto max-w-2xl z-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#082235]/80 backdrop-blur-md border border-[#00B2FE]/30 text-[#00B2FE] text-xs font-semibold mb-6 shadow-md">
-            <Sparkles className="w-3.5 h-3.5 text-[#00B2FE]" />
             <span>Climate Change Registry Portal (CCRP)</span>
           </div>
 
@@ -258,52 +295,68 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             A secure digital platform for registering climate change initiatives, reporting progress, tracking performance, and monitoring KPIs across Abu Dhabi’s Climate Change Strategy and Adaptation Plan.
           </p>
 
-          {/* 3 Feature Glass Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 max-w-2xl">
+          {/* 4 Feature Glass Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8 max-w-2xl">
             {/* Card 1: Project Registration */}
-            <div className="relative p-4 rounded-2xl bg-gradient-to-b from-white/15 via-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.36),inset_0_1px_1px_0_rgba(255,255,255,0.3)] hover:border-[#00B2FE]/60 hover:bg-white/20 hover:shadow-[0_12px_36px_rgba(0,178,254,0.25),inset_0_1px_2px_rgba(255,255,255,0.5)] transition-all duration-300 hover:-translate-y-1.5 group overflow-hidden">
+            <div className="relative p-3.5 sm:p-4 rounded-2xl bg-gradient-to-b from-white/15 via-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.36),inset_0_1px_1px_0_rgba(255,255,255,0.3)] hover:border-[#00B2FE]/60 hover:bg-white/20 hover:shadow-[0_12px_36px_rgba(0,178,254,0.25),inset_0_1px_2px_rgba(255,255,255,0.5)] transition-all duration-300 hover:-translate-y-1.5 group overflow-hidden">
               <div className="absolute inset-x-3 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
               <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#00B2FE]/15 to-transparent pointer-events-none rounded-b-2xl opacity-60 group-hover:opacity-100 transition-opacity" />
 
               <div className="relative z-10">
-                <div className="mb-3 text-[#00B2FE] drop-shadow-[0_2px_10px_rgba(0,178,254,0.5)] group-hover:scale-110 group-hover:text-cyan-300 transition-all duration-300">
-                  <Building2 className="w-6 h-6" />
+                <div className="mb-2.5 text-[#00B2FE] drop-shadow-[0_2px_10px_rgba(0,178,254,0.5)] group-hover:scale-110 group-hover:text-cyan-300 transition-all duration-300">
+                  <Leaf className="w-5 h-5" />
                 </div>
                 <h4 className="text-xs font-bold text-white tracking-wide">Project Registration</h4>
                 <p className="text-[11px] text-slate-300/90 mt-1 leading-snug font-normal">
-                  Register and manage climate initiatives.
+                  Register and manage climate initiatives
                 </p>
               </div>
             </div>
 
-            {/* Card 2: Initiative Performance */}
-            <div className="relative p-4 rounded-2xl bg-gradient-to-b from-white/15 via-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.36),inset_0_1px_1px_0_rgba(255,255,255,0.3)] hover:border-[#00B2FE]/60 hover:bg-white/20 hover:shadow-[0_12px_36px_rgba(0,178,254,0.25),inset_0_1px_2px_rgba(255,255,255,0.5)] transition-all duration-300 hover:-translate-y-1.5 group overflow-hidden">
+            {/* Card 2: Performance Tracking */}
+            <div className="relative p-3.5 sm:p-4 rounded-2xl bg-gradient-to-b from-white/15 via-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.36),inset_0_1px_1px_0_rgba(255,255,255,0.3)] hover:border-[#00B2FE]/60 hover:bg-white/20 hover:shadow-[0_12px_36px_rgba(0,178,254,0.25),inset_0_1px_2px_rgba(255,255,255,0.5)] transition-all duration-300 hover:-translate-y-1.5 group overflow-hidden">
               <div className="absolute inset-x-3 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
               <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#00B2FE]/15 to-transparent pointer-events-none rounded-b-2xl opacity-60 group-hover:opacity-100 transition-opacity" />
 
               <div className="relative z-10">
-                <div className="mb-3 text-[#00B2FE] drop-shadow-[0_2px_10px_rgba(0,178,254,0.5)] group-hover:scale-110 group-hover:text-cyan-300 transition-all duration-300">
-                  <Layers className="w-6 h-6" />
+                <div className="mb-2.5 text-[#00B2FE] drop-shadow-[0_2px_10px_rgba(0,178,254,0.5)] group-hover:scale-110 group-hover:text-cyan-300 transition-all duration-300">
+                  <BarChart3 className="w-5 h-5" />
                 </div>
-                <h4 className="text-xs font-bold text-white tracking-wide">Initiative Performance</h4>
+                <h4 className="text-xs font-bold text-white tracking-wide">Performance Tracking</h4>
                 <p className="text-[11px] text-slate-300/90 mt-1 leading-snug font-normal">
-                  Track progress, targets, and milestones.
+                  Track progress, targets and milestones
                 </p>
               </div>
             </div>
 
-            {/* Card 3: Project Data Entry */}
-            <div className="relative p-4 rounded-2xl bg-gradient-to-b from-white/15 via-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.36),inset_0_1px_1px_0_rgba(255,255,255,0.3)] hover:border-[#00B2FE]/60 hover:bg-white/20 hover:shadow-[0_12px_36px_rgba(0,178,254,0.25),inset_0_1px_2px_rgba(255,255,255,0.5)] transition-all duration-300 hover:-translate-y-1.5 group overflow-hidden">
+            {/* Card 3: Centralized Data */}
+            <div className="relative p-3.5 sm:p-4 rounded-2xl bg-gradient-to-b from-white/15 via-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.36),inset_0_1px_1px_0_rgba(255,255,255,0.3)] hover:border-[#00B2FE]/60 hover:bg-white/20 hover:shadow-[0_12px_36px_rgba(0,178,254,0.25),inset_0_1px_2px_rgba(255,255,255,0.5)] transition-all duration-300 hover:-translate-y-1.5 group overflow-hidden">
               <div className="absolute inset-x-3 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
               <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#00B2FE]/15 to-transparent pointer-events-none rounded-b-2xl opacity-60 group-hover:opacity-100 transition-opacity" />
 
               <div className="relative z-10">
-                <div className="mb-3 text-[#00B2FE] drop-shadow-[0_2px_10px_rgba(0,178,254,0.5)] group-hover:scale-110 group-hover:text-cyan-300 transition-all duration-300">
-                  <BarChart3 className="w-6 h-6" />
+                <div className="mb-2.5 text-[#00B2FE] drop-shadow-[0_2px_10px_rgba(0,178,254,0.5)] group-hover:scale-110 group-hover:text-cyan-300 transition-all duration-300">
+                  <Layers className="w-5 h-5" />
                 </div>
-                <h4 className="text-xs font-bold text-white tracking-wide">Project Data Entry</h4>
+                <h4 className="text-xs font-bold text-white tracking-wide">Centralized Data</h4>
                 <p className="text-[11px] text-slate-300/90 mt-1 leading-snug font-normal">
-                  Submit reports and track progress.
+                  Submit, review and track data
+                </p>
+              </div>
+            </div>
+
+            {/* Card 4: Collaborative Action */}
+            <div className="relative p-3.5 sm:p-4 rounded-2xl bg-gradient-to-b from-white/15 via-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.36),inset_0_1px_1px_0_rgba(255,255,255,0.3)] hover:border-[#00B2FE]/60 hover:bg-white/20 hover:shadow-[0_12px_36px_rgba(0,178,254,0.25),inset_0_1px_2px_rgba(255,255,255,0.5)] transition-all duration-300 hover:-translate-y-1.5 group overflow-hidden">
+              <div className="absolute inset-x-3 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
+              <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#00B2FE]/15 to-transparent pointer-events-none rounded-b-2xl opacity-60 group-hover:opacity-100 transition-opacity" />
+
+              <div className="relative z-10">
+                <div className="mb-2.5 text-[#00B2FE] drop-shadow-[0_2px_10px_rgba(0,178,254,0.5)] group-hover:scale-110 group-hover:text-cyan-300 transition-all duration-300">
+                  <Users className="w-5 h-5" />
+                </div>
+                <h4 className="text-xs font-bold text-white tracking-wide">Collaborative Action</h4>
+                <p className="text-[11px] text-slate-300/90 mt-1 leading-snug font-normal">
+                  Enable data driven decisions
                 </p>
               </div>
             </div>
@@ -312,28 +365,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       </div>
 
       {/* RIGHT SIDE: Floating Authentication Panel */}
-      <div className="relative lg:w-[44%] xl:w-[42%] flex items-center justify-center lg:justify-start lg:pl-8 xl:pl-10 p-5 sm:p-8 lg:p-10 z-20 bg-[#041221] overflow-y-auto">
-        {/* Seamless Leftward Feathering Gradient (Desktop) */}
-        <div className="hidden lg:block absolute inset-y-0 left-0 w-32 sm:w-48 lg:w-64 bg-gradient-to-r from-[#041221] via-[#041221]/70 to-transparent z-10 pointer-events-none" />
-
-        {/* Seamless Top Feathering Gradient (Mobile / Tablet) */}
-        <div className="lg:hidden absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#041221] via-[#041221]/80 to-transparent z-10 pointer-events-none" />
-
-        {/* Background Image Overlay with Smooth Opacity Blend */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-25 pointer-events-none"
-          style={{
-            backgroundImage: `url(${loginRightRibbedBg})`,
-          }}
-        />
-
-        {/* Radial Ambient Glow behind Card */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(15,50,100,0.4)_0%,transparent_70%)] pointer-events-none" />
-
+      <div className="relative lg:w-[44%] xl:w-[42%] flex items-center justify-center lg:justify-start lg:pl-8 xl:pl-10 p-5 sm:p-8 lg:p-10 z-20 overflow-y-auto">
         <div className="w-full max-w-sm sm:max-w-md relative z-20 my-auto py-4">
-          {/* Glass Card with Rich Blue Gradient & Pulsating Bluish Inner Shadow Vignette */}
-          <div className="p-8 sm:p-9 rounded-3xl bg-gradient-to-b from-[#0B4079] via-[#062954] to-[#031836] border border-white/10 relative overflow-hidden animate-pulse-inner-shadow shadow-2xl backdrop-blur-md">
-
+          {/* Frosted White & Blue Glass Card */}
+          <div className="p-8 sm:p-9 rounded-3xl bg-white/75 backdrop-blur-2xl border border-white/60 shadow-[0_24px_50px_rgba(0,30,60,0.25),0_0_0_1px_rgba(255,255,255,0.8)_inset] relative overflow-hidden">
             {/* ============================================================= */}
             {/* VIEW 1: LOGIN FORM */}
             {/* ============================================================= */}
@@ -341,10 +376,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               <div className="animate-in fade-in duration-200">
                 {/* Header */}
                 <div className="text-center mb-6">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                  <h2 className="text-2xl sm:text-3xl font-semibold text-[#003A70] tracking-tight">
                     Welcome back
                   </h2>
-                  <p className="text-xs text-slate-300/80 mt-1.5 font-normal">
+                  <p className="text-xs text-slate-500 mt-1.5 font-normal">
                     Sign in to your Climate Change Registry Portal
                   </p>
                 </div>
@@ -357,7 +392,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   className="space-y-3.5"
                 >
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    <label className="block text-xs font-bold text-[#003A70] mb-1.5">
                       Email
                     </label>
                     <FieldTooltip
@@ -369,13 +404,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                         value={loginEmail}
                         onChange={(e) => setLoginEmail(e.target.value)}
                         placeholder="Enter Email"
-                        className="w-full px-4 py-2.5 rounded-lg bg-white/85 text-black placeholder-slate-500 text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00B2FE] transition-all shadow-sm"
+                        className="w-full px-4 py-2.5 rounded-lg bg-white/85 hover:bg-white focus:bg-white text-slate-900 placeholder-slate-400 text-xs font-medium border border-slate-200/90 focus:border-[#0072CE] focus:outline-none focus:ring-2 focus:ring-[#0072CE]/20 transition-all shadow-sm"
                       />
                     </FieldTooltip>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    <label className="block text-xs font-bold text-[#003A70] mb-1.5">
                       Password
                     </label>
                     <FieldTooltip content="Enter your confidential account password.">
@@ -385,12 +420,12 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                           value={loginPassword}
                           onChange={(e) => setLoginPassword(e.target.value)}
                           placeholder="Enter Password"
-                          className="w-full pl-4 pr-10 py-2.5 rounded-lg bg-white/85 text-black placeholder-slate-500 text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00B2FE] transition-all shadow-sm"
+                          className="w-full pl-4 pr-10 py-2.5 rounded-lg bg-white/85 hover:bg-white focus:bg-white text-slate-900 placeholder-slate-400 text-xs font-medium border border-slate-200/90 focus:border-[#0072CE] focus:outline-none focus:ring-2 focus:ring-[#0072CE]/20 transition-all shadow-sm"
                         />
                         <button
                           type="button"
                           onClick={() => setShowLoginPassword(!showLoginPassword)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#003A70] transition-colors cursor-pointer"
                         >
                           {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
@@ -400,35 +435,35 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
                   <div className="flex items-center justify-between text-xs pt-1.5 pb-0.5 whitespace-nowrap">
                     <FieldTooltip content="Keep your authentication session persistent on this browser workstation.">
-                      <label className="flex items-center gap-2 cursor-pointer text-slate-300 whitespace-nowrap select-none">
+                      <label className="flex items-center gap-2 cursor-pointer text-slate-600 whitespace-nowrap select-none">
                         <input
                           type="checkbox"
                           checked={rememberMe}
                           onChange={(e) => setRememberMe(e.target.checked)}
-                          className="w-4 h-4 rounded bg-[#061626] border-[#163857] text-[#00B2FE] focus:ring-0 cursor-pointer shrink-0"
+                          className="w-4 h-4 rounded border-slate-300 text-[#0072CE] focus:ring-[#0072CE] cursor-pointer shrink-0"
                         />
-                        <span className="font-medium text-slate-300 whitespace-nowrap">Remember Me</span>
+                        <span className="font-semibold text-slate-600 whitespace-nowrap">Remember Me</span>
                       </label>
                     </FieldTooltip>
 
-                    <a href="#forgot" onClick={(e) => e.preventDefault()} className="text-[#00B2FE] hover:text-cyan-300 font-medium transition-colors whitespace-nowrap shrink-0 ml-2">
+                    <a href="#forgot" onClick={(e) => e.preventDefault()} className="text-[#0072CE] hover:text-[#004B87] font-semibold transition-colors whitespace-nowrap shrink-0 ml-2">
                       Forgot Password?
                     </a>
                   </div>
 
-                  {/* 3D Tactile CTA Button matching Application Linear Gradient with generous gap from inputs */}
+                  {/* 3D Tactile CTA Button */}
                   <div className="pt-2">
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full py-3.5 px-4 text-sm font-bold text-white rounded-xl bg-gradient-to-r from-[#004B87] via-[#006EAF] to-[#009CEB] border-t border-white/40 border-x border-white/10 border-b-2 border-[#002B52] shadow-[0_8px_20px_-4px_rgba(0,75,135,0.5),inset_0_1px_1px_rgba(255,255,255,0.65),inset_0_-2px_4px_rgba(0,0,0,0.3)] hover:brightness-110 hover:shadow-[0_10px_24px_-4px_rgba(0,75,135,0.65),inset_0_1px_1px_rgba(255,255,255,0.75)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-[0_3px_10px_rgba(0,75,135,0.4),inset_0_2px_4px_rgba(0,0,0,0.4)] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none group"
+                      className="w-full py-3.5 px-4 text-sm font-bold text-white rounded-xl bg-gradient-to-r from-[#004B87] via-[#006EAF] to-[#009CEB] border-t border-white/40 border-x border-white/10 border-b-2 border-[#002B52] shadow-[0_8px_20px_-4px_rgba(0,75,135,0.4),inset_0_1px_1px_rgba(255,255,255,0.65),inset_0_-2px_4px_rgba(0,0,0,0.2)] hover:brightness-110 hover:shadow-[0_10px_24px_-4px_rgba(0,75,135,0.55)] hover:-translate-y-0.5 active:translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none group"
                     >
                       {isLoading ? (
                         <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <>
                           <LogIn className="w-4 h-4 text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] transition-transform duration-200 group-hover:translate-x-0.5" />
-                          <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)] tracking-wide font-bold">Login</span>
+                          <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] tracking-wide font-bold">Login</span>
                         </>
                       )}
                     </button>
@@ -438,10 +473,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 {/* Divider: or */}
                 <div className="relative my-4">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-[#14324F]" />
+                    <div className="w-full border-t border-slate-200" />
                   </div>
                   <div className="relative flex justify-center text-xs">
-                    <span className="px-3 text-slate-400 font-medium bg-[#071B2F] rounded-full">
+                    <span className="px-3 text-slate-400 font-semibold bg-white/80 rounded-full">
                       or
                     </span>
                   </div>
@@ -452,7 +487,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   <button
                     type="button"
                     onClick={() => handleSignIn('FACILITY_OPERATOR')}
-                    className="w-11 h-11 p-2 rounded-2xl bg-[#00B2FE] hover:bg-[#009CEB] text-white shadow-lg shadow-[#00B2FE]/35 hover:scale-105 transition-all flex items-center justify-center cursor-pointer active:scale-95"
+                    className="w-11 h-11 p-2 rounded-2xl bg-[#0072CE] hover:bg-[#005A9E] text-white shadow-md shadow-[#0072CE]/30 hover:scale-105 transition-all flex items-center justify-center cursor-pointer active:scale-95"
                     title="Single Sign-On with Azure Active Directory (Azure AD)"
                   >
                     <svg
@@ -474,9 +509,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   </button>
                 </div>
 
-                {/* Don't have an account? Register Link (close to Azure button) */}
+                {/* Don't have an account? Register Link */}
                 <div className="mt-4 text-center text-xs">
-                  <span className="text-slate-300">Don't have an account?</span>{' '}
+                  <span className="text-slate-600">Don't have an account?</span>{' '}
                   <button
                     type="button"
                     onClick={() => {
@@ -491,7 +526,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                       });
                       setAuthMode('register_details');
                     }}
-                    className="text-[#00B2FE] hover:text-cyan-300 font-bold underline cursor-pointer transition-colors"
+                    className="text-[#0072CE] hover:text-[#004B87] font-bold underline cursor-pointer transition-colors"
                   >
                     Register
                   </button>
@@ -506,10 +541,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               <div className="animate-in fade-in duration-200">
                 {/* Header */}
                 <div className="text-center mb-6">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                  <h2 className="text-2xl sm:text-3xl font-semibold text-[#003A70] tracking-tight">
                     Create an Account
                   </h2>
-                  <p className="text-xs text-slate-300/80 mt-1.5 font-normal">
+                  <p className="text-xs text-slate-500 mt-1.5 font-normal">
                     Register your data provider account for the MRV Platform
                   </p>
                 </div>
@@ -518,38 +553,38 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   {/* First Name & Last Name in 2 columns */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">
-                        First Name <span className="text-rose-400">*</span>
+                      <label className="block text-xs font-bold text-[#003A70] mb-1">
+                        First Name <span className="text-rose-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={regForm.firstName}
                         onChange={(e) => setRegForm({ ...regForm, firstName: e.target.value })}
                         placeholder="Enter first name"
-                        className={`w-full px-3.5 py-2.5 rounded-lg bg-white/85 text-black placeholder-slate-500 text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00B2FE] transition-all shadow-sm ${
-                          regErrors.firstName ? 'border border-rose-500' : ''
+                        className={`w-full px-3.5 py-2.5 rounded-lg bg-[#F4F8FC] hover:bg-[#EEF4FB] focus:bg-white text-slate-900 placeholder-slate-400 text-xs font-medium border border-slate-200/90 focus:border-[#0072CE] focus:outline-none focus:ring-2 focus:ring-[#0072CE]/20 transition-all shadow-sm ${
+                          regErrors.firstName ? '!border-rose-500' : ''
                         }`}
                       />
                       {regErrors.firstName && (
-                        <p className="text-[10px] text-rose-400 mt-0.5">{regErrors.firstName}</p>
+                        <p className="text-[10px] text-rose-500 font-medium mt-0.5">{regErrors.firstName}</p>
                       )}
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">
-                        Last Name <span className="text-rose-400">*</span>
+                      <label className="block text-xs font-bold text-[#003A70] mb-1">
+                        Last Name <span className="text-rose-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={regForm.lastName}
                         onChange={(e) => setRegForm({ ...regForm, lastName: e.target.value })}
                         placeholder="Enter last name"
-                        className={`w-full px-3.5 py-2.5 rounded-lg bg-white/85 text-black placeholder-slate-500 text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00B2FE] transition-all shadow-sm ${
-                          regErrors.lastName ? 'border border-rose-500' : ''
+                        className={`w-full px-3.5 py-2.5 rounded-lg bg-[#F4F8FC] hover:bg-[#EEF4FB] focus:bg-white text-slate-900 placeholder-slate-400 text-xs font-medium border border-slate-200/90 focus:border-[#0072CE] focus:outline-none focus:ring-2 focus:ring-[#0072CE]/20 transition-all shadow-sm ${
+                          regErrors.lastName ? '!border-rose-500' : ''
                         }`}
                       />
                       {regErrors.lastName && (
-                        <p className="text-[10px] text-rose-400 mt-0.5">{regErrors.lastName}</p>
+                        <p className="text-[10px] text-rose-500 font-medium mt-0.5">{regErrors.lastName}</p>
                       )}
                     </div>
                   </div>
@@ -557,8 +592,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   {/* Email & Phone Number in 2 columns */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">
-                        Email <span className="text-rose-400">*</span>
+                      <label className="block text-xs font-bold text-[#003A70] mb-1">
+                        Email <span className="text-rose-500">*</span>
                       </label>
                       <FieldTooltip
                         content="Official corporate email address for account authentication and regulatory communication."
@@ -571,27 +606,27 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                           value={regForm.email}
                           onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
                           placeholder="name@company.ae"
-                          className={`w-full px-3.5 py-2.5 rounded-lg bg-white/85 text-black placeholder-slate-500 text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00B2FE] transition-all shadow-sm ${
-                            regErrors.email ? 'border border-rose-500' : ''
+                          className={`w-full px-3.5 py-2.5 rounded-lg bg-[#F4F8FC] hover:bg-[#EEF4FB] focus:bg-white text-slate-900 placeholder-slate-400 text-xs font-medium border border-slate-200/90 focus:border-[#0072CE] focus:outline-none focus:ring-2 focus:ring-[#0072CE]/20 transition-all shadow-sm ${
+                            regErrors.email ? '!border-rose-500' : ''
                           }`}
                         />
                       </FieldTooltip>
                       {regErrors.email && (
-                        <p className="text-[10px] text-rose-400 mt-0.5">{regErrors.email}</p>
+                        <p className="text-[10px] text-rose-500 font-medium mt-0.5">{regErrors.email}</p>
                       )}
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      <label className="block text-xs font-bold text-[#003A70] mb-1">
                         Phone Number <span className="text-slate-400 font-normal text-[10px]">(Optional)</span>
                       </label>
                       <div ref={dialCodeDropdownRef} className="relative">
-                        <div className="flex items-center rounded-lg bg-white/85 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#00B2FE] transition-all shadow-sm px-2.5 h-[34px] min-h-[34px]">
+                        <div className="flex items-center rounded-lg bg-[#F4F8FC] hover:bg-[#EEF4FB] focus-within:bg-white border border-slate-200/90 focus-within:border-[#0072CE] focus-within:ring-2 focus-within:ring-[#0072CE]/20 transition-all shadow-sm px-2.5 h-[34px] min-h-[34px]">
                           {/* Active Dial Code Dropdown Trigger */}
                           <button
                             type="button"
                             onClick={() => setIsDialCodeDropdownOpen(!isDialCodeDropdownOpen)}
-                            className="flex items-center gap-1.5 pr-2.5 border-r border-slate-300/80 shrink-0 cursor-pointer select-none text-slate-800 hover:text-[#004B87] font-bold text-xs font-mono transition-colors focus:outline-none focus:ring-0"
+                            className="flex items-center gap-1.5 pr-2.5 border-r border-slate-300 shrink-0 cursor-pointer select-none text-slate-800 hover:text-[#004B87] font-bold text-xs font-mono transition-colors focus:outline-none focus:ring-0"
                             title="Select Country Code"
                           >
                             <span>{selectedDialCode}</span>
@@ -605,13 +640,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                               value={regForm.phone}
                               onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })}
                               placeholder="50 123 4567"
-                              className="w-full min-w-0 !bg-transparent text-black placeholder-slate-400 text-xs font-medium focus:!outline-none !border-none !p-0 !h-full !min-h-0 !shadow-none focus:!ring-0 font-mono"
+                              className="w-full min-w-0 !bg-transparent text-slate-900 placeholder-slate-400 text-xs font-medium focus:!outline-none !border-none !p-0 !h-full !min-h-0 !shadow-none focus:!ring-0 font-mono"
                               style={{ height: '100%', minHeight: 'unset', border: 'none', background: 'transparent', outline: 'none', boxShadow: 'none' }}
                             />
                           </div>
                         </div>
 
-                        {/* Active Dial Code Dropdown Menu (Clean compact width matching input box) */}
+                        {/* Active Dial Code Dropdown Menu */}
                         {isDialCodeDropdownOpen && (
                           <div className="absolute left-0 right-0 top-full mt-1 w-full max-h-44 overflow-y-auto bg-white rounded-xl shadow-xl border border-slate-200 z-50 py-1 text-xs custom-scrollbar animate-in fade-in zoom-in-95 duration-150">
                             {COUNTRY_DIAL_CODES.map((item) => (
@@ -639,25 +674,25 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   {/* Entity Name & Entity Description in 2 columns */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">
-                        Entity Name <span className="text-rose-400">*</span>
+                      <label className="block text-xs font-bold text-[#003A70] mb-1">
+                        Entity Name <span className="text-rose-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={regForm.entityName}
                         onChange={(e) => setRegForm({ ...regForm, entityName: e.target.value })}
                         placeholder="Enter entity name"
-                        className={`w-full px-3.5 py-2.5 rounded-lg bg-white/85 text-black placeholder-slate-500 text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00B2FE] transition-all shadow-sm ${
-                          regErrors.entityName ? 'border border-rose-500' : ''
+                        className={`w-full px-3.5 py-2.5 rounded-lg bg-[#F4F8FC] hover:bg-[#EEF4FB] focus:bg-white text-slate-900 placeholder-slate-400 text-xs font-medium border border-slate-200/90 focus:border-[#0072CE] focus:outline-none focus:ring-2 focus:ring-[#0072CE]/20 transition-all shadow-sm ${
+                          regErrors.entityName ? '!border-rose-500' : ''
                         }`}
                       />
                       {regErrors.entityName && (
-                        <p className="text-[10px] text-rose-400 mt-0.5">{regErrors.entityName}</p>
+                        <p className="text-[10px] text-rose-500 font-medium mt-0.5">{regErrors.entityName}</p>
                       )}
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      <label className="block text-xs font-bold text-[#003A70] mb-1">
                         Entity Description
                       </label>
                       <FieldTooltip
@@ -670,18 +705,18 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                           value={regForm.entityDescription}
                           onChange={(e) => setRegForm({ ...regForm, entityDescription: e.target.value })}
                           placeholder="Enter entity description"
-                          className="w-full px-3.5 py-2.5 rounded-lg bg-white/85 text-black placeholder-slate-500 text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00B2FE] transition-all shadow-sm"
+                          className="w-full px-3.5 py-2.5 rounded-lg bg-[#F4F8FC] hover:bg-[#EEF4FB] focus:bg-white text-slate-900 placeholder-slate-400 text-xs font-medium border border-slate-200/90 focus:border-[#0072CE] focus:outline-none focus:ring-2 focus:ring-[#0072CE]/20 transition-all shadow-sm"
                         />
                       </FieldTooltip>
                     </div>
                   </div>
 
-                  {/* Send Email OTP CTA Button with generous gap */}
+                  {/* Send Email OTP CTA Button */}
                   <div className="pt-2">
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full py-3.5 px-4 text-sm font-bold text-white rounded-xl bg-gradient-to-r from-[#004B87] via-[#006EAF] to-[#009CEB] border-t border-white/40 border-x border-white/10 border-b-2 border-[#002B52] shadow-[0_8px_20px_-4px_rgba(0,75,135,0.5),inset_0_1px_1px_rgba(255,255,255,0.65),inset_0_-2px_4px_rgba(0,0,0,0.3)] hover:brightness-110 hover:shadow-[0_10px_24px_-4px_rgba(0,75,135,0.65)] hover:-translate-y-0.5 active:translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none group"
+                      className="w-full py-3.5 px-4 text-sm font-bold text-white rounded-xl bg-gradient-to-r from-[#004B87] via-[#006EAF] to-[#009CEB] border-t border-white/40 border-x border-white/10 border-b-2 border-[#002B52] shadow-[0_8px_20px_-4px_rgba(0,75,135,0.4),inset_0_1px_1px_rgba(255,255,255,0.65)] hover:brightness-110 hover:shadow-[0_10px_24px_-4px_rgba(0,75,135,0.55)] hover:-translate-y-0.5 active:translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none group"
                     >
                       {isLoading ? (
                         <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -698,10 +733,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 {/* Divider: or */}
                 <div className="relative my-4">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-[#14324F]" />
+                    <div className="w-full border-t border-slate-200" />
                   </div>
                   <div className="relative flex justify-center text-xs">
-                    <span className="px-3 text-slate-400 font-medium bg-[#071B2F] rounded-full">
+                    <span className="px-3 text-slate-400 font-semibold bg-white rounded-full">
                       or
                     </span>
                   </div>
@@ -712,7 +747,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   <button
                     type="button"
                     onClick={() => handleSignIn('FACILITY_OPERATOR')}
-                    className="w-11 h-11 p-2 rounded-2xl bg-[#00B2FE] hover:bg-[#009CEB] text-white shadow-lg shadow-[#00B2FE]/35 hover:scale-105 transition-all flex items-center justify-center cursor-pointer active:scale-95"
+                    className="w-11 h-11 p-2 rounded-2xl bg-[#0072CE] hover:bg-[#005A9E] text-white shadow-md shadow-[#0072CE]/30 hover:scale-105 transition-all flex items-center justify-center cursor-pointer active:scale-95"
                     title="Register with Azure Active Directory (Azure AD)"
                   >
                     <svg
@@ -736,11 +771,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
                 {/* Already have an account? Sign in */}
                 <div className="mt-4 text-center text-xs">
-                  <span className="text-slate-300">Already have an account?</span>{' '}
+                  <span className="text-slate-600">Already have an account?</span>{' '}
                   <button
                     type="button"
                     onClick={() => setAuthMode('login')}
-                    className="text-[#00B2FE] hover:text-cyan-300 font-bold underline cursor-pointer transition-colors"
+                    className="text-[#0072CE] hover:text-[#004B87] font-bold underline cursor-pointer transition-colors"
                   >
                     Sign In
                   </button>
@@ -755,18 +790,18 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               <div className="animate-in fade-in duration-200">
                 {/* Header */}
                 <div className="text-center mb-6">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                  <h2 className="text-2xl sm:text-3xl font-semibold text-[#003A70] tracking-tight">
                     Confirm OTP
                   </h2>
-                  <p className="text-xs text-slate-300/80 mt-1.5 font-normal leading-relaxed max-w-xs mx-auto">
-                    We sent a 6-digit verification code to <span className="font-semibold text-white">{regForm.email || 'your email'}</span>
+                  <p className="text-xs text-slate-500 mt-1.5 font-normal leading-relaxed max-w-xs mx-auto">
+                    We sent a 6-digit verification code to <span className="font-bold text-[#003A70]">{regForm.email || 'your email'}</span>
                   </p>
                 </div>
 
                 <form onSubmit={handleConfirmOtp} className="space-y-4">
                   {/* 6-Digit OTP Boxes */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 text-center mb-2.5">
+                    <label className="block text-xs font-bold text-[#003A70] text-center mb-2.5">
                       Enter 6-Digit Code
                     </label>
                     <div className="flex items-center justify-center gap-2 sm:gap-2.5">
@@ -781,7 +816,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                           onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
                           onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                           onPaste={idx === 0 ? handleOtpPaste : undefined}
-                          className="!w-[42px] !h-[42px] !min-w-[42px] !min-h-[42px] text-center text-base font-bold font-mono rounded-xl bg-white/85 text-black border-2 border-transparent focus:border-[#00B2FE] focus:bg-white focus:ring-2 focus:ring-[#00B2FE]/40 focus:outline-none transition-all shadow-md p-0"
+                          className="!w-[42px] !h-[42px] !min-w-[42px] !min-h-[42px] text-center text-base font-bold font-mono rounded-xl bg-[#F4F8FC] hover:bg-[#EEF4FB] focus:bg-white text-slate-900 border-2 border-slate-200/90 focus:border-[#0072CE] focus:ring-2 focus:ring-[#0072CE]/20 focus:outline-none transition-all shadow-sm p-0"
                           style={{ width: '42px', height: '42px', minWidth: '42px', minHeight: '42px' }}
                           autoFocus={idx === 0}
                         />
@@ -789,7 +824,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                     </div>
 
                     {otpError && (
-                      <p className="text-xs text-rose-400 text-center font-medium mt-2">{otpError}</p>
+                      <p className="text-xs text-rose-500 text-center font-medium mt-2">{otpError}</p>
                     )}
                   </div>
 
@@ -798,7 +833,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                     <button
                       type="button"
                       onClick={handleQuickFillOtp}
-                      className="text-[11px] text-cyan-300 hover:text-cyan-200 underline cursor-pointer"
+                      className="text-[11px] text-[#0072CE] hover:text-[#004B87] font-semibold underline cursor-pointer"
                       title="Auto-fill sample OTP code"
                     >
                       Quick Fill (123456)
@@ -809,14 +844,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                         <button
                           type="button"
                           onClick={handleResendOtp}
-                          className="text-[#00B2FE] hover:text-cyan-300 font-bold underline flex items-center gap-1 cursor-pointer transition-colors"
+                          className="text-[#0072CE] hover:text-[#004B87] font-bold underline flex items-center gap-1 cursor-pointer transition-colors"
                         >
                           <RotateCcw className="w-3 h-3" />
                           <span>Resend Code</span>
                         </button>
                       ) : (
-                        <span className="text-slate-400">
-                          Resend in <span className="font-bold text-slate-200">{otpCountdown}s</span>
+                        <span className="text-slate-500">
+                          Resend in <span className="font-bold text-slate-700">{otpCountdown}s</span>
                         </span>
                       )}
                     </div>
@@ -827,7 +862,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                     <button
                       type="button"
                       onClick={() => setAuthMode('register_details')}
-                      className="w-full py-3.5 px-4 text-xs sm:text-sm font-semibold text-slate-200 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/30 transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer select-none active:scale-[0.98]"
+                      className="w-full py-3.5 px-4 text-xs sm:text-sm font-semibold text-slate-700 rounded-xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer select-none active:scale-[0.98]"
                     >
                       <ArrowLeft className="w-4 h-4" />
                       <span>Back</span>
@@ -836,7 +871,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                     <button
                       type="submit"
                       disabled={isOtpVerifying}
-                      className="w-full py-3.5 px-4 text-xs sm:text-sm font-bold text-white rounded-xl bg-gradient-to-r from-[#004B87] via-[#006EAF] to-[#009CEB] border-t border-white/40 border-x border-white/10 border-b-2 border-[#002B52] shadow-[0_8px_20px_-4px_rgba(0,75,135,0.5),inset_0_1px_1px_rgba(255,255,255,0.65),inset_0_-2px_4px_rgba(0,0,0,0.3)] hover:brightness-110 hover:shadow-[0_10px_24px_-4px_rgba(0,75,135,0.65)] hover:-translate-y-0.5 active:translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer select-none group"
+                      className="w-full py-3.5 px-4 text-xs sm:text-sm font-bold text-white rounded-xl bg-gradient-to-r from-[#004B87] via-[#006EAF] to-[#009CEB] border-t border-white/40 border-x border-white/10 border-b-2 border-[#002B52] shadow-[0_8px_20px_-4px_rgba(0,75,135,0.4),inset_0_1px_1px_rgba(255,255,255,0.65)] hover:brightness-110 hover:shadow-[0_10px_24px_-4px_rgba(0,75,135,0.55)] hover:-translate-y-0.5 active:translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer select-none group"
                     >
                       {isOtpVerifying ? (
                         <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -858,35 +893,35 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             {authMode === 'register_success' && (
               <div className="text-center py-2 animate-in zoom-in-95 duration-200">
                 {/* Success Icon */}
-                <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-400 text-emerald-400 flex items-center justify-center mx-auto mb-4 shadow-[0_0_24px_rgba(16,185,129,0.35)]">
+                <div className="w-16 h-16 rounded-full bg-emerald-50 border-2 border-emerald-500 text-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-[0_0_24px_rgba(16,185,129,0.2)]">
                   <Check className="w-8 h-8 stroke-[3]" />
                 </div>
 
-                <h2 className="text-2xl font-bold text-white tracking-tight">
+                <h2 className="text-2xl font-semibold text-[#003A70] tracking-tight">
                   Successfully Registered!
                 </h2>
 
-                <p className="text-xs text-slate-300/90 mt-2 font-medium leading-relaxed max-w-xs mx-auto">
-                  Welcome, <span className="font-bold text-white">{regForm.firstName || 'Ahmed'} {regForm.lastName || 'Al Zaabi'}</span>. Your data provider account has been created and verified.
+                <p className="text-xs text-slate-600 mt-2 font-medium leading-relaxed max-w-xs mx-auto">
+                  Welcome, <span className="font-bold text-[#003A70]">{regForm.firstName || 'Ahmed'} {regForm.lastName || 'Al Zaabi'}</span>. Your data provider account has been created and verified.
                 </p>
 
                 {/* Account Summary Chip */}
-                <div className="mt-4 p-3 bg-white/10 rounded-xl border border-white/15 text-left text-xs space-y-1">
+                <div className="mt-4 p-3.5 bg-[#F4F8FC] rounded-xl border border-slate-200 text-left text-xs space-y-1.5">
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Account:</span>
-                    <span className="font-semibold text-white truncate max-w-[180px]">{regForm.email || 'ahmed.zaabi@alnoor-energy.ae'}</span>
+                    <span className="text-slate-500 font-medium">Account:</span>
+                    <span className="font-bold text-slate-800 truncate max-w-[180px]">{regForm.email || 'ahmed.zaabi@alnoor-energy.ae'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Entity:</span>
-                    <span className="font-semibold text-white truncate max-w-[180px]">{regForm.entityName || 'Al Noor Energy LLC'}</span>
+                    <span className="text-slate-500 font-medium">Entity:</span>
+                    <span className="font-bold text-slate-800 truncate max-w-[180px]">{regForm.entityName || 'Al Noor Energy LLC'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Role:</span>
-                    <span className="font-semibold text-[#00B2FE]">Data Provider</span>
+                    <span className="text-slate-500 font-medium">Role:</span>
+                    <span className="font-bold text-[#0072CE]">Data Provider</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Status:</span>
-                    <span className="font-semibold text-emerald-400 flex items-center gap-1">
+                    <span className="text-slate-500 font-medium">Status:</span>
+                    <span className="font-bold text-emerald-600 flex items-center gap-1">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       Verified
                     </span>
@@ -897,7 +932,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 <button
                   type="button"
                   onClick={() => handleSignIn('FACILITY_OPERATOR')}
-                  className="w-full py-3.5 px-4 text-sm font-bold text-white rounded-xl bg-gradient-to-r from-[#00875A] via-[#00A86B] to-[#10B981] border-t border-white/40 border-x border-white/10 border-b-2 border-[#005A3C] shadow-[0_8px_20px_-4px_rgba(0,135,90,0.5),inset_0_1px_1px_rgba(255,255,255,0.65)] hover:brightness-110 hover:shadow-[0_10px_24px_-4px_rgba(0,135,90,0.65)] hover:-translate-y-0.5 active:translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 mt-5 cursor-pointer select-none"
+                  className="w-full py-3.5 px-4 text-sm font-bold text-white rounded-xl bg-gradient-to-r from-[#00875A] via-[#00A86B] to-[#10B981] border-t border-white/40 border-x border-white/10 border-b-2 border-[#005A3C] shadow-[0_8px_20px_-4px_rgba(0,135,90,0.4),inset_0_1px_1px_rgba(255,255,255,0.65)] hover:brightness-110 hover:shadow-[0_10px_24px_-4px_rgba(0,135,90,0.55)] hover:-translate-y-0.5 active:translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 mt-5 cursor-pointer select-none"
                 >
                   <span>Proceed to Dashboard</span>
                   <ArrowRight className="w-4 h-4 text-white" />
@@ -910,7 +945,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                       if (regForm.email) setLoginEmail(regForm.email);
                       setAuthMode('login');
                     }}
-                    className="text-xs text-slate-300 hover:text-white underline cursor-pointer transition-colors"
+                    className="text-xs text-slate-500 hover:text-[#003A70] underline cursor-pointer transition-colors font-medium"
                   >
                     Back to Sign In
                   </button>

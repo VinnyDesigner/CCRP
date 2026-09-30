@@ -37,7 +37,6 @@ import {
 import { useMRV } from '../context/MRVContext';
 import { FieldTooltip } from '../components/ui/FieldTooltip';
 import { SortTriangles } from '../components/ui/SortTriangles';
-import emptyFolderIcon from '../assets/empty-folder-icon.png';
 import {
   PerformanceReportData,
   CCRP_PROJECT_PHASES,
@@ -52,7 +51,8 @@ import {
   CCRPApprovedInitiative,
   INITIAL_FACILITY_EMISSIONS,
 } from '../data/facilityEmissionsData';
-import { CCRP_ENTITIES } from '../data/facilityRegistrationsData';
+import { CCRP_ENTITIES, getSectorKpiInfo } from '../data/facilityRegistrationsData';
+import emptyFolderIcon from '../assets/empty-folder-icon.png';
 
 const PERFORMANCE_REPORT_STEPS = [
   { id: 'report-details', stepNumber: 1, title: 'Report Details' },
@@ -124,6 +124,11 @@ export const AnnualEmissionDataView: React.FC = () => {
       comments: '',
       plannedGhgReduction: '142,800',
       actualAnnualEmissionReduction: '138,500',
+      sectorKpiName: 'Renewable Energy Capacity',
+      sectorKpiUnit: 'MW',
+      sectorKpiTarget: 2000,
+      sectorKpiActual: 2000,
+      sectorKpiAchievement: 100,
       supportingDocsFiles: [],
       submittedDate: null,
       updatedDate: null,
@@ -188,6 +193,45 @@ export const AnnualEmissionDataView: React.FC = () => {
   const [formActualAnnualEmissionReduction, setFormActualAnnualEmissionReduction] = useState<number | string>(
     currentRecord.actualAnnualEmissionReduction || ''
   );
+
+  // Sector KPI States
+  const regForActive = (facilityRegistrations[selectedFacilityId] || {}) as any;
+  const projectSector = regForActive.projectSector || (currentRecord as any).projectSector || (currentRecord as any).businessSector || 'Energy';
+  const sectorKpiDefault = getSectorKpiInfo(projectSector);
+
+  const [formSectorKpiName, setFormSectorKpiName] = useState<string>(
+    currentRecord.sectorKpiName || regForActive.sectorKpiName || sectorKpiDefault.kpiName
+  );
+  const [formSectorKpiUnit, setFormSectorKpiUnit] = useState<string>(
+    currentRecord.sectorKpiUnit || regForActive.sectorKpiUnit || sectorKpiDefault.unit
+  );
+  const [formSectorKpiTarget, setFormSectorKpiTarget] = useState<number | string>(
+    currentRecord.sectorKpiTarget !== undefined
+      ? currentRecord.sectorKpiTarget
+      : regForActive.sectorKpiTarget !== undefined
+      ? regForActive.sectorKpiTarget
+      : sectorKpiDefault.defaultTarget || 100
+  );
+  const [formSectorKpiActual, setFormSectorKpiActual] = useState<number | string>(
+    currentRecord.sectorKpiActual !== undefined
+      ? currentRecord.sectorKpiActual
+      : currentRecord.sectorKpiTarget !== undefined
+      ? currentRecord.sectorKpiTarget
+      : regForActive.sectorKpiTarget !== undefined
+      ? regForActive.sectorKpiTarget
+      : sectorKpiDefault.defaultTarget || 100
+  );
+
+  // Calculated KPI Achievement % = (Actual / Target) * 100
+  const computedKpiAchievement = useMemo(() => {
+    const target = Number(formSectorKpiTarget);
+    const actual = Number(formSectorKpiActual);
+    if (!isNaN(target) && target > 0 && !isNaN(actual) && formSectorKpiActual !== '') {
+      return ((actual / target) * 100).toFixed(1);
+    }
+    return '100.0';
+  }, [formSectorKpiTarget, formSectorKpiActual]);
+
   const [formSupportingDocs, setFormSupportingDocs] = useState<
     { id: string; name: string; size: string; uploadDate: string }[]
   >(currentRecord.supportingDocsFiles || []);
@@ -200,11 +244,17 @@ export const AnnualEmissionDataView: React.FC = () => {
     if (matched) {
       const reg = facilityRegistrations[matched.id] || {};
       const cadence = reg.reportingCadence || reg.cadence || matched.cadence || 'Semiannual';
+      const sec = reg.projectSector || matched.sector || 'Energy';
+      const kpi = getSectorKpiInfo(sec);
       setFormInitiativeId(matched.initiativeCode);
       setFormInitiativeName(matched.name);
       setFormEntity(matched.entity);
       setFormPillar(matched.pillar);
       setFormCadence(cadence);
+      setFormSectorKpiName(reg.sectorKpiName || kpi.kpiName);
+      setFormSectorKpiUnit(reg.sectorKpiUnit || kpi.unit);
+      setFormSectorKpiTarget(reg.sectorKpiTarget !== undefined ? reg.sectorKpiTarget : (kpi.defaultTarget || 100));
+      setFormSectorKpiActual(reg.sectorKpiTarget !== undefined ? reg.sectorKpiTarget : (kpi.defaultTarget || 100));
       const validPeriods = getReportingPeriodsForCadence(cadence);
       setFormProgressReportPeriod(validPeriods[0]);
     }
@@ -221,6 +271,8 @@ export const AnnualEmissionDataView: React.FC = () => {
 
     const cadence = reg?.reportingCadence || reg?.cadence || rec.reportingCadence || matched?.cadence || 'Semiannual';
     const validPeriods = getReportingPeriodsForCadence(cadence);
+    const sec = reg?.projectSector || rec.projectSector || rec.businessSector || matched?.sector || 'Energy';
+    const kpiInfo = getSectorKpiInfo(sec);
 
     setFormInitiativeId(initCode);
     setFormInitiativeName(rec.initiativeName || rec.facilityName || matched?.name || CCRP_APPROVED_INITIATIVES[0].name);
@@ -245,6 +297,25 @@ export const AnnualEmissionDataView: React.FC = () => {
     setFormComments(rec.comments || '');
     setFormPlannedGhgReduction(rec.plannedGhgReduction || rec.totalEmissions || '');
     setFormActualAnnualEmissionReduction(rec.actualAnnualEmissionReduction || rec.totalScope1 || '');
+
+    setFormSectorKpiName(rec.sectorKpiName || reg.sectorKpiName || kpiInfo.kpiName);
+    setFormSectorKpiUnit(rec.sectorKpiUnit || reg.sectorKpiUnit || kpiInfo.unit);
+    setFormSectorKpiTarget(
+      rec.sectorKpiTarget !== undefined
+        ? rec.sectorKpiTarget
+        : reg.sectorKpiTarget !== undefined
+        ? reg.sectorKpiTarget
+        : kpiInfo.defaultTarget || 100
+    );
+    setFormSectorKpiActual(
+      rec.sectorKpiActual !== undefined
+        ? rec.sectorKpiActual
+        : rec.sectorKpiTarget !== undefined
+        ? rec.sectorKpiTarget
+        : reg.sectorKpiTarget !== undefined
+        ? reg.sectorKpiTarget
+        : kpiInfo.defaultTarget || 100
+    );
     setFormSupportingDocs(rec.supportingDocsFiles || []);
   };
 
@@ -516,6 +587,11 @@ export const AnnualEmissionDataView: React.FC = () => {
         comments: formComments,
         plannedGhgReduction: formPlannedGhgReduction,
         actualAnnualEmissionReduction: formActualAnnualEmissionReduction,
+        sectorKpiName: formSectorKpiName,
+        sectorKpiUnit: formSectorKpiUnit,
+        sectorKpiTarget: formSectorKpiTarget,
+        sectorKpiActual: formSectorKpiActual,
+        sectorKpiAchievement: computedKpiAchievement,
         supportingDocsFiles: formSupportingDocs,
         updatedDate: todayStr,
 
@@ -565,6 +641,11 @@ export const AnnualEmissionDataView: React.FC = () => {
         comments: formComments,
         plannedGhgReduction: formPlannedGhgReduction,
         actualAnnualEmissionReduction: formActualAnnualEmissionReduction,
+        sectorKpiName: formSectorKpiName,
+        sectorKpiUnit: formSectorKpiUnit,
+        sectorKpiTarget: formSectorKpiTarget,
+        sectorKpiActual: formSectorKpiActual,
+        sectorKpiAchievement: computedKpiAchievement,
         supportingDocsFiles: formSupportingDocs,
         submittedDate: todayStr,
         updatedDate: todayStr,
@@ -1179,7 +1260,7 @@ export const AnnualEmissionDataView: React.FC = () => {
           </div>
         </div>
 
-        {/* Row 2: 3 Input Fields in a 4-column row (Initiative Name, Progress Report Period, Entity) with 4th column as empty space */}
+        {/* Row 2: Input Fields in a 4-column row (Initiative Name, Entity) with 3rd & 4th columns as empty space */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-0.5 items-end">
           {/* Col 1: Initiative Name Text Box */}
           <div>
@@ -1212,48 +1293,7 @@ export const AnnualEmissionDataView: React.FC = () => {
             </div>
           </div>
 
-          {/* Col 2: Progress Report Period Select */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Progress Report Period
-            </label>
-            <div className="relative">
-              <FieldTooltip content="Quarterly progress reporting cycle (Q1, Q2, Q3, Q4).">
-                {isReadOnly ? (
-                  <input
-                    type="text"
-                    readOnly
-                    disabled
-                    value={formProgressReportPeriod}
-                    className="w-full h-9 px-3.5 bg-slate-200/90 border border-slate-300 rounded-[8px] text-xs text-slate-800 font-bold cursor-not-allowed select-none"
-                  />
-                ) : (
-                  <div className="relative">
-                    <select
-                      value={formProgressReportPeriod}
-                      onChange={(e) => {
-                        setFormProgressReportPeriod(e.target.value);
-                        updateCurrentRecord((prev) => ({
-                          ...prev,
-                          progressReportPeriod: e.target.value,
-                        }));
-                      }}
-                      className="w-full h-9 px-3.5 bg-white border border-slate-300 rounded-[8px] text-xs text-slate-800 font-bold focus:outline-none focus:border-[#004B87] shadow-2xs appearance-none pr-8 cursor-pointer"
-                    >
-                      {availablePeriods.map((period) => (
-                        <option key={period} value={period}>
-                          {period}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  </div>
-                )}
-              </FieldTooltip>
-            </div>
-          </div>
-
-          {/* Col 3: Entity Select */}
+          {/* Col 2: Entity Select */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
               Entity
@@ -1295,7 +1335,8 @@ export const AnnualEmissionDataView: React.FC = () => {
             </div>
           </div>
 
-          {/* Col 4: Empty Space for this row only */}
+          {/* Col 3 & 4: Empty Space for this row only */}
+          <div className="hidden lg:block"></div>
           <div className="hidden lg:block"></div>
         </div>
       </div>
@@ -1701,6 +1742,93 @@ export const AnnualEmissionDataView: React.FC = () => {
                           ))}
                         </select>
                       )}
+                    </FieldTooltip>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sector KPI Performance */}
+              <div>
+                <h4 className="text-xs font-bold text-[#336D9F] mb-3">
+                  Sector KPI Performance ({formSectorKpiName})
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {/* KPI Target (from registration) */}
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                      KPI Target ({formSectorKpiUnit})
+                    </label>
+                    <FieldTooltip content={`Baseline statutory target value established in project registration for ${formSectorKpiName}.`}>
+                      <input
+                        type="text"
+                        readOnly
+                        disabled
+                        value={formSectorKpiTarget !== undefined && formSectorKpiTarget !== '' ? `${Number(formSectorKpiTarget).toLocaleString()} ${formSectorKpiUnit}` : '—'}
+                        className="w-full px-3.5 py-2 bg-[#F1F5F9] border border-slate-200 rounded-lg text-slate-800 font-bold text-xs cursor-not-allowed select-none"
+                      />
+                    </FieldTooltip>
+                  </div>
+
+                  {/* Actual KPI Value (Editable) */}
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                      Actual KPI Value ({formSectorKpiUnit}) *
+                    </label>
+                    <FieldTooltip content={`Realized performance achieved during this reporting period for ${formSectorKpiName}.`}>
+                      <input
+                        type="number"
+                        step="any"
+                        readOnly={isReadOnly}
+                        disabled={isReadOnly}
+                        value={formSectorKpiActual}
+                        onChange={(e) => setFormSectorKpiActual(e.target.value)}
+                        placeholder={`e.g. ${formSectorKpiTarget || '100'}`}
+                        className={`w-full px-3.5 py-2 border rounded-lg text-slate-800 font-bold text-xs shadow-xs ${
+                          isReadOnly
+                            ? 'bg-[#F1F5F9] border-slate-200 cursor-not-allowed select-none'
+                            : 'bg-white border-slate-200 focus:outline-none focus:border-[#336D9F]'
+                        }`}
+                      />
+                    </FieldTooltip>
+                  </div>
+
+                  {/* Achievement % (Calculated = Actual / Target * 100) */}
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                      Achievement (%)
+                    </label>
+                    <FieldTooltip content="Calculated achievement percentage based on realized KPI vs baseline target (Actual / Target × 100).">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          readOnly
+                          disabled
+                          value={`${computedKpiAchievement}%`}
+                          className={`w-full px-3.5 py-2 bg-[#F1F5F9] border border-slate-200 rounded-lg font-bold text-xs cursor-not-allowed select-none ${
+                            Number(computedKpiAchievement) >= 100
+                              ? 'text-[#00875A]'
+                              : Number(computedKpiAchievement) >= 80
+                              ? 'text-[#004B87]'
+                              : 'text-amber-700'
+                          }`}
+                        />
+                      </div>
+                    </FieldTooltip>
+                  </div>
+
+                  {/* Driver Sector */}
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1 text-xs">
+                      Driver Sector
+                    </label>
+                    <FieldTooltip content="Governing economic sector driving this KPI requirement.">
+                      <input
+                        type="text"
+                        readOnly
+                        disabled
+                        value={projectSector}
+                        className="w-full px-3.5 py-2 bg-[#F1F5F9] border border-slate-200 rounded-lg text-slate-700 font-semibold text-xs cursor-not-allowed select-none truncate"
+                      />
                     </FieldTooltip>
                   </div>
                 </div>

@@ -7,6 +7,46 @@ export interface FacilityRegistrationVersionSnapshot {
   data: Record<string, any>;
 }
 
+export interface SectorKpiMapping {
+  kpiName: string;
+  unit: string;
+  defaultTarget?: number | string;
+}
+
+export const SECTOR_KPI_MAP: Record<string, SectorKpiMapping> = {
+  Energy: { kpiName: 'Renewable Energy Capacity', unit: 'MW', defaultTarget: 2000 },
+  Environment: { kpiName: 'Area Restored', unit: 'ha', defaultTarget: 500 },
+  'Coastal & Marine Ecosystems': { kpiName: 'Area Restored', unit: 'ha', defaultTarget: 500 },
+  'Agriculture, Forestry & Land Use (AFOLU)': { kpiName: 'Area Restored', unit: 'ha', defaultTarget: 300 },
+  'Infrastructure & Built Environment': { kpiName: 'Area Restored', unit: 'ha', defaultTarget: 100 },
+  'Waste Management': { kpiName: 'Renewable Energy Capacity', unit: 'MW', defaultTarget: 35 },
+  Transport: { kpiName: 'Low-Emission Fleet', unit: 'Vehicles', defaultTarget: 250 },
+  Industry: { kpiName: 'Energy Efficiency Improvement', unit: '%', defaultTarget: 25 },
+  'Industry & Manufacturing': { kpiName: 'Energy Efficiency Improvement', unit: '%', defaultTarget: 25 },
+  Health: { kpiName: 'Climate Health Risk Reduction', unit: '%', defaultTarget: 30 },
+  Other: { kpiName: 'Custom KPI', unit: 'Units', defaultTarget: 100 },
+};
+
+export const getSectorKpiInfo = (sector?: string, customName?: string, customUnit?: string): SectorKpiMapping => {
+  if (!sector) return { kpiName: 'Renewable Energy Capacity', unit: 'MW', defaultTarget: 2000 };
+  if (sector === 'Other' && customName) {
+    return {
+      kpiName: customName,
+      unit: customUnit || 'Units',
+      defaultTarget: 100,
+    };
+  }
+  const match = SECTOR_KPI_MAP[sector];
+  if (match) return match;
+  const foundKey = Object.keys(SECTOR_KPI_MAP).find((k) => k.toLowerCase() === sector.toLowerCase());
+  if (foundKey) return SECTOR_KPI_MAP[foundKey];
+  return {
+    kpiName: customName || 'Custom KPI',
+    unit: customUnit || 'Units',
+    defaultTarget: 100,
+  };
+};
+
 export interface CCRPProjectRegistration {
   // Step 1: Project Details
   // Section 1: Project Information
@@ -32,6 +72,11 @@ export interface CCRPProjectRegistration {
   strategicObjectiveOther?: string;
   pillar: string;
   pillarOther?: string;
+
+  // Dynamic Sector KPI
+  sectorKpiName?: string;
+  sectorKpiUnit?: string;
+  sectorKpiTarget?: string | number;
 
   // Section: Indicators and targets 2023-2027
   indicatorsAndTargets: string[];
@@ -81,6 +126,9 @@ export const BLANK_FACILITY_REGISTRATION: CCRPProjectRegistration = {
   strategicObjective: 'Reduce GHG Emissions in Key Sectors',
   strategicObjectiveOther: '',
   pillar: 'Mitigation',
+  sectorKpiName: 'Renewable Energy Capacity',
+  sectorKpiUnit: 'MW',
+  sectorKpiTarget: 2000,
   indicatorsAndTargets: [
     'Percentage of total GHG emissions reduced from 2016 levels 22% by 2027',
     'Percentage of GHG emissions reduced in the electricity and water sector from 2016 levels 43% by 2027',
@@ -123,6 +171,9 @@ export const SAMPLE_DEMO_FACILITY_REGISTRATION: CCRPProjectRegistration = {
   strategicObjective: 'Reduce GHG Emissions in Key Sectors',
   strategicObjectiveOther: '',
   pillar: 'Mitigation',
+  sectorKpiName: 'Renewable Energy Capacity',
+  sectorKpiUnit: 'MW',
+  sectorKpiTarget: 2000,
   indicatorsAndTargets: [
     'Percentage of total GHG emissions reduced from 2016 levels 22% by 2027',
     'Percentage of GHG emissions reduced in the electricity and water sector from 2016 levels 43% by 2027',
@@ -164,6 +215,9 @@ export const INITIAL_FACILITY_REGISTRATIONS: Record<string, CCRPProjectRegistrat
     strategicObjective: 'Reduce GHG Emissions in Key Sectors',
     strategicObjectiveOther: '',
     pillar: 'Mitigation',
+    sectorKpiName: 'Renewable Energy Capacity',
+    sectorKpiUnit: 'MW',
+    sectorKpiTarget: 2000,
     indicatorsAndTargets: [
       'Percentage of total GHG emissions reduced from 2016 levels 22% by 2027',
       'Percentage of GHG emissions reduced in the electricity and water sector from 2016 levels 43% by 2027',
@@ -200,6 +254,9 @@ export const INITIAL_FACILITY_REGISTRATIONS: Record<string, CCRPProjectRegistrat
     strategicObjective: 'Drive a Low-Carbon Innovation and Economic Diversification Agenda',
     strategicObjectiveOther: '',
     pillar: 'Economic Diversification',
+    sectorKpiName: 'Energy Efficiency Improvement',
+    sectorKpiUnit: '%',
+    sectorKpiTarget: 25,
     indicatorsAndTargets: [
       'Percentage of GHG emissions reduced in the industrial sector from 2016 levels',
       'Percentage of total GHG emissions reduced from 2016 levels 22% by 2027',
@@ -236,6 +293,9 @@ export const INITIAL_FACILITY_REGISTRATIONS: Record<string, CCRPProjectRegistrat
     strategicObjective: 'Increase Removal of Greenhouse Gas (GHG) Emissions Through Carbon Sinks',
     strategicObjectiveOther: '',
     pillar: 'Adaptation',
+    sectorKpiName: 'Area Restored',
+    sectorKpiUnit: 'ha',
+    sectorKpiTarget: 500,
     indicatorsAndTargets: [
       'Percentage of emissions removed from total emissions through carbon sinks 3% by 2027',
       'Percentage of adaptation plans developed for the four key sectors (health, energy, infrastructure, and environment) 100% by 2024',
@@ -272,6 +332,9 @@ export const INITIAL_FACILITY_REGISTRATIONS: Record<string, CCRPProjectRegistrat
     strategicObjective: 'Reduce GHG Emissions in Key Sectors',
     strategicObjectiveOther: '',
     pillar: 'Mitigation',
+    sectorKpiName: 'Low-Emission Fleet',
+    sectorKpiUnit: 'Vehicles',
+    sectorKpiTarget: 250,
     indicatorsAndTargets: [
       'Percentage of GHG emissions reduced in the transport sector from 2016 levels 10% by 2027',
       'Percentage of total GHG emissions reduced from 2016 levels 22% by 2027',
@@ -307,6 +370,9 @@ export const INITIAL_FACILITY_REGISTRATIONS: Record<string, CCRPProjectRegistrat
     strategicObjective: 'Reduce GHG Emissions in Key Sectors',
     strategicObjectiveOther: '',
     pillar: 'Cross Cutting',
+    sectorKpiName: 'Renewable Energy Capacity',
+    sectorKpiUnit: 'MW',
+    sectorKpiTarget: 35,
     indicatorsAndTargets: [
       'Percentage of GHG emissions reduced in the waste sector from 2016 levels 41% by 2027',
       'Percentage of total GHG emissions reduced from 2016 levels 22% by 2027',
@@ -343,6 +409,9 @@ export const INITIAL_FACILITY_REGISTRATIONS: Record<string, CCRPProjectRegistrat
     strategicObjective: 'Enhance Resilience of Vulnerable Sectors to Adapt to Climate Change Impacts',
     strategicObjectiveOther: '',
     pillar: 'Adaptation',
+    sectorKpiName: 'Area Restored',
+    sectorKpiUnit: 'ha',
+    sectorKpiTarget: 100,
     indicatorsAndTargets: [
       'Percentage of adaptation plans developed for the four key sectors (health, energy, infrastructure, and environment) 100% by 2024',
     ],
@@ -378,6 +447,9 @@ export const INITIAL_FACILITY_REGISTRATIONS: Record<string, CCRPProjectRegistrat
     strategicObjective: 'Enhance Resilience of Vulnerable Sectors to Adapt to Climate Change Impacts',
     strategicObjectiveOther: '',
     pillar: 'Adaptation',
+    sectorKpiName: 'Area Restored',
+    sectorKpiUnit: 'ha',
+    sectorKpiTarget: 300,
     indicatorsAndTargets: [
       'Percentage of GHG emissions reduced in the agricultural sector from 2016 levels 20% by 2027',
     ],

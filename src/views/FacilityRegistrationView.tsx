@@ -38,6 +38,8 @@ import {
   CCRP_PILLARS,
   CCRP_INDICATORS_TARGETS_CHECKLIST,
   CCRP_INDICATORS_BY_PILLAR,
+  getSectorKpiInfo,
+  SECTOR_KPI_MAP,
 } from '../data/facilityRegistrationsData';
 export type { FacilityRegistrationVersionSnapshot, CCRPProjectRegistration };
 
@@ -1327,12 +1329,30 @@ export const FacilityRegistrationView: React.FC = () => {
                           <select
                             value={formData.projectSector || 'Energy'}
                             onChange={(e) => {
-                              if (e.target.value === 'Other') {
+                              const newSector = e.target.value;
+                              if (newSector === 'Other') {
                                 setIsCustomSectorInput(true);
                                 handleInputChange('projectSector', 'Other');
+                                const kpi = getSectorKpiInfo('Other');
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  projectSector: 'Other',
+                                  sectorKpiName: prev.sectorKpiName || kpi.kpiName,
+                                  sectorKpiUnit: prev.sectorKpiUnit || kpi.unit,
+                                  sectorKpiTarget: prev.sectorKpiTarget !== undefined ? prev.sectorKpiTarget : kpi.defaultTarget,
+                                }));
                               } else {
-                                handleInputChange('projectSector', e.target.value);
+                                handleInputChange('projectSector', newSector);
                                 handleInputChange('projectSectorOther', '');
+                                const kpi = getSectorKpiInfo(newSector);
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  projectSector: newSector,
+                                  projectSectorOther: '',
+                                  sectorKpiName: kpi.kpiName,
+                                  sectorKpiUnit: kpi.unit,
+                                  sectorKpiTarget: kpi.defaultTarget,
+                                }));
                               }
                             }}
                             className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#336D9F] shadow-xs cursor-pointer text-xs text-navy-900 font-medium"
@@ -1477,7 +1497,7 @@ export const FacilityRegistrationView: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Row 2: 1 field (Strategic Objective), remaining 3 columns empty space */}
+                  {/* Row 2: Strategic Objective, Sector KPI Target, Sector KPI Name, and 1 empty space */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                     <div>
                       <label className="block text-slate-700 font-semibold mb-1">
@@ -1533,9 +1553,51 @@ export const FacilityRegistrationView: React.FC = () => {
                         </FieldTooltip>
                       )}
                     </div>
-                    {/* Remaining 3 columns in the 4-column row stay empty */}
-                    <div className="hidden lg:block"></div>
-                    <div className="hidden lg:block"></div>
+
+                    {/* Sector KPI Target */}
+                    <div>
+                      <label className="block text-slate-700 font-semibold mb-1">
+                        Sector KPI Target ({formData.sectorKpiUnit || getSectorKpiInfo(formData.projectSector).unit}) *
+                      </label>
+                      <FieldTooltip content={`Baseline statutory target value for ${formData.sectorKpiName || getSectorKpiInfo(formData.projectSector).kpiName}.`} example="2000">
+                        <input
+                          type="number"
+                          step="any"
+                          value={formData.sectorKpiTarget !== undefined ? formData.sectorKpiTarget : (getSectorKpiInfo(formData.projectSector).defaultTarget || '')}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            handleInputChange('sectorKpiTarget', val);
+                            const kpi = getSectorKpiInfo(formData.projectSector);
+                            setFormData((prev) => ({
+                              ...prev,
+                              sectorKpiTarget: val,
+                              sectorKpiName: prev.sectorKpiName || kpi.kpiName,
+                              sectorKpiUnit: prev.sectorKpiUnit || kpi.unit,
+                            }));
+                          }}
+                          placeholder={`e.g. ${getSectorKpiInfo(formData.projectSector).defaultTarget || '100'}`}
+                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-navy-900 focus:outline-none focus:border-[#336D9F] shadow-xs font-bold text-xs"
+                        />
+                      </FieldTooltip>
+                    </div>
+
+                    {/* Sector KPI Name (Auto-derived from Sector) */}
+                    <div>
+                      <label className="block text-slate-700 font-semibold mb-1">
+                        Sector KPI Name
+                      </label>
+                      <FieldTooltip content="Driver KPI automatically assigned based on project sector classification.">
+                        <input
+                          type="text"
+                          readOnly
+                          disabled
+                          value={formData.sectorKpiName || getSectorKpiInfo(formData.projectSector).kpiName}
+                          className="w-full px-3.5 py-2 bg-[#F1F5F9] border border-slate-200 rounded-lg text-slate-700 font-semibold text-xs shadow-2xs cursor-not-allowed select-none truncate"
+                        />
+                      </FieldTooltip>
+                    </div>
+
+                    {/* Remaining 1 column empty space */}
                     <div className="hidden lg:block"></div>
                   </div>
                 </div>
@@ -1579,14 +1641,14 @@ export const FacilityRegistrationView: React.FC = () => {
                     {/* Field 3: Start Date */}
                     <div>
                       <label className="block text-slate-700 font-semibold mb-1">
-                        Start Date
+                        Start Date *
                       </label>
                       <FieldTooltip content="Official commencement or commissioning date of the initiative." format="YYYY-MM-DD" example="2023-01-01">
                         <input
                           type="date"
                           value={formData.startDate}
                           onChange={(e) => handleInputChange('startDate', e.target.value)}
-                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-navy-900 focus:outline-none focus:border-[#336D9F] shadow-xs font-medium text-xs"
+                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-navy-900 focus:outline-none focus:border-[#336D9F] shadow-xs font-medium text-xs cursor-pointer"
                         />
                       </FieldTooltip>
                     </div>
@@ -1601,7 +1663,7 @@ export const FacilityRegistrationView: React.FC = () => {
                           type="date"
                           value={formData.endDate}
                           onChange={(e) => handleInputChange('endDate', e.target.value)}
-                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-navy-900 focus:outline-none focus:border-[#336D9F] shadow-xs font-medium text-xs"
+                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-navy-900 focus:outline-none focus:border-[#336D9F] shadow-xs font-medium text-xs cursor-pointer"
                         />
                       </FieldTooltip>
                     </div>
@@ -1990,7 +2052,7 @@ export const FacilityRegistrationView: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Row 2: 1 field, 3 empty */}
+                {/* Row 2: Strategic Objective, Sector KPI Target, Sector KPI Name, and 1 empty space */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                   <div>
                     <label className="block text-slate-700 font-semibold mb-1">
@@ -2004,8 +2066,34 @@ export const FacilityRegistrationView: React.FC = () => {
                       className="w-full px-3.5 py-2 bg-[#F8FAFC] border border-slate-200 rounded-lg text-slate-800 font-medium text-xs shadow-2xs cursor-not-allowed select-none truncate"
                     />
                   </div>
-                  <div className="hidden lg:block"></div>
-                  <div className="hidden lg:block"></div>
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">
+                      Sector KPI Target ({viewingData.sectorKpiUnit || getSectorKpiInfo(viewingData.projectSector).unit})
+                    </label>
+                    <input
+                      type="text"
+                      readOnly
+                      disabled
+                      value={
+                        viewingData.sectorKpiTarget !== undefined && viewingData.sectorKpiTarget !== ''
+                          ? `${Number(viewingData.sectorKpiTarget).toLocaleString()} ${viewingData.sectorKpiUnit || getSectorKpiInfo(viewingData.projectSector).unit}`
+                          : `${getSectorKpiInfo(viewingData.projectSector).defaultTarget} ${getSectorKpiInfo(viewingData.projectSector).unit}`
+                      }
+                      className="w-full px-3.5 py-2 bg-[#F8FAFC] border border-slate-200 rounded-lg text-slate-800 font-bold text-xs shadow-2xs cursor-not-allowed select-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">
+                      Sector KPI Name
+                    </label>
+                    <input
+                      type="text"
+                      readOnly
+                      disabled
+                      value={viewingData.sectorKpiName || getSectorKpiInfo(viewingData.projectSector).kpiName}
+                      className="w-full px-3.5 py-2 bg-[#F8FAFC] border border-slate-200 rounded-lg text-slate-800 font-semibold text-xs shadow-2xs cursor-not-allowed select-none truncate"
+                    />
+                  </div>
                   <div className="hidden lg:block"></div>
                 </div>
               </div>

@@ -1454,11 +1454,10 @@ export const VersionHistoryView: React.FC = () => {
                       Start Date *
                     </label>
                     <input
-                      type="text"
+                      type="date"
                       value={formData.startDate}
                       onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                      placeholder="e.g. 2023-01-01"
-                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] text-xs"
+                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] text-xs cursor-pointer"
                     />
                   </div>
 
@@ -1467,11 +1466,10 @@ export const VersionHistoryView: React.FC = () => {
                       End Date
                     </label>
                     <input
-                      type="text"
+                      type="date"
                       value={formData.endDate}
                       onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                      placeholder="e.g. 2027-12-31"
-                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] text-xs"
+                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-[#004B87] text-xs cursor-pointer"
                     />
                   </div>
                 </div>

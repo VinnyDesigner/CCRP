@@ -22,6 +22,13 @@ export interface PerformanceReportData {
   activitiesOutcomesOutput?: string;
   comments?: string;
 
+  // Dynamic Sector KPI
+  sectorKpiName?: string;
+  sectorKpiUnit?: string;
+  sectorKpiTarget?: string | number;
+  sectorKpiActual?: string | number;
+  sectorKpiAchievement?: number | string;
+
   // Step 3: GHG Emissions
   plannedGhgReduction?: number | string;
   actualAnnualEmissionReduction?: number | string;
@@ -231,6 +238,11 @@ export const INITIAL_FACILITY_EMISSIONS: Record<string, PerformanceReportData> =
     raiseToCommittee: 'No',
     activitiesOutcomesOutput: 'Successfully completed PV array installation for Block C (600MW). Telemetry links integrated with ADDC dispatch center.',
     comments: 'Phase 2 commissioning test scheduled for Q3 with DoE inspection team.',
+    sectorKpiName: 'Renewable Energy Capacity',
+    sectorKpiUnit: 'MW',
+    sectorKpiTarget: 2000,
+    sectorKpiActual: 2000,
+    sectorKpiAchievement: 100,
     plannedGhgReduction: '142,800',
     actualAnnualEmissionReduction: '138,500',
     supportingDocsFiles: [
@@ -273,6 +285,11 @@ export const INITIAL_FACILITY_EMISSIONS: Record<string, PerformanceReportData> =
     raiseToCommittee: 'Yes',
     activitiesOutcomesOutput: 'Front-End Engineering Design (FEED) completed for 100MW pilot electrolyzer facility in Ruwais industrial zone.',
     comments: 'Commercial agreements pending final review by Ministry of Industry and Advanced Technology (MoIAT).',
+    sectorKpiName: 'Energy Efficiency Improvement',
+    sectorKpiUnit: '%',
+    sectorKpiTarget: 25,
+    sectorKpiActual: 20,
+    sectorKpiAchievement: 80,
     plannedGhgReduction: '',
     actualAnnualEmissionReduction: '',
     supportingDocsFiles: [
@@ -313,6 +330,11 @@ export const INITIAL_FACILITY_EMISSIONS: Record<string, PerformanceReportData> =
     raiseToCommittee: 'No',
     activitiesOutcomesOutput: 'Planted over 1.2 million mangrove saplings across coastal lagoons with 94% seedling survival rate.',
     comments: 'Drone seed-dispersal methodology expanded to Eastern Mangroves sector.',
+    sectorKpiName: 'Area Restored',
+    sectorKpiUnit: 'ha',
+    sectorKpiTarget: 500,
+    sectorKpiActual: 520,
+    sectorKpiAchievement: 104,
     plannedGhgReduction: '',
     actualAnnualEmissionReduction: '',
     supportingDocsFiles: [
@@ -353,6 +375,11 @@ export const INITIAL_FACILITY_EMISSIONS: Record<string, PerformanceReportData> =
     raiseToCommittee: 'No',
     activitiesOutcomesOutput: 'Deployment of 120 fast EV charging hubs and commissioning of 45 electric buses in municipal fleet.',
     comments: 'Coordination underway with DMT for right-of-way permissions in Al Ain region.',
+    sectorKpiName: 'Low-Emission Fleet',
+    sectorKpiUnit: 'Vehicles',
+    sectorKpiTarget: 250,
+    sectorKpiActual: 210,
+    sectorKpiAchievement: 84,
     plannedGhgReduction: '24,000',
     actualAnnualEmissionReduction: '21,500',
     supportingDocsFiles: [],
@@ -391,6 +418,11 @@ export const INITIAL_FACILITY_EMISSIONS: Record<string, PerformanceReportData> =
     raiseToCommittee: 'No',
     activitiesOutcomesOutput: 'Full anaerobic digestion train operational; diverted 45,000 tonnes of organic waste in H1.',
     comments: 'Commercial operations running at peak efficiency.',
+    sectorKpiName: 'Renewable Energy Capacity',
+    sectorKpiUnit: 'MW',
+    sectorKpiTarget: 35,
+    sectorKpiActual: 35,
+    sectorKpiAchievement: 100,
     plannedGhgReduction: '38,500',
     actualAnnualEmissionReduction: '41,200',
     supportingDocsFiles: [],
@@ -429,6 +461,11 @@ export const INITIAL_FACILITY_EMISSIONS: Record<string, PerformanceReportData> =
     raiseToCommittee: 'No',
     activitiesOutcomesOutput: 'Upgraded 12km of arterial stormwater channels in Mussafah and Shakhbout City.',
     comments: 'Resubmitting revised milestone projections following hydrological model update.',
+    sectorKpiName: 'Area Restored',
+    sectorKpiUnit: 'ha',
+    sectorKpiTarget: 100,
+    sectorKpiActual: 80,
+    sectorKpiAchievement: 80,
     plannedGhgReduction: '',
     actualAnnualEmissionReduction: '',
     supportingDocsFiles: [],
@@ -468,6 +505,11 @@ export const INITIAL_FACILITY_EMISSIONS: Record<string, PerformanceReportData> =
     raiseToCommittee: 'No',
     activitiesOutcomesOutput: 'Pilot setup across 80 farms in Al Ain region.',
     comments: 'Preparing data submission for initial performance cycle.',
+    sectorKpiName: 'Area Restored',
+    sectorKpiUnit: 'ha',
+    sectorKpiTarget: 300,
+    sectorKpiActual: 240,
+    sectorKpiAchievement: 80,
     plannedGhgReduction: '',
     actualAnnualEmissionReduction: '',
     supportingDocsFiles: [],

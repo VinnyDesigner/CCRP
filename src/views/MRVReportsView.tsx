@@ -43,7 +43,7 @@ import {
   PerformanceReportData,
   CCRPApprovedInitiative,
 } from '../data/facilityEmissionsData';
-import { INITIAL_FACILITY_REGISTRATIONS } from '../data/facilityRegistrationsData';
+import { INITIAL_FACILITY_REGISTRATIONS, getSectorKpiInfo } from '../data/facilityRegistrationsData';
 
 // ---------------------------------------------------------------------------
 // ALL 7 APPROVED INITIATIVES WITH METADATA & CADENCE
@@ -842,12 +842,23 @@ export const MRVReportsView: React.FC = () => {
   };
 
   // Active initiative metadata
+  // Active initiative metadata
   const activeInitiativeMeta = useMemo(() => {
     return (
       ALL_CCRP_INITIATIVES.find((i) => i.id === selectedProjectId) ||
       ALL_CCRP_INITIATIVES[0]
     );
   }, [selectedProjectId]);
+
+  // Active facility registration data
+  const activeRegData = useMemo(() => {
+    return (
+      facilityRegistrations[selectedProjectId] ||
+      INITIAL_FACILITY_REGISTRATIONS[selectedProjectId] ||
+      facilityRegistrations['fac-1'] ||
+      INITIAL_FACILITY_REGISTRATIONS['fac-1']
+    );
+  }, [selectedProjectId, facilityRegistrations]);
 
   // Available reporting periods for the active initiative and FY
   const availableReportingPeriods = useMemo(() => {
@@ -866,6 +877,32 @@ export const MRVReportsView: React.FC = () => {
       INITIAL_FACILITY_EMISSIONS['fac-1'];
     return rawData;
   }, [selectedProjectId, facilityEmissions]);
+
+  // Dynamic Sector KPI info
+  const activeSectorKpi = useMemo(() => {
+    const kpiInfo = getSectorKpiInfo(
+      activeRegData?.projectSector || activeInitiativeMeta.sector,
+      activeRegData?.sectorKpiName || activeReportData.sectorKpiName,
+      activeRegData?.sectorKpiUnit || activeReportData.sectorKpiUnit
+    );
+
+    const name = activeRegData?.sectorKpiName || activeReportData.sectorKpiName || kpiInfo.kpiName;
+    const unit = activeRegData?.sectorKpiUnit || activeReportData.sectorKpiUnit || kpiInfo.unit;
+    const target = activeRegData?.sectorKpiTarget ?? activeReportData.sectorKpiTarget ?? kpiInfo.defaultTarget ?? 0;
+    const actual = activeReportData.sectorKpiActual ?? (Number(target) > 0 ? Number((Number(target) * 0.95).toFixed(1)) : 0);
+    const achievementPct = activeReportData.sectorKpiAchievement !== undefined
+      ? activeReportData.sectorKpiAchievement
+      : (Number(target) > 0 ? Number(((Number(actual) / Number(target)) * 100).toFixed(1)) : 0);
+
+    return {
+      name,
+      unit,
+      target,
+      actual,
+      achievementPct,
+      sector: activeRegData?.projectSector || activeInitiativeMeta.sector || 'Energy',
+    };
+  }, [activeRegData, activeReportData, activeInitiativeMeta]);
 
   // Derive workflow & review status
   const workflowStatus =
@@ -901,6 +938,16 @@ export const MRVReportsView: React.FC = () => {
 
     // Sync live form edits from facilityEmissions for the active record
     return filteredRows.map((r) => {
+      let rowKpiTarget = activeSectorKpi.target;
+      let rowKpiActual = activeSectorKpi.actual;
+      let rowKpiAchievement = activeSectorKpi.achievementPct;
+
+      if (!r.isCurrent) {
+        const factor = r.actualProgress > 0 ? r.actualProgress / 100 : 0.8;
+        rowKpiActual = typeof rowKpiTarget === 'number' ? Number((rowKpiTarget * factor).toFixed(1)) : rowKpiActual;
+        rowKpiAchievement = Number(rowKpiTarget) > 0 ? Number(((Number(rowKpiActual) / Number(rowKpiTarget)) * 100).toFixed(1)) : 100;
+      }
+
       if (r.isCurrent) {
         const livePlanned =
           activeReportData.plannedProgress !== undefined &&
@@ -931,11 +978,23 @@ export const MRVReportsView: React.FC = () => {
           status: activeReportData.status || r.status,
           plannedGhg: r.plannedGhg !== '—' ? livePlannedGhg : '—',
           actualGhg: r.actualGhg !== '—' ? liveActualGhg : '—',
+          kpiName: activeSectorKpi.name,
+          kpiUnit: activeSectorKpi.unit,
+          kpiTarget: rowKpiTarget,
+          kpiActual: rowKpiActual,
+          kpiAchievement: rowKpiAchievement,
         };
       }
-      return r;
+      return {
+        ...r,
+        kpiName: activeSectorKpi.name,
+        kpiUnit: activeSectorKpi.unit,
+        kpiTarget: rowKpiTarget,
+        kpiActual: rowKpiActual,
+        kpiAchievement: rowKpiAchievement,
+      };
     });
-  }, [selectedProjectId, selectedPeriod, selectedReportingPeriod, activeReportData]);
+  }, [selectedProjectId, selectedPeriod, selectedReportingPeriod, activeReportData, activeSectorKpi]);
 
   // Chart data derived strictly from current dataset
   const performanceChartData = useMemo(() => {
@@ -1015,9 +1074,6 @@ export const MRVReportsView: React.FC = () => {
     activeInitiativeMeta,
   ]);
 
-  // -------------------------------------------------------------------------
-  // 4. CONFIGURED KPI PERFORMANCE DYNAMIC EXTRACTION
-  // -------------------------------------------------------------------------
   const kpiPerformanceList = useMemo(() => {
     const currentPeriodRow =
       currentFYData.find((r) => r.isCurrent) || currentFYData[0];
@@ -1035,23 +1091,25 @@ export const MRVReportsView: React.FC = () => {
         ? currentPeriodRow.actualGhg
         : activeReportData.actualAnnualEmissionReduction || '';
 
+    const sectorKpiIndicator = {
+      name: `Sector KPI: ${activeSectorKpi.name} (${activeSectorKpi.sector})`,
+      target: `${typeof activeSectorKpi.target === 'number' ? activeSectorKpi.target.toLocaleString() : activeSectorKpi.target} ${activeSectorKpi.unit}`,
+      actual: `${typeof activeSectorKpi.actual === 'number' ? activeSectorKpi.actual.toLocaleString() : activeSectorKpi.actual} ${activeSectorKpi.unit}`,
+      variance: `${activeSectorKpi.achievementPct}% Target Achieved`,
+      status: Number(activeSectorKpi.achievementPct) >= 100 ? 'Achieved' : Number(activeSectorKpi.achievementPct) >= 80 ? 'On Track' : 'In Progress',
+      statusVariant: (Number(activeSectorKpi.achievementPct) >= 80 ? 'success' : 'info') as 'success' | 'info',
+    };
+
+    let otherKpis: any[] = [];
     switch (selectedProjectId) {
       case 'fac-1':
-        return [
+        otherKpis = [
           {
             name: 'Annual GHG Emissions Reduction (Electricity Sector)',
             target: plannedGhg ? `${plannedGhg} tCO₂e` : '142,800 tCO₂e',
             actual: actualGhg ? `${actualGhg} tCO₂e` : '138,500 tCO₂e',
             variance: '-4,300 tCO₂e (-3.0%)',
             status: 'On Track',
-            statusVariant: 'success' as const,
-          },
-          {
-            name: 'Clean Solar PV Generation Installed Capacity',
-            target: '2,000 MW',
-            actual: '2,000 MW',
-            variance: '100% Target Met',
-            status: 'Achieved',
             statusVariant: 'success' as const,
           },
           {
@@ -1063,16 +1121,9 @@ export const MRVReportsView: React.FC = () => {
             statusVariant: actualProg >= plannedProg ? ('success' as const) : ('info' as const),
           },
         ];
+        break;
       case 'fac-2':
-        return [
-          {
-            name: 'Pilot Clean Hydrogen Electrolyzer Deployment',
-            target: '150 MW',
-            actual: '50 MW',
-            variance: '-100 MW (33.3% capacity)',
-            status: 'Under Implementation',
-            statusVariant: 'warning' as const,
-          },
+        otherKpis = [
           {
             name: 'Front-End Engineering Design (FEED) Milestone',
             target: `${plannedProg}%`,
@@ -1082,16 +1133,9 @@ export const MRVReportsView: React.FC = () => {
             statusVariant: 'info' as const,
           },
         ];
+        break;
       case 'fac-3':
-        return [
-          {
-            name: 'Coastal Mangrove Blue Carbon Habitat Sequestration',
-            target: '1,200,000 saplings',
-            actual: '1,200,000 (94% survival)',
-            variance: '100% Target Met',
-            status: 'Achieved',
-            statusVariant: 'success' as const,
-          },
+        otherKpis = [
           {
             name: 'Sector Climate Adaptation Plan Milestones',
             target: `${plannedProg}%`,
@@ -1101,8 +1145,9 @@ export const MRVReportsView: React.FC = () => {
             statusVariant: 'success' as const,
           },
         ];
+        break;
       case 'fac-4':
-        return [
+        otherKpis = [
           {
             name: 'Transport Sector GHG Emissions Reduction',
             target: plannedGhg ? `${plannedGhg} tCO₂e` : '24,000 tCO₂e',
@@ -1120,22 +1165,15 @@ export const MRVReportsView: React.FC = () => {
             statusVariant: 'info' as const,
           },
         ];
+        break;
       case 'fac-5':
-        return [
+        otherKpis = [
           {
             name: 'Waste Sector GHG Emissions Reduction',
             target: plannedGhg ? `${plannedGhg} tCO₂e` : '38,500 tCO₂e',
             actual: actualGhg ? `${actualGhg} tCO₂e` : '41,200 tCO₂e',
             variance: '+2,700 tCO₂e (+7.0%)',
             status: 'Target Exceeded',
-            statusVariant: 'success' as const,
-          },
-          {
-            name: 'Biogas Clean Energy Generation & Waste Diversion',
-            target: '35 MW / 45,000 tonnes',
-            actual: '35 MW / 45,000 tonnes',
-            variance: '100% Target Met',
-            status: 'Achieved',
             statusVariant: 'success' as const,
           },
           {
@@ -1147,8 +1185,9 @@ export const MRVReportsView: React.FC = () => {
             statusVariant: 'success' as const,
           },
         ];
+        break;
       case 'fac-6':
-        return [
+        otherKpis = [
           {
             name: 'Urban Stormwater Drainage Climate Resilience Channel Upgrades',
             target: `${plannedProg}%`,
@@ -1166,9 +1205,10 @@ export const MRVReportsView: React.FC = () => {
             statusVariant: 'info' as const,
           },
         ];
+        break;
       case 'fac-7':
       default:
-        return [
+        otherKpis = [
           {
             name: 'Agricultural IoT Precision Smart Irrigation Farm Deployment',
             target: `${plannedProg}%`,
@@ -1186,8 +1226,11 @@ export const MRVReportsView: React.FC = () => {
             statusVariant: 'info' as const,
           },
         ];
+        break;
     }
-  }, [selectedProjectId, activeReportData, currentFYData]);
+
+    return [sectorKpiIndicator, ...otherKpis];
+  }, [selectedProjectId, activeReportData, currentFYData, activeSectorKpi]);
 
   // -------------------------------------------------------------------------
   // 5. TAB 2: SUBMISSION STATUS OVERVIEW DATA
@@ -1577,17 +1620,6 @@ export const MRVReportsView: React.FC = () => {
               );
             })}
           </div>
-
-          {/* Project & FY Indicator Pill in Tab Bar */}
-          <div className="hidden md:flex items-center gap-2 text-xs font-semibold text-slate-500">
-            <span className="text-[11px]">Selected:</span>
-            <span className="font-bold text-[#004B87] bg-[#EBF3FA] px-2.5 py-0.5 rounded-full border border-[#004B87]/20 truncate max-w-[220px]">
-              {activeInitiativeMeta.name}
-            </span>
-            <span className="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 text-[11px]">
-              {selectedPeriod}
-            </span>
-          </div>
         </div>
 
         {/* Scrollable Card Body */}
@@ -1696,17 +1728,20 @@ export const MRVReportsView: React.FC = () => {
               {/* 2. PERFORMANCE DETAILS TABLE */}
               <div className="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-2xs">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse min-w-[900px]">
+                  <table className="w-full text-left text-xs border-collapse min-w-[1050px]">
                     <thead className="sticky top-0 z-10 bg-[#D6E3EF] shadow-xs select-none">
                       <tr className="h-[38px] bg-[#D6E3EF] text-slate-800 font-bold text-xs border-b border-[#5B88B0]/30">
-                        <th className="h-[38px] px-3.5 align-middle bg-[#D6E3EF] font-bold text-slate-800 min-w-[200px]">Initiative / Project</th>
-                        <th className="h-[38px] px-3.5 align-middle bg-[#D6E3EF] font-bold text-slate-800 min-w-[140px]">Entity</th>
-                        <th className="h-[38px] px-3.5 align-middle bg-[#D6E3EF] font-bold text-slate-800 min-w-[110px]">Pillar</th>
+                        <th className="h-[38px] px-3.5 align-middle bg-[#D6E3EF] font-bold text-slate-800 min-w-[190px]">Initiative / Project</th>
+                        <th className="h-[38px] px-3.5 align-middle bg-[#D6E3EF] font-bold text-slate-800 min-w-[130px]">Entity</th>
+                        <th className="h-[38px] px-3.5 align-middle bg-[#D6E3EF] font-bold text-slate-800 min-w-[100px]">Pillar</th>
                         <th className="h-[38px] px-3.5 align-middle bg-[#D6E3EF] font-bold text-slate-800 min-w-[120px]">Reporting Period</th>
                         <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Planned Progress (%)</th>
                         <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Actual Progress (%)</th>
                         <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Variance (%)</th>
-                        <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Project / Initiative Status</th>
+                        <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Project Status</th>
+                        <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">KPI Target</th>
+                        <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">KPI Actual</th>
+                        <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Achievement %</th>
                         <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Planned GHG (tCO₂e)</th>
                         <th className="h-[38px] px-3.5 text-center align-middle bg-[#D6E3EF] font-bold text-slate-800">Actual GHG (tCO₂e)</th>
                       </tr>
@@ -1720,7 +1755,7 @@ export const MRVReportsView: React.FC = () => {
                               idx % 2 === 1 ? 'bg-slate-50/80' : 'bg-white'
                             } hover:bg-[#EBF3FA] transition-colors`}
                           >
-                            <td className="h-[48px] px-3.5 align-middle text-slate-800 font-semibold max-w-[220px]">
+                            <td className="h-[48px] px-3.5 align-middle text-slate-800 font-semibold max-w-[210px]">
                               <span className="block truncate font-bold text-slate-800" title={activeInitiativeMeta.name}>
                                 {activeInitiativeMeta.name}
                               </span>
@@ -1728,7 +1763,7 @@ export const MRVReportsView: React.FC = () => {
                                 {activeInitiativeMeta.initiativeCode}
                               </span>
                             </td>
-                            <td className="h-[48px] px-3.5 align-middle text-slate-600 text-[11px] max-w-[150px]">
+                            <td className="h-[48px] px-3.5 align-middle text-slate-600 text-[11px] max-w-[140px]">
                               <span className="truncate block" title={activeInitiativeMeta.entity}>
                                 {activeInitiativeMeta.entity}
                               </span>
@@ -1771,6 +1806,29 @@ export const MRVReportsView: React.FC = () => {
                             <td className="h-[48px] px-3.5 text-center align-middle">
                               {getProjectStatusBadge(row.status)}
                             </td>
+                            <td className="h-[48px] px-3.5 text-center align-middle font-mono font-medium text-slate-800 whitespace-nowrap">
+                              <span title={`Sector KPI: ${row.kpiName}`}>
+                                {typeof row.kpiTarget === 'number' ? row.kpiTarget.toLocaleString() : row.kpiTarget} {row.kpiUnit}
+                              </span>
+                            </td>
+                            <td className="h-[48px] px-3.5 text-center align-middle font-mono font-bold text-[#004B87] whitespace-nowrap">
+                              <span title={`Sector KPI: ${row.kpiName}`}>
+                                {typeof row.kpiActual === 'number' ? row.kpiActual.toLocaleString() : row.kpiActual} {row.kpiUnit}
+                              </span>
+                            </td>
+                            <td className="h-[48px] px-3.5 text-center align-middle">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[11px] font-bold inline-block min-w-[50px] text-center ${
+                                  Number(row.kpiAchievement) >= 100
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
+                                    : Number(row.kpiAchievement) >= 80
+                                    ? 'bg-sky-50 text-[#004B87] border border-sky-200/60'
+                                    : 'bg-amber-50 text-amber-700 border border-amber-200/60'
+                                }`}
+                              >
+                                {row.kpiAchievement}%
+                              </span>
+                            </td>
                             <td className="h-[48px] px-3.5 text-center align-middle font-mono font-medium text-slate-800">
                               {row.plannedGhg !== '—' ? `${row.plannedGhg}` : '—'}
                             </td>
@@ -1781,7 +1839,7 @@ export const MRVReportsView: React.FC = () => {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={10} className="h-32 text-center text-slate-400 font-medium text-xs align-middle">
+                          <td colSpan={13} className="h-32 text-center text-slate-400 font-medium text-xs align-middle">
                             No performance reporting records found for {selectedPeriod} {selectedReportingPeriod !== 'All' ? `(${selectedReportingPeriod})` : ''}.
                           </td>
                         </tr>
@@ -1790,6 +1848,7 @@ export const MRVReportsView: React.FC = () => {
                   </table>
                 </div>
               </div>
+
 
               {/* 3. REPORTING COMPLIANCE SECTION */}
               <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 sm:p-4 space-y-3">
@@ -1904,16 +1963,6 @@ export const MRVReportsView: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <Target className="w-4 h-4 text-[#004B87]" />
                     <h3 className="text-sm font-bold text-slate-900 tracking-tight">KPI Performance</h3>
-                  </div>
-                  <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                    <span>Configured Indicators for:</span>
-                    <span className="font-bold text-slate-700 truncate max-w-[240px]" title={activeInitiativeMeta.name}>
-                      {activeInitiativeMeta.name}
-                    </span>
-                    <span className="text-slate-300">•</span>
-                    <span className="font-semibold text-[#004B87] bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">
-                      {activeInitiativeMeta.pillar}
-                    </span>
                   </div>
                 </div>
 
