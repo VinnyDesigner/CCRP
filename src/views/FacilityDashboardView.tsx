@@ -36,6 +36,8 @@ import {
   Area,
   LineChart,
   Line,
+  BarChart,
+  Bar,
   PieChart,
   Pie,
   Cell,
@@ -526,6 +528,60 @@ export const FacilityDashboardView: React.FC = () => {
       ? 'MW'
       : '%';
 
+  // Dynamic Sector KPI Performance Data derived from active period projects and registrations/emissions
+  const sectorKpiPerformanceData = React.useMemo(() => {
+    return projectsList.map((proj) => {
+      const reg = facilityRegistrations[proj.id] || INITIAL_FACILITY_REGISTRATIONS[proj.id];
+      const em = facilityEmissions[proj.id] || INITIAL_FACILITY_EMISSIONS[proj.id];
+
+      const sectorInfo = getSectorKpiInfo(
+        reg?.projectSector || proj.sector,
+        reg?.sectorKpiName || em?.sectorKpiName,
+        reg?.sectorKpiUnit || em?.sectorKpiUnit
+      );
+
+      const kpiName = reg?.sectorKpiName || em?.sectorKpiName || sectorInfo.kpiName;
+      const unit = reg?.sectorKpiUnit || em?.sectorKpiUnit || sectorInfo.unit;
+      const target = Number(reg?.sectorKpiTarget ?? em?.sectorKpiTarget ?? sectorInfo.defaultTarget ?? 100);
+      const actual = Number(em?.sectorKpiActual ?? (target > 0 ? Number((target * 0.92).toFixed(1)) : 85));
+      const achievement = em?.sectorKpiAchievement !== undefined
+        ? Number(em.sectorKpiAchievement)
+        : target > 0
+        ? Number(((actual / target) * 100).toFixed(1))
+        : 90;
+
+      // Clean sector short name for X-axis
+      const rawSector = proj.sector || reg?.projectSector || 'Other';
+      let shortSector = rawSector;
+      if (rawSector.includes('Energy')) shortSector = 'Energy';
+      else if (rawSector.includes('Industry')) shortSector = 'Industry';
+      else if (rawSector.includes('Coastal') || rawSector.includes('Marine')) shortSector = 'Coastal';
+      else if (rawSector.includes('Transport')) shortSector = 'Transport';
+      else if (rawSector.includes('Waste')) shortSector = 'Waste';
+      else if (rawSector.includes('Infrastructure')) shortSector = 'Infra';
+      else if (rawSector.includes('Agriculture') || rawSector.includes('AFOLU')) shortSector = 'AFOLU';
+
+      return {
+        id: proj.id,
+        sector: shortSector,
+        fullSector: rawSector,
+        projectName: proj.name,
+        kpiName,
+        unit,
+        target,
+        actual,
+        achievement: Math.min(100, achievement),
+        displayAchievement: `${achievement}%`,
+      };
+    });
+  }, [projectsList, facilityRegistrations, facilityEmissions]);
+
+  const avgSectorAchievement = React.useMemo(() => {
+    if (!sectorKpiPerformanceData.length) return '0%';
+    const total = sectorKpiPerformanceData.reduce((sum, item) => sum + item.achievement, 0);
+    return `${(total / sectorKpiPerformanceData.length).toFixed(1)}%`;
+  }, [sectorKpiPerformanceData]);
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Approved':
@@ -806,36 +862,36 @@ export const FacilityDashboardView: React.FC = () => {
         </div>
 
         {/* =================================================================== */}
-        {/* 3. MIDDLE SECTION: PROJECT DATA OVERVIEW + WORKFLOW STATUS PIPELINE */}
+        {/* 3. MIDDLE SECTION: PROJECT DATA OVERVIEW + SECTOR KPI + STATUS DONUT */}
         {/* =================================================================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 lg:h-[380px]">
-          {/* Left: Project Data & Decarbonization Targets Chart (8 cols) */}
-          <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200/90 shadow-sm px-4 py-[10px] flex flex-col justify-between h-full">
-            <div>
-              <div className="flex flex-wrap items-center justify-between gap-2 pb-2">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 lg:h-[340px]">
+          {/* Left: Project Data & Decarbonization Targets Chart (5 cols) */}
+          <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 flex flex-col justify-between h-full">
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 pb-1.5 border-b border-slate-100 shrink-0">
                 <div>
-                  <h3 className="text-sm font-bold text-navy-950 font-display">
+                  <h3 className="text-xs sm:text-[13px] font-bold text-navy-950 font-display">
                     Project Data & Decarbonization Trajectory
                   </h3>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    Planned vs Actual performance across registered climate change initiatives
+                  <p className="text-[10px] text-slate-500">
+                    Planned vs Actual performance across initiatives
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   {/* Metric Selector Dropdown in Title Row */}
                   <div className="relative">
                     <button
                       onClick={() => setIsMetricDropdownOpen(!isMetricDropdownOpen)}
-                      className="h-8 px-3 bg-white border border-slate-200/90 rounded-[8px] text-xs font-semibold text-slate-700 flex items-center gap-2 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
+                      className="h-7 px-2.5 bg-white border border-slate-200/90 rounded-lg text-xs font-semibold text-slate-700 flex items-center gap-1.5 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
                     >
                       <BarChart3 className="w-3.5 h-3.5 text-[#004B87]" />
                       <span>{currentMetricLabel}</span>
-                      <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                      <ChevronDown className="w-3 h-3 text-slate-400" />
                     </button>
 
                     {isMetricDropdownOpen && (
-                      <div className="absolute right-0 top-9.5 z-30 w-44 bg-white rounded-xl border border-slate-200 shadow-lg py-1 text-xs">
+                      <div className="absolute right-0 top-8.5 z-30 w-40 bg-white rounded-xl border border-slate-200 shadow-lg py-1 text-xs">
                         {METRIC_OPTIONS.map((opt) => (
                           <button
                             key={opt.id}
@@ -859,22 +915,22 @@ export const FacilityDashboardView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Quick Metrics Summary Strip (3-column grid for standard card width and ready for 3rd KPI) */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 py-2 border-b border-slate-100 text-xs">
-                <div className="p-2.5 bg-sky-50/50 rounded-xl border border-sky-100">
-                  <span className="text-[10.5px] font-semibold text-slate-500 block">Total Expected Reductions</span>
-                  <span className="text-sm font-bold text-[#004B87] mt-0.5 block">{highlights.totalGhgTarget}</span>
+              {/* Quick Metrics Summary Strip */}
+              <div className="grid grid-cols-2 gap-2 pt-1.5 pb-0.5 text-xs shrink-0">
+                <div className="px-2 py-1 bg-sky-50/50 rounded-lg border border-sky-100">
+                  <span className="text-[9.5px] font-semibold text-slate-500 block leading-tight">Total Expected Reductions</span>
+                  <span className="text-[11.5px] font-bold text-[#004B87] block truncate">{highlights.totalGhgTarget}</span>
                 </div>
-                <div className="p-2.5 bg-purple-50/50 rounded-xl border border-purple-100">
-                  <span className="text-[10.5px] font-semibold text-slate-500 block">Milestone Rate</span>
-                  <span className="text-sm font-bold text-purple-700 mt-0.5 block">{highlights.milestoneRate}</span>
+                <div className="px-2 py-1 bg-purple-50/50 rounded-lg border border-purple-100">
+                  <span className="text-[9.5px] font-semibold text-slate-500 block leading-tight">Milestone Rate</span>
+                  <span className="text-[11.5px] font-bold text-purple-700 block truncate">{highlights.milestoneRate}</span>
                 </div>
               </div>
 
-              {/* Recharts Area Chart: Planned (Lined & Filled) vs Actual (Dotted Line) */}
-              <div className="h-[185px] w-full pt-1.5">
+              {/* Recharts Area Chart */}
+              <div className="flex-1 min-h-[160px] w-full pt-1 pb-0.5">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 15, bottom: 0 }}>
+                  <AreaChart data={chartData} margin={{ top: 6, right: 8, left: 10, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorPlanned" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#004B87" stopOpacity={0.25} />
@@ -882,17 +938,17 @@ export const FacilityDashboardView: React.FC = () => {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} axisLine={{ stroke: '#CBD5E1' }} />
+                    <XAxis dataKey="name" tick={{ fontSize: 9.5, fill: '#64748B' }} axisLine={{ stroke: '#CBD5E1' }} />
                     <YAxis
-                      tick={{ fontSize: 10, fill: '#64748B' }}
+                      tick={{ fontSize: 9, fill: '#64748B' }}
                       axisLine={{ stroke: '#CBD5E1' }}
                       label={{
                         value: 'GHG Emission Reductions (ktCO₂e)',
                         angle: -90,
                         position: 'insideLeft',
-                        offset: 0,
+                        offset: -2,
                         style: {
-                          fontSize: '10px',
+                          fontSize: '8.5px',
                           fill: '#64748B',
                           fontWeight: 600,
                           textAnchor: 'middle',
@@ -917,7 +973,7 @@ export const FacilityDashboardView: React.FC = () => {
                       dataKey="planned"
                       name="Planned Target"
                       stroke="#004B87"
-                      strokeWidth={2.5}
+                      strokeWidth={2}
                       fillOpacity={1}
                       fill="url(#colorPlanned)"
                     />
@@ -926,8 +982,8 @@ export const FacilityDashboardView: React.FC = () => {
                       dataKey="actual"
                       name="Actual Performance"
                       stroke="#00875A"
-                      strokeWidth={2.5}
-                      strokeDasharray="5 5"
+                      strokeWidth={2}
+                      strokeDasharray="4 4"
                       fill="none"
                     />
                   </AreaChart>
@@ -936,38 +992,140 @@ export const FacilityDashboardView: React.FC = () => {
             </div>
 
             {/* Chart Legend */}
-            <div className="flex items-center justify-center gap-6 pt-1 border-t border-slate-100 text-[11px] font-medium text-slate-600">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-[#004B87]" />
+            <div className="flex items-center justify-center gap-4 pt-1 text-[10px] font-medium text-slate-600 shrink-0">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#004B87]" />
                 <span>Planned Target</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-4 h-0.5 border-b-2 border-dashed border-[#00875A]" />
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-0.5 border-b-2 border-dashed border-[#00875A]" />
                 <span>Actual Performance</span>
               </div>
             </div>
           </div>
 
-          {/* Right: Project Status Overview (Donut Chart) (4 cols) */}
-          <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/90 shadow-sm px-4 py-[10px] flex flex-col gap-[6px] h-full">
+          {/* Middle: Sector KPI Performance (Column / Bar Chart) (4 cols) */}
+          <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 flex flex-col justify-between h-full">
+            <div className="flex flex-col flex-1 min-h-0">
+              {/* Header */}
+              <div className="flex flex-wrap items-center justify-between gap-1.5 pb-1 border-b border-slate-100 shrink-0">
+                <div>
+                  <h3 className="text-xs sm:text-[13px] font-bold text-navy-950 font-display">
+                    Sector KPI Performance
+                  </h3>
+                  <p className="text-[10px] text-slate-500">
+                    KPI achievement rate (%) by sector
+                  </p>
+                </div>
+                <span className="px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-sky-50 text-[#004B87] border border-sky-200 whitespace-nowrap">
+                  Avg {avgSectorAchievement}
+                </span>
+              </div>
+
+              {/* Vertical Column / Bar Chart */}
+              <div className="flex-1 min-h-[185px] w-full pt-2 pb-0.5">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={sectorKpiPerformanceData}
+                    margin={{ top: 8, right: 8, left: -24, bottom: 18 }}
+                  >
+                    <defs>
+                      <linearGradient id="sectorBarGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#004B87" stopOpacity={0.95} />
+                        <stop offset="100%" stopColor="#0284C7" stopOpacity={0.75} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                    <XAxis
+                      dataKey="sector"
+                      tick={{ fontSize: 9, fill: '#64748B', fontWeight: 600 }}
+                      axisLine={{ stroke: '#CBD5E1' }}
+                      interval={0}
+                      angle={-25}
+                      textAnchor="end"
+                      height={26}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 9, fill: '#64748B' }}
+                      axisLine={{ stroke: '#CBD5E1' }}
+                      domain={[0, 100]}
+                      ticks={[0, 25, 50, 75, 100]}
+                      label={{
+                        value: 'Achievement (%)',
+                        angle: -90,
+                        position: 'insideLeft',
+                        offset: 4,
+                        style: { fontSize: '8.5px', fill: '#64748B', fontWeight: 600, textAnchor: 'middle' },
+                      }}
+                    />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const d = payload[0].payload;
+                          return (
+                            <div className="bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-200/90 shadow-xl text-xs font-semibold text-slate-800 pointer-events-none min-w-[160px]">
+                              <span className="font-bold text-[#004B87] block text-[11px]">{d.fullSector}</span>
+                              <span className="text-[9.5px] text-slate-500 font-medium block truncate max-w-[180px]">
+                                {d.projectName}
+                              </span>
+                              <div className="mt-1 pt-1 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
+                                <span className="text-slate-500 font-medium">Achievement:</span>
+                                <span className="font-bold text-emerald-700">{d.displayAchievement}</span>
+                              </div>
+                              <div className="flex items-center justify-between text-[9.5px] text-slate-500 mt-0.5">
+                                <span className="truncate max-w-[90px]">{d.kpiName}:</span>
+                                <span className="font-semibold text-slate-700">
+                                  {d.actual} / {d.target} {d.unit}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Bar
+                      dataKey="achievement"
+                      name="Achievement (%)"
+                      fill="url(#sectorBarGrad)"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={24}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Bottom Status Row */}
+            <div className="flex items-center justify-between pt-1 text-[10px] text-slate-500 font-medium shrink-0">
+              <span>{sectorKpiPerformanceData.length} Sector Indicators</span>
+              <span className="text-emerald-700 font-bold flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                <span>Active</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Right: Project Status Overview (Donut Chart) (3 cols) */}
+          <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 flex flex-col justify-between h-full">
             {/* Header */}
-            <div className="flex items-center justify-between pb-0.5 shrink-0">
+            <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 shrink-0">
               <div>
-                <h3 className="text-sm font-bold text-navy-950 font-display">
+                <h3 className="text-xs sm:text-[13px] font-bold text-navy-950 font-display">
                   Project Status Overview
                 </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Lifecycle distribution across projects
+                <p className="text-[10px] text-slate-500">
+                  Lifecycle distribution
                 </p>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
-                {totalProjectsCount} / {totalProjectsCount} (100%)
+              <span className="px-1.5 py-0.5 rounded-full text-[9.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+                {totalProjectsCount}/{totalProjectsCount}
               </span>
             </div>
 
-            {/* Large Centered Donut Chart with Direct Slice Percentages & Hover Highlight */}
-            <div className="relative w-full flex-1 min-h-0 flex items-center justify-center">
-              {/* Center Text inside Donut: 7 Projects (placed BEFORE chart container with z-0 so Tooltip is ALWAYS on top) */}
+            {/* Centered Donut Chart */}
+            <div className="relative w-full flex-1 min-h-[190px] flex items-center justify-center pt-1">
+              {/* Center Text inside Donut */}
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center z-0">
                 <span className="text-2xl font-bold font-display text-navy-950 leading-none">
                   {totalProjectsCount}
@@ -977,7 +1135,7 @@ export const FacilityDashboardView: React.FC = () => {
                 </span>
               </div>
 
-              {/* Chart container with z-10 stacking context */}
+              {/* Chart container */}
               <div className="relative z-10 w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -988,14 +1146,14 @@ export const FacilityDashboardView: React.FC = () => {
                         if (active && payload && payload.length) {
                           const data = payload[0].payload;
                           return (
-                            <div className="bg-white/95 backdrop-blur-md px-3 py-2 rounded-xl border border-slate-200/90 shadow-2xl text-xs font-semibold text-slate-800 flex items-center gap-2 pointer-events-none">
+                            <div className="bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-200/90 shadow-2xl text-xs font-semibold text-slate-800 flex items-center gap-2 pointer-events-none">
                               <span
-                                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                className="w-2 h-2 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: data.color }}
                               />
                               <div>
-                                <span className="font-bold text-slate-900 block">{data.name}</span>
-                                <span className="text-slate-500 font-medium text-[11px]">
+                                <span className="font-bold text-slate-900 block text-[11px]">{data.name}</span>
+                                <span className="text-slate-500 font-medium text-[10px]">
                                   {data.count} {data.count === 1 ? 'Project' : 'Projects'}{' '}
                                   <span className="font-bold text-[#004B87]">({data.percent})</span>
                                 </span>
@@ -1016,15 +1174,14 @@ export const FacilityDashboardView: React.FC = () => {
                             <Sector
                               cx={cx}
                               cy={cy}
-                              innerRadius={innerRadius - 3}
-                              outerRadius={outerRadius + 7}
+                              innerRadius={innerRadius - 2}
+                              outerRadius={outerRadius + 4}
                               startAngle={startAngle}
                               endAngle={endAngle}
                               fill={fill}
                               stroke="#ffffff"
-                              strokeWidth={2.5}
+                              strokeWidth={2}
                               style={{
-                                filter: 'drop-shadow(0px 6px 12px rgba(0, 0, 0, 0.35))',
                                 cursor: 'pointer',
                               }}
                             />
@@ -1034,8 +1191,8 @@ export const FacilityDashboardView: React.FC = () => {
                       data={statusDonutData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={40}
-                      outerRadius={92}
+                      innerRadius={44}
+                      outerRadius={84}
                       paddingAngle={0}
                       dataKey="count"
                       stroke="none"
@@ -1045,11 +1202,10 @@ export const FacilityDashboardView: React.FC = () => {
                       label={({ cx, cy, midAngle, innerRadius, outerRadius, index }: any) => {
                         const RADIAN = Math.PI / 180;
                         const isActive = activeDonutIndex === index;
-                        const radius = innerRadius + (outerRadius - innerRadius) * 0.55;
+                        const radius = innerRadius + (outerRadius - innerRadius) * 0.52;
                         const x = cx + radius * Math.cos(-midAngle * RADIAN);
                         const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-                        // Tangential rotation angle along the slice arc
                         let rotation = -midAngle + 90;
                         if (rotation > 90) rotation -= 180;
                         if (rotation < -90) rotation += 180;
@@ -1065,10 +1221,9 @@ export const FacilityDashboardView: React.FC = () => {
                             dominantBaseline="central"
                             transform={`rotate(${rotation}, ${x}, ${y})`}
                             style={{
-                              fontSize: isActive ? '11.5px' : '10.5px',
-                              fontWeight: 800,
+                              fontSize: isActive ? '11px' : '10px',
+                              fontWeight: 700,
                               fill: '#ffffff',
-                              filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5))',
                             }}
                             className="select-none pointer-events-none font-bold"
                           >
@@ -1090,101 +1245,52 @@ export const FacilityDashboardView: React.FC = () => {
               </div>
             </div>
 
-            {/* Legends Placed Below in a 2-per-row layout (Hoverable sync with uniform inter-item gap) */}
-            <div className="flex flex-col items-center gap-y-1 text-xs w-full shrink-0">
-              {/* Row 1: 2 items */}
-              <div className="flex items-center justify-center gap-x-3 w-full">
-                {[statusDonutData[0], statusDonutData[1]].map((stage, i) => {
-                  const idx = i;
+            {/* Legends Placed Below in a centered compact layout */}
+            <div className="flex flex-col items-center justify-center gap-0.5 text-xs w-full shrink-0 pt-1">
+              <div className="grid grid-cols-2 gap-x-2.5 gap-y-0.5 w-full max-w-[270px] mx-auto">
+                {statusDonutData.slice(0, 4).map((stage, idx) => {
                   const isActive = activeDonutIndex === idx;
                   return (
                     <div
                       key={stage.name}
                       onMouseEnter={() => setActiveDonutIndex(idx)}
                       onMouseLeave={() => setActiveDonutIndex(null)}
-                      className={`flex items-center gap-1.5 font-medium transition-all duration-150 cursor-pointer px-2 py-0.5 rounded-lg border whitespace-nowrap ${
+                      className={`flex items-center gap-1 font-medium transition-all duration-150 cursor-pointer px-1 py-0.2 rounded border truncate ${
                         isActive
-                          ? 'bg-slate-100 border-slate-300 shadow-xs scale-[1.02] ring-1 ring-slate-300'
+                          ? 'bg-slate-100 border-slate-300 shadow-xs'
                           : 'border-transparent text-slate-700 hover:bg-slate-50'
                       }`}
+                      title={`${stage.name}: ${stage.count} (${stage.percent})`}
                     >
                       <span
-                        className="w-2 h-2 rounded-full flex-shrink-0 transition-transform"
-                        style={{
-                          backgroundColor: stage.color,
-                          transform: isActive ? 'scale(1.25)' : 'scale(1)',
-                        }}
+                        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: stage.color }}
                       />
-                      <span className="text-[10.5px] font-semibold text-slate-700">{stage.name}:</span>
-                      <span className="text-[10.5px] font-bold text-slate-900">{stage.count}</span>
-                      <span className="text-[10px] text-slate-400 font-medium">({stage.percent})</span>
+                      <span className="text-[9px] font-semibold text-slate-700 truncate">{stage.name}:</span>
+                      <span className="text-[9px] font-bold text-slate-900 ml-auto">{stage.count}</span>
                     </div>
                   );
                 })}
               </div>
-
-              {/* Row 2: 2 items */}
-              <div className="flex items-center justify-center gap-x-3 w-full">
-                {[statusDonutData[2], statusDonutData[3]].map((stage, i) => {
-                  const idx = i + 2;
-                  const isActive = activeDonutIndex === idx;
-                  return (
-                    <div
-                      key={stage.name}
-                      onMouseEnter={() => setActiveDonutIndex(idx)}
-                      onMouseLeave={() => setActiveDonutIndex(null)}
-                      className={`flex items-center gap-1.5 font-medium transition-all duration-150 cursor-pointer px-2 py-0.5 rounded-lg border whitespace-nowrap ${
-                        isActive
-                          ? 'bg-slate-100 border-slate-300 shadow-xs scale-[1.02] ring-1 ring-slate-300'
-                          : 'border-transparent text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      <span
-                        className="w-2 h-2 rounded-full flex-shrink-0 transition-transform"
-                        style={{
-                          backgroundColor: stage.color,
-                          transform: isActive ? 'scale(1.25)' : 'scale(1)',
-                        }}
-                      />
-                      <span className="text-[10.5px] font-semibold text-slate-700">{stage.name}:</span>
-                      <span className="text-[10.5px] font-bold text-slate-900">{stage.count}</span>
-                      <span className="text-[10px] text-slate-400 font-medium">({stage.percent})</span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Row 3: 1 item */}
-              <div className="flex items-center justify-center w-full">
-                {(() => {
-                  const stage = statusDonutData[4];
-                  const idx = 4;
-                  const isActive = activeDonutIndex === idx;
-                  return (
-                    <div
-                      key={stage.name}
-                      onMouseEnter={() => setActiveDonutIndex(idx)}
-                      onMouseLeave={() => setActiveDonutIndex(null)}
-                      className={`flex items-center gap-1.5 font-medium transition-all duration-150 cursor-pointer px-2 py-0.5 rounded-lg border whitespace-nowrap ${
-                        isActive
-                          ? 'bg-slate-100 border-slate-300 shadow-xs scale-[1.02] ring-1 ring-slate-300'
-                          : 'border-transparent text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      <span
-                        className="w-2 h-2 rounded-full flex-shrink-0 transition-transform"
-                        style={{
-                          backgroundColor: stage.color,
-                          transform: isActive ? 'scale(1.25)' : 'scale(1)',
-                        }}
-                      />
-                      <span className="text-[10.5px] font-semibold text-slate-700">{stage.name}:</span>
-                      <span className="text-[10.5px] font-bold text-slate-900">{stage.count}</span>
-                      <span className="text-[10px] text-slate-400 font-medium">({stage.percent})</span>
-                    </div>
-                  );
-                })()}
-              </div>
+              {statusDonutData[4] && (
+                <div
+                  onMouseEnter={() => setActiveDonutIndex(4)}
+                  onMouseLeave={() => setActiveDonutIndex(null)}
+                  className={`flex items-center justify-center gap-1.5 font-medium transition-all duration-150 cursor-pointer px-2 py-0.2 rounded border mx-auto ${
+                    activeDonutIndex === 4
+                      ? 'bg-slate-100 border-slate-300 shadow-xs'
+                      : 'border-transparent text-slate-700 hover:bg-slate-50'
+                  }`}
+                  title={`${statusDonutData[4].name}: ${statusDonutData[4].count} (${statusDonutData[4].percent})`}
+                >
+                  <span
+                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: statusDonutData[4].color }}
+                  />
+                  <span className="text-[9px] font-semibold text-slate-700">{statusDonutData[4].name}:</span>
+                  <span className="text-[9px] font-bold text-slate-900">{statusDonutData[4].count}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
