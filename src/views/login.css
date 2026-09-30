@@ -1,0 +1,443 @@
+/* ==========================================================================
+   Login Page Styles (login.css)
+   ========================================================================== */
+
+:root {
+  --common-blue-color: #43709C;
+  --common-grey-color: #464646;
+  --common-grey-color2: #464646;
+  --common-font-size: 0.813rem;
+  --primary-color: #43709C;
+  --font-primary-regular: 'Omnes-Regular', sans-serif;
+  --font-primary-medium: 'Omnes-Medium', sans-serif;
+  --font-primary-semibold: 'Omnes-SemiBold', sans-serif;
+  --font-primary-bold: 'Omnes-Bold', sans-serif;
+}
+
+/* Login Main Container */
+.login-container {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Background Images */
+.login-bg-left,
+.login-bg-right {
+  position: absolute;
+  top: 0;
+  height: 100vh;
+  width: 50%;
+  z-index: 0;
+}
+
+.login-bg-left {
+  left: 0;
+}
+
+.login-bg-right {
+  right: 0;
+}
+
+.login-bg-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Center Overlay Floating Panel */
+.inner-panel {
+  width: 52%;
+  max-width: 1100px;
+  height: 85vh;
+  max-height: fit-content;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  display: flex;
+  position: relative; /* This is required for absolute positioning */
+  background: transparent;
+}
+
+@media (max-width: 991px) {
+  .inner-panel {
+    width: 92%;
+    height: auto;
+    max-height: none;
+    flex-direction: column;
+    margin: 2rem auto;
+  }
+}
+
+/* Inner Left / Right Panels */
+.inner-left-panel,
+.inner-right-panel {
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  flex: 1 1;
+  padding: 3rem 2rem;
+}
+
+.inner-right-panel {
+  align-items: center;
+  background-image: url('../assets/middleleftimg.png');
+  background-color: transparent;
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.inner-left-panel {
+  background-image: url('../assets/middleRightImg.png');
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  overflow: hidden;
+  padding: 2.75rem 2.25rem 2.25rem;
+}
+
+/* Inner Content Typography & Positioning */
+.innerrightimg {
+  max-width: 450px;
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+
+.logintext {
+  background: linear-gradient(96.52deg, #BEE6FF 4.26%, #A1FFE2 83.05%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent !important;
+  font-family: 'Omnes-Bold', 'Omnes-SemiBold', var(--font-primary-bold), var(--font-primary-semibold), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 700;
+  font-size: 36px;
+  letter-spacing: 1%;
+  vertical-align: middle;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+
+.loginp1 {
+  font-family: 'Omnes-Medium', var(--font-primary-medium), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  vertical-align: middle;
+  color: #FFFFFF;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.loginp2 {
+  font-family: 'Omnes-Regular', var(--font-primary-regular), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  letter-spacing: 1%;
+  vertical-align: middle;
+  color: #FFFFFF;
+  margin-bottom: 0;
+}
+
+/* Form Wrapper & Controls */
+.login-form-wrapper {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.logo-header-section {
+  margin-bottom: 1.25rem;
+}
+
+.setLogoWidth {
+  max-width: 220px;
+  width: 100%;
+  height: auto;
+  max-height: 70px;
+  object-fit: contain;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  margin-bottom: 0.65rem;
+}
+
+.login-title {
+  color: #386B98;
+  font-family: var(--font-primary-semibold), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 1.625rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 0;
+}
+
+/* Form Fields, Inputs & Spacing */
+.form-field-group {
+  margin-bottom: 1rem; /* 16px gap between fields */
+  text-align: left;
+}
+
+.form-label {
+  display: block;
+  text-align: left;
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 0.375rem; /* 6px gap from label to input */
+}
+
+.form-control {
+  width: 100%;
+  height: 40px; /* Exact uniform 40px height */
+  padding: 0 0.85rem;
+  font-size: 0.875rem; /* 14px */
+  color: #1E293B;
+  background-color: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-control::placeholder {
+  color: #94A3B8;
+  font-size: 0.84rem;
+}
+
+.form-control:focus {
+  border-color: #386B98;
+  box-shadow: 0 0 0 1px #386B98;
+}
+
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-input-field {
+  padding-right: 2.5rem !important;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  transition: color 0.15s ease;
+}
+
+.password-toggle-btn:hover {
+  color: #475569;
+}
+
+/* Remember Me Checkbox */
+.remember-me-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem; /* 20px gap before login button */
+  margin-top: 0.25rem;
+}
+
+.remember-checkbox {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #386B98;
+  border: 1px solid #CBD5E1;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.remember-label {
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Submit Button Spacing & Style */
+.submit-button {
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+
+.login-submit-btn,
+.submit-button button,
+.submit-button .btn-success {
+  border-radius: 8px;
+  background-color: #3F6E97 !important;
+  border: 1px solid #3F6E97 !important;
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff !important;
+  width: 100%;
+  height: 44px;
+  padding: 0.65rem 1rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.login-submit-btn:hover,
+.submit-button button:hover,
+.submit-button .btn-success:hover {
+  background-color: #345B7D !important;
+  border-color: #345B7D !important;
+}
+
+.login-submit-btn:active,
+.submit-button button:active,
+.submit-button .btn-success:active {
+  background-color: #2D4E6D !important;
+  transform: scale(0.99);
+}
+
+.signin-other-title {
+  position: relative;
+  text-align: center;
+  margin: 1.75rem 0 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.signin-other-title:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed #CBD5E1;
+  z-index: 1;
+}
+
+.signin-other-title .login-description {
+  position: relative;
+  z-index: 2;
+  background-color: #ffffff;
+  padding: 0 0.95rem;
+  display: inline-block;
+  color: #64748B;
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+
+.azure-sso-wrapper {
+  margin-top: 0.25rem;
+  display: flex;
+  justify-content: center;
+}
+
+.azure-login-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 120, 212, 0.2);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.azure-login-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+}
+
+.azure-login-btn:active {
+  transform: scale(0.96);
+}
+
+.azure-login-btn img,
+.azure-icon-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: block;
+}
+
+.forgotColorLogin {
+  color: #43709C;
+  font-family: var(--font-primary-medium);
+  font-size: 0.9rem;
+}
+
+.rememberShiftMt {
+  font-size: 0.875rem;
+  margin-top: -2px;
+}
+
+.fgt-pswd {
+  font-size: 14px;
+}
+
+.auth-login-btn {
+  background-color: rgba(0, 102, 164, 1);
+  color: white;
+  padding: 12px 20px;
+  font-size: 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.auth-login-btn:hover {
+  background-color: rgba(0, 92, 148, 1);
+  transform: scale(1.05);
+}
+
+.auth-login-btn:active {
+  background-color: rgba(0, 82, 132, 1);
+  transform: scale(0.98);
+}
+
+.auth-bg-cover {
+  background: linear-gradient(45deg, #004987 0%, #80a7c4);
+}
+
+.loginHeadingBanner {
+  position: absolute;
+  bottom: 19px;
+  color: #fff;
+  font-size: 1.5rem;
+  font-family: 'Omnes-Medium', sans-serif;
+  background: #00000017;
+  padding: 4px 10px;
+}
+
+.btn-link-pass-chang {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateX(-30%);
+}
+
+.paswordResetPgHt .auth-one-bg {
+  height: 550px !important;
+}

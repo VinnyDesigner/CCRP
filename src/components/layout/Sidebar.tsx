@@ -58,7 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ).length;
 
   // Active view match flags
-  const isDashboardActive = activeView === 'dashboard' && currentRole === 'FACILITY_OPERATOR';
+  const isDashboardActive = activeView === 'dashboard' || activeView === 'ead-dashboard';
   const isInitiativesActive =
     activeView === 'initiatives' ||
     activeView === 'facility' ||
@@ -81,6 +81,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const isReportsActive =
     activeView === 'reports' ||
     activeView === 'mrv-reports' ||
+    activeView === 'ead-analytics' ||
     activeView === 'submissions';
   const isAdministrationActive =
     activeView === 'administration' ||
@@ -93,18 +94,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     activeView === 'action-logs';
   const isHelpActive = activeView === 'help' || activeView === 'help-guidance';
 
-  const isEadDashboardActive =
-    activeView === 'ead-dashboard' || (currentRole === 'EAD_REVIEWER' && activeView === 'dashboard');
+  const isEadDashboardActive = isDashboardActive;
   const isEadFacilitiesActive = activeView === 'ead-facilities';
-  const isEadAnnualEmissionActive =
-    activeView === 'annual-emission-data' ||
-    activeView === 'emissions-data' ||
-    activeView === 'ead-queue' ||
-    activeView === 'ead-review-detail';
-  const isEadReportsActive =
-    activeView === 'ead-[#analytics]' ||
-    activeView === 'ead-analytics' ||
-    (currentRole === 'EAD_REVIEWER' && (activeView === 'reports' || activeView === 'mrv-reports'));
+  const isEadAnnualEmissionActive = isPerformanceReportingActive;
+  const isEadReportsActive = isReportsActive;
 
   return (
     <>
@@ -120,7 +113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <div
               className="flex items-center justify-center cursor-pointer"
-              onClick={() => setActiveView(currentRole === 'EAD_REVIEWER' ? 'ead-dashboard' : 'dashboard')}
+              onClick={() => setActiveView('registration')}
               title="Climate Change Registry Portal (CCRP)"
             >
               <img
@@ -136,25 +129,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Navigation Section */}
           <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-2.5 space-y-3 font-sans">
             {currentRole === 'FACILITY_OPERATOR' ? (
-              /* DATA PROVIDER SIDEBAR MENU: Dashboard, Project Registration, Project Data Entry, Amendments, Reports */
+              /* DATA PROVIDER SIDEBAR MENU: Project Registration, Project Data Entry, Amendments */
               <>
-                {/* 1. Dashboard */}
-                <button
-                  onClick={() => setActiveView('dashboard')}
-                  className={`flex items-center rounded-[6px] text-xs font-bold transition-all cursor-pointer ${
-                    isCollapsed ? 'w-9 h-9 mx-auto justify-center px-0 py-0' : 'w-full gap-2.5 px-3 py-2'
-                  } ${
-                    isDashboardActive
-                      ? 'bg-white text-[#365785] shadow-sm font-bold'
-                      : 'text-white/90 hover:text-white hover:bg-white/15'
-                  }`}
-                  title="Dashboard"
-                >
-                  <LayoutDashboard className={`w-4 h-4 shrink-0 ${isDashboardActive ? 'text-[#365785]' : 'text-white/85'}`} />
-                  {!isCollapsed && <span className="truncate">Dashboard</span>}
-                </button>
-
-                {/* 2. Project Registration */}
+                {/* 1. Project Registration */}
                 <button
                   onClick={() => setActiveView('registration')}
                   className={`flex items-center rounded-[6px] text-xs font-bold transition-all cursor-pointer ${
@@ -170,7 +147,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {!isCollapsed && <span className="truncate">Project Registration</span>}
                 </button>
 
-                {/* 3. Project Data Entry */}
+                {/* 2. Project Data Entry */}
                 <button
                   onClick={() => setActiveView('annual-emission-data')}
                   className={`flex items-center rounded-[6px] text-xs font-bold transition-all cursor-pointer ${
@@ -186,7 +163,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {!isCollapsed && <span className="truncate">Project Data Entry</span>}
                 </button>
 
-                {/* 4. Amendments */}
+                {/* 3. Amendments */}
                 <button
                   onClick={() => setActiveView('amendments')}
                   className={`flex items-center rounded-[6px] text-xs font-bold transition-all cursor-pointer ${
@@ -201,39 +178,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <History className={`w-4 h-4 shrink-0 ${isAmendmentsActive ? 'text-[#365785]' : 'text-white/85'}`} />
                   {!isCollapsed && <span className="truncate">Amendments</span>}
                 </button>
-
-                {/* 5. Reports */}
-                <button
-                  onClick={() => setActiveView('reports')}
-                  className={`flex items-center rounded-[6px] text-xs font-bold transition-all cursor-pointer ${
-                    isCollapsed ? 'w-9 h-9 mx-auto justify-center px-0 py-0' : 'w-full gap-2.5 px-3 py-2'
-                  } ${
-                    isReportsActive
-                      ? 'bg-white text-[#365785] shadow-sm font-bold'
-                      : 'text-white/90 hover:text-white hover:bg-white/15'
-                  }`}
-                  title="Reports"
-                >
-                  <BarChart3 className={`w-4 h-4 shrink-0 ${isReportsActive ? 'text-[#365785]' : 'text-white/85'}`} />
-                  {!isCollapsed && <span className="truncate">Reports</span>}
-                </button>
               </>
             ) : (
               /* ADMIN SIDEBAR MENU: Dashboard, Project Registration, Project Data Entry, Reports, Administration */
               <>
                 {/* 1. Dashboard */}
                 <button
-                  onClick={() => setActiveView('ead-dashboard')}
+                  onClick={() => setActiveView('dashboard')}
                   className={`flex items-center rounded-[6px] text-xs font-bold transition-all cursor-pointer ${
                     isCollapsed ? 'w-9 h-9 mx-auto justify-center px-0 py-0' : 'w-full gap-2.5 px-3 py-2'
                   } ${
-                    isEadDashboardActive
+                    isDashboardActive
                       ? 'bg-white text-[#365785] shadow-sm font-bold'
                       : 'text-white/90 hover:text-white hover:bg-white/15'
                   }`}
                   title="Dashboard"
                 >
-                  <LayoutDashboard className={`w-4 h-4 shrink-0 ${isEadDashboardActive ? 'text-[#365785]' : 'text-white/85'}`} />
+                  <LayoutDashboard className={`w-4 h-4 shrink-0 ${isDashboardActive ? 'text-[#365785]' : 'text-white/85'}`} />
                   {!isCollapsed && <span className="truncate">Dashboard</span>}
                 </button>
 
@@ -265,23 +226,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   }`}
                   title="Project Data Entry"
                 >
-                  <Flame className={`w-4 h-4 shrink-0 ${isEadAnnualEmissionActive ? 'text-[#365785]' : 'text-white/85'}`} />
+                  <TrendingUp className={`w-4 h-4 shrink-0 ${isEadAnnualEmissionActive ? 'text-[#365785]' : 'text-white/85'}`} />
                   {!isCollapsed && <span className="truncate">Project Data Entry</span>}
                 </button>
 
                 {/* 4. Reports */}
                 <button
-                  onClick={() => setActiveView('ead-analytics')}
+                  onClick={() => setActiveView('reports')}
                   className={`flex items-center rounded-[6px] text-xs font-bold transition-all cursor-pointer ${
                     isCollapsed ? 'w-9 h-9 mx-auto justify-center px-0 py-0' : 'w-full gap-2.5 px-3 py-2'
                   } ${
-                    isEadReportsActive
+                    isReportsActive
                       ? 'bg-white text-[#365785] shadow-sm font-bold'
                       : 'text-white/90 hover:text-white hover:bg-white/15'
                   }`}
                   title="Reports"
                 >
-                  <BarChart3 className={`w-4 h-4 shrink-0 ${isEadReportsActive ? 'text-[#365785]' : 'text-white/85'}`} />
+                  <BarChart3 className={`w-4 h-4 shrink-0 ${isReportsActive ? 'text-[#365785]' : 'text-white/85'}`} />
                   {!isCollapsed && <span className="truncate">Reports</span>}
                 </button>
 

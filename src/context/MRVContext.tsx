@@ -1081,7 +1081,7 @@ export const MRVProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [submissions, setSubmissions] = useState<Submission[]>(INITIAL_SUBMISSIONS);
   const [verifiers] = useState<AccreditedVerifier[]>(INITIAL_VERIFIERS);
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
-  const [activeView, setActiveView] = useState<string>('dashboard');
+  const [activeView, setActiveView] = useState<string>('registration');
   const [selectedSubmissionForReview, setSelectedSubmissionForReview] = useState<Submission | null>(null);
 
   // Per-Facility Monitoring Plan Statuses
@@ -1294,8 +1294,8 @@ export const MRVProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return {
           title: 'Module Locked',
           reason: 'Prerequisite workflow step has not been completed yet.',
-          prerequisiteView: 'dashboard',
-          prerequisiteName: 'Dashboard',
+          prerequisiteView: 'registration',
+          prerequisiteName: 'Project Registration',
         };
     }
   };
@@ -1657,7 +1657,7 @@ export const MRVProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       registrationApprovalDate: '15-Jan-2026',
       monitoringPlanDeadline: '15-Apr-2026',
     });
-    setActiveView(currentRole === 'EAD_REVIEWER' ? 'ead-dashboard' : 'dashboard');
+    setActiveView('registration');
   };
 
   return (

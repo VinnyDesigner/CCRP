@@ -32,20 +32,35 @@ import { SubmissionDetailView } from './views/SubmissionDetailView';
 import { MRVDataHistoryView } from './views/MRVDataHistoryView';
 import { ReadOnlyRecordViewer } from './components/mrv/ReadOnlyRecordViewer';
 import { AdministrationView } from './views/AdministrationView';
+import { WorkspaceSelectionModal } from './components/common/WorkspaceSelectionModal';
 
 const MainAppContent: React.FC = () => {
   const { currentRole, activeView, setActiveView, resetDemoData } = useMRV();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [showWorkspaceModal, setShowWorkspaceModal] = useState(false);
 
   const handleLoginSuccess = () => {
     resetDemoData();
     setIsAuthenticated(true);
+    setShowWorkspaceModal(true);
   };
 
   const handleLogout = () => {
     resetDemoData();
+    setActiveView('registration');
     setIsAuthenticated(false);
+    setShowWorkspaceModal(false);
+  };
+
+  const handleSelectMRV = () => {
+    setShowWorkspaceModal(false);
+    window.open('https://mrv.ead.gov.ae', '_blank', 'noopener,noreferrer');
+  };
+
+  const handleSelectProjectTracker = () => {
+    setShowWorkspaceModal(false);
+    setActiveView('registration');
   };
 
   if (!isAuthenticated) {
@@ -55,7 +70,8 @@ const MainAppContent: React.FC = () => {
   const renderActiveView = () => {
     switch (activeView) {
       case 'dashboard':
-        return currentRole === 'EAD_REVIEWER' ? <EADDashboardView /> : <FacilityDashboardView />;
+      case 'ead-dashboard':
+        return <FacilityDashboardView />;
       case 'initiatives':
       case 'facility':
       case 'registration':
@@ -119,7 +135,7 @@ const MainAppContent: React.FC = () => {
       case 'action-logs':
         return <AdministrationView />;
       default:
-        return currentRole === 'EAD_REVIEWER' ? <EADDashboardView /> : <FacilityDashboardView />;
+        return <FacilityRegistrationView />;
     }
   };
 
@@ -148,6 +164,13 @@ const MainAppContent: React.FC = () => {
           </main>
         </div>
       </div>
+
+      {/* Choose Your Workspace & Project Tracker Onboarding Modal */}
+      <WorkspaceSelectionModal
+        isOpen={showWorkspaceModal}
+        onSelectMRV={handleSelectMRV}
+        onSelectProjectTracker={handleSelectProjectTracker}
+      />
 
       {/* Global Comprehensive Read-Only Record Viewer Modal */}
       <ReadOnlyRecordViewer />

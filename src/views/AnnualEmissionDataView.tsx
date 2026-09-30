@@ -331,6 +331,94 @@ export const AnnualEmissionDataView: React.FC = () => {
 
   // Determine all performance reports with sample demo records
   const allReportsList = useMemo(() => {
+    if (isFacilityOperator) {
+      if (operatorFacilityIds.length === 0) {
+        return [];
+      }
+      const allKeys = Array.from(
+        new Set([...operatorFacilityIds, ...operatorEmissionIds])
+      ).filter((id) => !deletedEmissionIds.includes(id));
+
+      return allKeys
+        .map((id) => {
+          const reg = facilityRegistrations[id];
+          const rec =
+            facilityEmissions[id] ||
+            (reg
+              ? ({
+                  initiativeName: reg.initiativeName || reg.facilityName || 'Registered Initiative',
+                  initiativeId: reg.initiativeId || reg.facilityId || '—',
+                  entity: reg.entity || reg.operatorName || 'Department of Energy (DoE)',
+                  pillar: reg.pillar || 'Mitigation',
+                  reportingCadence: reg.reportingCadence || 'Semiannual',
+                  progressReportPeriod: 'Semiannual 1 (H1)',
+                  projectPhase: 'Implementation',
+                  status: 'In Progress',
+                  workflowStatus: 'Draft',
+                  plannedProgress: 75,
+                  actualProgress: 68,
+                  budget: 'AED 3,200,000,000',
+                  budgetType: 'Capex',
+                  budgetStatus: 'Available',
+                  sectorKpiName: reg.sectorKpiName,
+                  sectorKpiUnit: reg.sectorKpiUnit,
+                  sectorKpiTarget: reg.sectorKpiTarget,
+                  sectorKpiActual: reg.sectorKpiTarget,
+                } as PerformanceReportData)
+              : null);
+
+          if (!rec) return null;
+
+          const initName = rec.initiativeName || rec.facilityName || reg?.initiativeName || 'Registered Initiative';
+          const initId = rec.initiativeId || rec.facilityId || reg?.initiativeId || '—';
+          const entity = rec.entity || rec.operatorName || reg?.entity || 'Department of Energy (DoE)';
+          const pillar = rec.pillar || reg?.pillar || 'Mitigation';
+          const rawWfStatus = String(rec.workflowStatus || rec.status || 'Draft');
+
+          const normalizeStatus = (st: string) => {
+            if (st === 'Approved' || st === 'Approved / Published' || st === 'Verified') return 'Approved';
+            if (st === 'Returned for Correction' || st === 'Correction Required' || st === 'Reverted' || st === 'Correction Requested') return 'Correction Requested';
+            if (st === 'Under EAD Review' || st === 'Under Review') return 'Under Review';
+            if (st === 'Submitted' || st.includes('Submitted')) return 'Submitted';
+            return 'Draft';
+          };
+          const status = normalizeStatus(rawWfStatus);
+
+          const rawPeriod = rec.progressReportPeriod || 'Semiannual 1 (H1)';
+          const formatReportPeriod = (periodStr: string, pillarName: string) => {
+            if (pillarName === 'Adaptation') {
+              if (periodStr.includes('Q1') || periodStr === 'Quarter 1 (Q1)') return '2026 (Q1)';
+              if (periodStr.includes('Q2') || periodStr === 'Quarter 2 (Q2)') return '2026 (Q2)';
+              if (periodStr.includes('Q3') || periodStr === 'Quarter 3 (Q3)') return '2026 (Q3)';
+              if (periodStr.includes('Q4') || periodStr === 'Quarter 4 (Q4)') return '2026 (Q4)';
+              return `2026 (${periodStr || 'Q1'})`;
+            }
+            if (periodStr.includes('H1') || periodStr.includes('Semiannual 1') || periodStr === 'Semiannual 1 (H1)' || periodStr === 'H1') return '2026 (H1)';
+            if (periodStr.includes('H2') || periodStr.includes('Semiannual 2') || periodStr === 'Semiannual 2 (H2)' || periodStr === 'H2') return '2026 (H2)';
+            return `2026 (${periodStr || 'H1'})`;
+          };
+          const reportPeriod = formatReportPeriod(rawPeriod, pillar);
+
+          const actualProg = rec.actualProgress !== undefined ? Number(rec.actualProgress) : 0;
+          const plannedProg = rec.plannedProgress !== undefined ? Number(rec.plannedProgress) : 0;
+
+          return {
+            id,
+            rec,
+            name: initName,
+            initiativeCode: initId,
+            entity,
+            pillar,
+            status,
+            rawStatus: rawWfStatus,
+            reportPeriod,
+            actualProg,
+            plannedProg,
+          };
+        })
+        .filter((item): item is NonNullable<typeof item> => item !== null);
+    }
+
     const allKeys = Array.from(
       new Set([
         ...Object.keys(INITIAL_FACILITY_EMISSIONS),
@@ -391,7 +479,7 @@ export const AnnualEmissionDataView: React.FC = () => {
         };
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);
-  }, [facilityEmissions, deletedEmissionIds]);
+  }, [isFacilityOperator, operatorFacilityIds, operatorEmissionIds, facilityRegistrations, facilityEmissions, deletedEmissionIds]);
 
   // Filtered Performance Reports for Overview Table
   const filteredTableList = useMemo(() => {
@@ -489,7 +577,20 @@ export const AnnualEmissionDataView: React.FC = () => {
   // Flow 1: Create New Performance Report
   const handleCreateReport = () => {
     const newReportId = `rep-${Date.now()}`;
-    const defaultInit = CCRP_APPROVED_INITIATIVES[0];
+    const registeredProject =
+      operatorFacilityIds.length > 0 && facilityRegistrations[operatorFacilityIds[0]]
+        ? facilityRegistrations[operatorFacilityIds[0]]
+        : null;
+
+    const defaultInit = registeredProject
+      ? {
+          name: registeredProject.initiativeName || registeredProject.facilityName || CCRP_APPROVED_INITIATIVES[0].name,
+          initiativeCode: registeredProject.initiativeId || registeredProject.facilityId || CCRP_APPROVED_INITIATIVES[0].initiativeCode,
+          entity: registeredProject.entity || registeredProject.operatorName || CCRP_APPROVED_INITIATIVES[0].entity,
+          pillar: registeredProject.pillar || CCRP_APPROVED_INITIATIVES[0].pillar,
+          cadence: registeredProject.reportingCadence || CCRP_APPROVED_INITIATIVES[0].cadence,
+        }
+      : CCRP_APPROVED_INITIATIVES[0];
 
     const blankReport: PerformanceReportData = {
       initiativeName: defaultInit.name,
@@ -809,24 +910,24 @@ export const AnnualEmissionDataView: React.FC = () => {
             <div className="flex flex-col items-center text-center max-w-md">
               <img
                 src={emptyFolderIcon}
-                alt="No Performance Reports"
+                alt="No Projects Available for Data Entry"
                 className="w-[84px] h-[74px] object-contain mb-3.5 select-none"
                 draggable={false}
               />
 
               <h2 className="text-[15px] font-bold text-[#336D9F] tracking-tight">
-                No Data Entry Records Available
+                No Projects Available for Data Entry
               </h2>
               <p className="text-[11.5px] text-slate-500 font-normal mt-1 max-w-sm">
-                You haven't submitted any initiative data entry reports yet. Start reporting on your approved climate change initiatives.
+                You don't have any registered projects available for data entry yet. Please register a project first to continue.
               </p>
 
               <button
-                onClick={handleCreateReport}
+                onClick={() => setActiveView('registration')}
                 className="mt-4 h-9 px-4 bg-gradient-to-r from-[#004B87] to-[#006BB8] text-white rounded-[8px] text-xs font-bold flex items-center gap-1.5 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
               >
-                <Plus className="w-4 h-4" />
-                <span>Add Data Entry</span>
+                <span>Go to Project Registration</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -1262,7 +1363,7 @@ export const AnnualEmissionDataView: React.FC = () => {
 
         {/* Row 2: Input Fields in a 4-column row (Initiative Name, Entity) with 3rd & 4th columns as empty space */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-0.5 items-end">
-          {/* Col 1: Initiative Name Text Box */}
+          {/* Col 1: Initiative Name Text Box (Defaulted / Read-only linked to registered project) */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
               Initiative Name
@@ -1271,23 +1372,11 @@ export const AnnualEmissionDataView: React.FC = () => {
               <FieldTooltip content="Official title of the climate change initiative." example="Al Dhafra Solar PV Decarbonization Program">
                 <input
                   type="text"
-                  readOnly={isReadOnly}
-                  disabled={isReadOnly}
-                  value={formInitiativeName}
-                  onChange={(e) => {
-                    setFormInitiativeName(e.target.value);
-                    updateCurrentRecord((prev) => ({
-                      ...prev,
-                      initiativeName: e.target.value,
-                      facilityName: e.target.value,
-                    }));
-                  }}
-                  placeholder="e.g. Al Dhafra Solar PV Decarbonization Program"
-                  className={`w-full h-9 px-3.5 border rounded-[8px] text-xs text-slate-800 font-bold shadow-2xs truncate ${
-                    isReadOnly
-                      ? 'bg-slate-200/90 border-slate-300 cursor-not-allowed select-none'
-                      : 'bg-white border-slate-300 focus:outline-none focus:border-[#004B87]'
-                  }`}
+                  readOnly
+                  disabled
+                  value={formInitiativeName || regForActive?.initiativeName || CCRP_APPROVED_INITIATIVES[0].name}
+                  placeholder="Al Dhafra Solar PV Decarbonization Program"
+                  className="w-full h-9 px-3.5 bg-slate-100/90 border border-slate-300 rounded-[8px] text-xs text-slate-800 font-bold shadow-2xs truncate cursor-default select-none"
                 />
               </FieldTooltip>
             </div>

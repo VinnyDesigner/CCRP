@@ -73,13 +73,15 @@ export const VersionHistoryView: React.FC = () => {
   // Determine eligible initiatives with sample demo records directly from Project Registration / Master Data
   const approvedInitiatives = useMemo(() => {
     // Collect all candidate initiative IDs to display rich sample demo overview
-    const allKeys = Array.from(
-      new Set([
-        ...Object.keys(INITIAL_FACILITY_REGISTRATIONS),
-        ...Object.keys(facilityRegistrations),
-        ...facilities.map((f) => f.id),
-      ])
-    );
+    const allKeys = isFacilityOperator
+      ? operatorFacilityIds
+      : Array.from(
+          new Set([
+            ...Object.keys(INITIAL_FACILITY_REGISTRATIONS),
+            ...Object.keys(facilityRegistrations),
+            ...facilities.map((f) => f.id),
+          ])
+        );
 
     return allKeys
       .map((id) => {
@@ -733,16 +735,16 @@ export const VersionHistoryView: React.FC = () => {
             <div className="flex flex-col items-center text-center max-w-md">
               <img
                 src={emptyFolderIcon}
-                alt="No Initiatives Available"
+                alt="No Amendments Available"
                 className="w-[84px] h-[74px] object-contain mb-3.5 select-none"
                 draggable={false}
               />
 
               <h2 className="text-[15px] font-bold text-[#336D9F] tracking-tight">
-                No Initiatives Available
+                No Amendments Available
               </h2>
               <p className="text-[11.5px] text-slate-500 font-normal mt-1 max-w-sm">
-                You don't have any approved initiatives available for amendment. Start by registering an initiative first to raise an amendment request.
+                You don't have any climate change project amendments available yet. Start by registering an initiative first to raise an amendment request.
               </p>
 
               <button
@@ -750,7 +752,7 @@ export const VersionHistoryView: React.FC = () => {
                 className="mt-4 h-9 px-4 bg-gradient-to-r from-[#004B87] to-[#006BB8] text-white rounded-[8px] text-xs font-bold flex items-center gap-1.5 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
               >
                 <Plus className="w-4 h-4" />
-                <span>Register New Initiative</span>
+                <span>Register New Project</span>
               </button>
             </div>
           </div>
@@ -1159,10 +1161,11 @@ export const VersionHistoryView: React.FC = () => {
                     <FieldTooltip content="Official title of the climate change initiative." example="Al Dhafra Solar PV Decarbonization Program">
                       <input
                         type="text"
-                        value={formData.initiativeName}
-                        onChange={(e) => setFormData({ ...formData, initiativeName: e.target.value })}
-                        placeholder="e.g. Al Dhafra Solar PV Decarbonization Program"
-                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-bold focus:outline-none focus:border-[#004B87] shadow-2xs text-xs"
+                        readOnly
+                        disabled
+                        value={formData.initiativeName || currentInitiative?.name || 'Al Dhafra Solar PV Decarbonization Program'}
+                        placeholder="Al Dhafra Solar PV Decarbonization Program"
+                        className="w-full px-3.5 py-2 bg-slate-100/90 border border-slate-300 rounded-lg text-slate-800 font-bold cursor-default select-none shadow-2xs text-xs"
                       />
                     </FieldTooltip>
                   </div>

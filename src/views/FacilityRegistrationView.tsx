@@ -132,13 +132,15 @@ export const FacilityRegistrationView: React.FC = () => {
 
   // Determine all registered initiatives with sample demo records
   const allInitiativesList = useMemo(() => {
-    const allKeys = Array.from(
-      new Set([
-        ...Object.keys(INITIAL_FACILITY_REGISTRATIONS),
-        ...Object.keys(facilityRegistrations),
-        ...facilities.map((f) => f.id),
-      ])
-    ).filter((id) => !deletedFacilityIds.includes(id));
+    const allKeys = isFacilityOperator
+      ? operatorFacilityIds.filter((id) => !deletedFacilityIds.includes(id))
+      : Array.from(
+          new Set([
+            ...Object.keys(INITIAL_FACILITY_REGISTRATIONS),
+            ...Object.keys(facilityRegistrations),
+            ...facilities.map((f) => f.id),
+          ])
+        ).filter((id) => !deletedFacilityIds.includes(id));
 
     return allKeys
       .map((id) => {
@@ -717,16 +719,16 @@ export const FacilityRegistrationView: React.FC = () => {
             <div className="flex flex-col items-center text-center max-w-md">
               <img
                 src={emptyFolderIcon}
-                alt="No Initiatives Registered"
+                alt="No Projects Registered"
                 className="w-[84px] h-[74px] object-contain mb-3.5 select-none"
                 draggable={false}
               />
 
               <h2 className="text-[15px] font-bold text-[#336D9F] tracking-tight">
-                No Initiatives Registered
+                No Projects Registered
               </h2>
               <p className="text-[11.5px] text-slate-500 font-normal mt-1 max-w-sm">
-                You haven't registered any climate change initiatives yet. Start by registering your first initiative.
+                You don't have any climate change projects registered yet. Please register your first project to continue.
               </p>
 
               <button
@@ -734,7 +736,7 @@ export const FacilityRegistrationView: React.FC = () => {
                 className="mt-4 h-9 px-4 bg-gradient-to-r from-[#004B87] to-[#006BB8] text-white rounded-[8px] text-xs font-bold flex items-center gap-1.5 shadow-md shadow-[#004B87]/25 hover:shadow-lg hover:from-[#003d6e] hover:to-[#005c9e] transition-all cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
               >
                 <Plus className="w-4 h-4" />
-                <span>Add New Project</span>
+                <span>Register New Project</span>
               </button>
             </div>
           </div>

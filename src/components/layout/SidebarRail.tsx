@@ -24,9 +24,9 @@ export const SidebarRail: React.FC = () => {
       {/* Top Action Icons */}
       <div className="flex flex-col items-center gap-3 text-slate-500">
         <button
-          onClick={() => setActiveView('dashboard')}
+          onClick={() => setActiveView('registration')}
           className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-200/60 hover:text-black transition-all"
-          title="Back to Main Dashboard"
+          title="Back to Project Registration"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
